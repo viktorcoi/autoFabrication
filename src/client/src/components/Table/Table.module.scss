@@ -1,0 +1,316 @@
+.card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.viewport {
+    flex: 1;
+    min-height: 0;
+    border: 1px solid var(--vkui--color_separator_primary);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.scroll {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: auto;
+}
+
+.scrollLoading {
+    overflow: hidden;
+}
+
+.scrollDragging .resizeHandle {
+    pointer-events: none;
+}
+
+.scrollDragging .resizeHandle::before {
+    background: transparent !important;
+}
+
+.table {
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 100%;
+    user-select: none;
+}
+
+.headerCell {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    text-align: left;
+    vertical-align: middle;
+    padding: 0;
+    background: var(--vkui--color_background_secondary);
+    border-bottom: 1px solid var(--vkui--color_separator_primary);
+    border-right: 1px solid var(--vkui--color_separator_primary);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.headerCell:first-child {
+    border-left: 0;
+}
+
+.headerCellDragging {
+    opacity: 0.45;
+}
+
+.headerCellResizing {
+    box-shadow: inset -2px 0 0 0 var(--vkui--color_stroke_accent_themed);
+}
+
+.headerInner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    padding-right: 16px;
+}
+
+.dragHandle {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--vkui--color_icon_secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    pointer-events: none;
+}
+
+.dragHandle:active {
+    cursor: grabbing;
+}
+
+.sortButton {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+.headerTitle {
+    color: var(--vkui--color_text_primary);
+    font-weight: 600;
+    line-height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sortIcon {
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--vkui--color_icon_secondary);
+}
+
+.resizeHandle {
+    position: absolute;
+    top: 0;
+    right: -5px;
+    width: 10px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 5;
+}
+
+.resizeHandle::before {
+    content: '';
+    position: absolute;
+    right: 4px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    border-radius: 2px;
+    background: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.resizeHandle:hover::before {
+    background: var(--vkui--color_stroke_accent_themed);
+}
+
+.bodyRow {
+    transition: background-color 0.15s ease;
+}
+
+.bodyRow:nth-child(2n) {
+    background: var(--vkui--color_background_secondary);
+}
+
+.bodyRow:hover {
+    background: var(--vkui--color_background_accent_themed);
+}
+
+.bodyRowSelected {
+    background: color-mix(in srgb, var(--vkui--color_background_accent_themed) 40%, transparent);
+}
+
+.bodyRowSelected:nth-child(2n),
+.bodyRowSelected:hover {
+    background: color-mix(in srgb, var(--vkui--color_background_accent_themed) 40%, transparent);
+}
+
+.bodyCell {
+    border-right: 1px solid var(--vkui--color_separator_primary);
+    padding: 10px 12px;
+    vertical-align: middle;
+    text-align: left;
+}
+
+.bodyCellResizing {
+    box-shadow: inset -2px 0 0 0 var(--vkui--color_stroke_accent_themed);
+}
+
+.cellText {
+    color: var(--vkui--color_text_primary);
+    line-height: 20px;
+}
+
+.emptyCell {
+    padding: 48px 16px;
+    text-align: center;
+}
+
+.emptyTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--vkui--color_text_primary);
+}
+
+.emptyDescription {
+    margin-top: 6px;
+    color: var(--vkui--color_text_secondary);
+}
+
+.loadingOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 7;
+    background: color-mix(in srgb, var(--vkui--color_background_content) 85%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(1.5px);
+}
+
+.dragGhost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 10000;
+    box-sizing: border-box;
+    border: 1px solid var(--vkui--color_separator_primary);
+    border-radius: 10px;
+    background: var(--vkui--color_background_secondary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+    display: block;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 0.98;
+    will-change: left, top;
+}
+
+.dragGhost :global(.headerInner) {
+    padding: 10px 12px;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.paginationIconButton {
+    width: 36px;
+    min-width: 36px;
+    padding: 0;
+}
+
+.pageSizeSelect {
+    margin-left: auto;
+    width: 160px;
+    position: relative;
+    z-index: 2;
+    background: var(--vkui--color_background_content);
+}
+
+.pageRail {
+    min-width: 320px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.pageButton,
+.pageEllipsis {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    border: 1px solid var(--vkui--color_separator_primary);
+    border-radius: 8px;
+    background: var(--vkui--color_background_content);
+    color: var(--vkui--color_text_primary);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.pageButtonActive {
+    border-color: var(--vkui--color_stroke_accent_themed);
+    background: var(--vkui--color_background_accent_themed);
+    font-weight: 600;
+}
+
+.jumpWrap {
+    width: 214px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.jumpInput {
+    width: 136px;
+}
+
+@media (max-width: 900px) {
+    .pagination {
+        flex-wrap: wrap;
+    }
+
+    .pageSizeSelect {
+        width: 100%;
+        margin-left: 0;
+    }
+}

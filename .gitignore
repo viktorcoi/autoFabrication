@@ -1,0 +1,15 @@
+node_modules
+.next
+src/client/.next
+dist
+src/server/dist
+.turbo
+coverage
+*.log
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+src/server/prisma/dev.db
+src/server/prisma/dev.db-journal

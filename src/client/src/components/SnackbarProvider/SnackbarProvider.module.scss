@@ -1,0 +1,10 @@
+.close {
+    cursor: pointer;
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    transition: opacity .15s ease-out;
+    &:hover {
+        opacity: .6;
+    }
+}
