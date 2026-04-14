@@ -12,7 +12,11 @@ const envSchema = z.object({
 	CLIENT_URL: z.string().url().default("http://localhost:3000"),
 	UPLOAD_DIR: z.string().min(1).default("./storage"),
 	ADMIN_LOGIN: z.string().min(1).default("admin"),
-	ADMIN_PASSWORD: z.string().min(8).default("admin12345"),
+	ADMIN_PASSWORD: z
+		.string()
+		.min(6, "ADMIN_PASSWORD должен содержать минимум 6 символов")
+		.regex(/\d/, "ADMIN_PASSWORD должен содержать хотя бы одну цифру")
+		.default("admin12345"),
 	ADMIN_FIRST_NAME: z.string().min(1).default("Главный"),
 	ADMIN_LAST_NAME: z.string().min(1).default("Администратор"),
 	ADMIN_MIDDLE_NAME: z.string().default(""),

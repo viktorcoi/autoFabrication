@@ -22,9 +22,7 @@ userRouter.get(
 	asyncHandler(async (_request, response) => {
 		const users = await listUsers();
 
-		response.json({
-			items: users,
-		});
+		response.json(users);
 	}),
 );
 

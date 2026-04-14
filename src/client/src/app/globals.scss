@@ -27,6 +27,11 @@ html[data-color-scheme="dark"] {
 	box-sizing: border-box;
 }
 
+a {
+	all: unset;
+	cursor: pointer;
+}
+
 html,
 body {
 	margin: 0;
@@ -34,6 +39,8 @@ body {
 	height: 100%;
 	overflow: hidden;
 }
+
+.activated { pointer-events: none }
 
 .vkuiSnackbar__fixed .vkuiSnackbar__in {
 	padding: 12px 12px 0 12px;
@@ -43,4 +50,8 @@ body {
 	.vkuiBasic__body {
 		position: relative;
 	}
+}
+
+.search {
+	width: 250px;
 }

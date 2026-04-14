@@ -1,0 +1,173 @@
+.wrap {
+    display: grid;
+    place-items: center;
+}
+
+.error {
+    display: grid;
+    place-items: center;
+    position: relative;
+    user-select: none;
+    gap: 20px;
+}
+
+.code {
+    display: flex;
+    position: relative;
+}
+
+.symbol > span {
+    font-size: 180px !important;
+    line-height: 220px !important;
+    font-weight: 900 !important;
+}
+
+.second {
+    position: absolute;
+}
+
+.box {
+    position: relative;
+    &:first-child {
+        .symbol {
+            animation: drill-symbol .1s linear infinite;
+        }
+        .icon {
+            position: absolute;
+            left: 0;
+            top: 161px;
+            animation: drill .1s linear infinite;
+            transform: rotate(-65deg);
+        }
+        .second {
+            bottom: 58px;
+            left: 25px;
+            color: var(--vkui--color_background);
+        }
+    }
+    &:nth-child(2) {
+        .second {
+            bottom: 182px;
+            left: 3px;
+            position: absolute;
+            transform: rotate(-290deg);
+            animation: wrench 1.285s linear infinite;
+            transform-origin: 20% 75%;
+        }
+        .icon {
+            margin-top: 40px;
+            transform: rotate(12deg);
+            animation: gear 9s linear infinite;
+        }
+        &::after {
+            content: '';
+            position: absolute;
+            border-radius: 100%;
+            left: 14px;
+            top: 17px;
+            display: block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--vkui--color_text_primary);
+        }
+    }
+    &:last-child {
+        .symbol {
+            animation: hammer-symbol .5s linear infinite;
+        }
+        .icon {
+            position: absolute;
+            right: -15px;
+            top: -12px;
+            transform: rotate(320deg);
+            animation: hammer .5s linear infinite;
+            transform-origin: 80% 80%;
+        }
+        .second {
+            top: 57px;
+            left: 55px;
+            color: var(--vkui--color_background);
+        }
+    }
+}
+
+.status {
+    min-width: 300px;
+    box-shadow: var(--vkui--elevation2);
+    :global(.vkuiBanner__content) {
+        align-items: center;
+    }
+}
+
+@keyframes drill {
+    0% {
+        transform: rotate(-65deg);
+    }
+    80% {
+        transform: rotate(-65deg) translateY(2px);
+    }
+    100% {
+        transform: rotate(-65deg);
+    }
+}
+
+@keyframes drill-symbol {
+    0% {
+        transform: translateY(0);
+    }
+    80% {
+        transform: translateY(2px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes hammer {
+    20% {
+        transform: rotate(320deg);
+    }
+    80% {
+        transform: rotate(380deg) translateY(-20px);
+    }
+    100% {
+        transform: rotate(320deg);
+    }
+}
+
+@keyframes hammer-symbol {
+    20% {
+        transform: translateY(0);
+    }
+    35% {
+        transform: translateY(10px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes wrench {
+    0% {
+        transform: rotate(-290deg);
+    }
+    35% {
+        transform: rotate(-305deg);
+    }
+    80% {
+        transform: rotate(-305deg);
+    }
+    100% {
+        transform: rotate(-290deg);
+    }
+}
+
+@keyframes gear {
+    from {
+        transform: rotate(12deg);
+    }
+
+    to {
+        transform: rotate(372deg);
+    }
+}

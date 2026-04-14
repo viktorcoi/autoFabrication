@@ -1,48 +1,38 @@
-import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import Script from "next/script";
-import { PropsWithChildren } from "react";
-import { COLOR_SCHEME_COOKIE, isAppColorScheme, type AppColorScheme } from "@/lib/theme";
-import Providers from "./providers";
+import '@vkontakte/vkui/dist/vkui.css';
 import "./globals.scss";
+import { PropsWithChildren } from "react";
+import Wrapper from "@/app/wrapper";
 
-export const metadata: Metadata = {
-	title: "autoFabrication",
-	description: "Система автоматизации производственных процессов",
-};
-
-const RootLayout = async ({ children }: PropsWithChildren) => {
-	const cookieStore = await cookies();
-	const colorSchemeCookie = cookieStore.get(COLOR_SCHEME_COOKIE)?.value;
-	const initialColorScheme: AppColorScheme = isAppColorScheme(colorSchemeCookie) ? colorSchemeCookie : "light";
+const LayoutRoot = ({ children }: PropsWithChildren) => {
 
 	return (
 		<html
 			lang="ru"
 			className="vkui"
-			data-color-scheme={initialColorScheme}
-			suppressHydrationWarning
 		>
+			<head>
+				<style
+					data-element-for-preload="true"
+					dangerouslySetInnerHTML={{ __html: "body{opacity:0}" }}
+				/>
+				<noscript
+					data-element-for-preload="true"
+					dangerouslySetInnerHTML={{ __html: "<style>body{opacity:1}</style>" }}
+				/>
+				<title>Да хуй знает, пока не думал над этим</title>
+				<meta
+					name="viewport"
+					content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no, viewport-fit=cover"
+				/>
+				<link id="favicon" rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16"/>
+			</head>
 			<body className="vkui__root">
-				<Script id="vkui-theme-init" strategy="beforeInteractive">
-					{`
-						(function () {
-							var cookieName = "${COLOR_SCHEME_COOKIE}";
-							var match = document.cookie.match(new RegExp("(?:^|; )" + cookieName + "=([^;]*)"));
-							var cookieValue = match ? decodeURIComponent(match[1]) : "";
-							var scheme = cookieValue === "dark" || cookieValue === "light"
-								? cookieValue
-								: (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-							document.documentElement.dataset.colorScheme = scheme;
-							document.documentElement.style.colorScheme = scheme;
-							document.cookie = cookieName + "=" + scheme + "; path=/; max-age=31536000; samesite=lax";
-						})();
-					`}
-				</Script>
-				<Providers initialColorScheme={initialColorScheme}>{children}</Providers>
+				<Wrapper>
+					{children}
+				</Wrapper>
 			</body>
 		</html>
 	);
 };
 
-export default RootLayout;
+export default LayoutRoot;

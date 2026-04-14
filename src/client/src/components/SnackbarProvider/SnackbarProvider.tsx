@@ -1,13 +1,14 @@
 import {PropsWithChildren, ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import {
     Icon16Cancel,
-    Icon16CancelCircle, Icon16CancelCircleOutline,
+    Icon16CancelCircle,
     Icon16DoneCircle,
     Icon16InfoCircle,
     Icon16WarningTriangle
 } from "@vkontakte/icons";
 import {Snackbar} from "@vkontakte/vkui";
-import {SnackbarType, useSnackbarStore} from "@/store/snackbar/snackbar";
+import {SnackbarType} from "@/store/snackbar/types";
+import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import styles from './SnackbarProvider.module.scss';
 
 const renderIconByType: Record<SnackbarType, ReactNode> = {

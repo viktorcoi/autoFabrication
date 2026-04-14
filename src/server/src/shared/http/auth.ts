@@ -1,4 +1,4 @@
-import type { Request } from "express";
+import type { Request, Response } from "express";
 import { parse } from "cookie";
 import { env } from "../../config/env.js";
 import { AppError } from "../errors/app-error.js";
@@ -15,12 +15,29 @@ export const readAuthToken = (request: Request) => {
 	return cookies[env.AUTH_COOKIE_NAME];
 };
 
-export const requireAuth = (request: Request) => {
+export const clearAuthCookie = (response: Response) => {
+	response.clearCookie(env.AUTH_COOKIE_NAME, {
+		httpOnly: true,
+		sameSite: "lax",
+		secure: false,
+		path: "/",
+	});
+};
+
+export const requireAuth = (
+	request: Request,
+	response: Response
+) => {
 	const token = readAuthToken(request);
 
 	if (!token) {
 		throw new AppError(401, "Требуется авторизация");
 	}
 
-	return verifyAuthToken(token);
+	try {
+		return verifyAuthToken(token);
+	} catch (error) {
+		clearAuthCookie(response);
+		throw error;
+	}
 };

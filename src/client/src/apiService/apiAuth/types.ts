@@ -1,4 +1,4 @@
-export type UserInfo = {
+export type GetAuthMeResponse = {
     id: number;
     firstName: string;
     lastName: string;
@@ -15,8 +15,3 @@ export type UserInfo = {
         permissions: Record<string, unknown>;
     };
 }
-
-export type PostAuthLoginResponse = {
-    token: string;
-    user: UserInfo;
-};

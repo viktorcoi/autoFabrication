@@ -1,0 +1,25 @@
+.wrap {
+    background-color: var(--vkui--color_background_content);
+    border-radius: var(--app-border_radius);
+    box-shadow: var(--vkui--elevation2);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.user {
+    background-color: var(--vkui--color_transparent--active);
+    padding: 6px;
+    :global(.vkuiSimpleCell__before), :global(.vkuiSimpleCell__middle) {
+        padding-block: unset;
+    }
+}

@@ -10,9 +10,7 @@ const roleSelect = {
 	createdAt: true,
 	updatedAt: true,
 	_count: {
-		select: {
-			users: true,
-		},
+		select: { users: true },
 	},
 } satisfies Prisma.RoleSelect;
 

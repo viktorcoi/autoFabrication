@@ -22,9 +22,7 @@ roleRouter.get(
 	asyncHandler(async (_request, response) => {
 		const roles = await listRoles();
 
-		response.json({
-			items: roles,
-		});
+		response.json(roles);
 	}),
 );
 

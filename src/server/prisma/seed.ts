@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import * as bcrypt from "bcrypt";
 import { env } from "../src/config/env.js";
 import { prisma } from "../src/lib/prisma.js";
 import { adminPermissions } from "../src/modules/roles/role.types.js";
@@ -20,8 +20,8 @@ const seed = async () => {
 		},
 	});
 
-	if (env.ADMIN_PASSWORD.length < 8) {
-		throw new AppError(500, "ADMIN_PASSWORD должен содержать минимум 8 символов");
+	if (env.ADMIN_PASSWORD.length < 6 || !/\d/.test(env.ADMIN_PASSWORD)) {
+		throw new AppError(500, "ADMIN_PASSWORD должен содержать минимум 6 символов и хотя бы одну цифру");
 	}
 
 	const passwordHash = await bcrypt.hash(env.ADMIN_PASSWORD, 12);

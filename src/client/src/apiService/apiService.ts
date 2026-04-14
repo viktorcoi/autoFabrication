@@ -1,7 +1,9 @@
 import axios, {AxiosError} from "axios";
-import {AuthService} from "@/lib/apiService/authService/authService";
+import {useAppStore} from "@/store/app/app";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
-import {ApiServiceErrorOptions, ApiServiceResponse} from "@/lib/apiService/types";
+import {ApiAuth} from "@/apiService/apiAuth/apiAuth";
+import {ApiRoles} from "@/apiService/apiRoles/apiRoles";
+import {ApiServiceErrorOptions, ApiServiceResponse} from "@/apiService/types";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/",
@@ -9,12 +11,14 @@ export const api = axios.create({
 });
 
 export const ApiService = {
-    auth: AuthService,
+    auth: ApiAuth,
+    roles: ApiRoles,
 };
 
 export const handleApiError = <T>(
     e: AxiosError<{message?: string}>,
     errorOptions?: ApiServiceErrorOptions,
+    fromLogin?: boolean
 ): ApiServiceResponse<T> => {
     if (axios.isCancel(e) || e?.name === 'CanceledError') {
         return {
@@ -24,6 +28,14 @@ export const handleApiError = <T>(
     }
 
     if (e.response) {
+        if (e.response.status === 401 && !fromLogin) {
+            useAppStore.getState().setUser(null);
+            return {
+                status: 'error',
+                data: 'Unauthorized'
+            }
+        }
+
         const message = e?.response?.data?.message || errorOptions?.placeholder || 'Неизвестная ошибка';
 
         if (errorOptions?.show !== false) {

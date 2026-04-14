@@ -1,0 +1,29 @@
+.wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 320px) 1fr;
+    height: 100%;
+    gap: 20px;
+}
+
+.list, .detail {
+    background-color: var(--vkui--color_background_content);
+    border-radius: var(--app-border_radius);
+    box-shadow: var(--vkui--elevation2);
+    padding: 15px;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    height: max-content;
+    width: 320px;
+    gap: 8px;
+}
+
+.menu {
+    pointer-events: all;
+}
+
+.detail {
+    max-width: 660px;
+}

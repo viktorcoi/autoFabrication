@@ -1,12 +1,12 @@
-import {api, handleApiError, handleApiSuccess} from "@/lib/apiService/apiService";
-import {PostAuthLoginResponse, UserInfo} from "@/lib/apiService/authService/types";
-import {ApiServiceOptions, ApiServiceResponse} from "@/lib/apiService/types";
+import {api, handleApiError, handleApiSuccess} from "@/apiService/apiService";
+import {ApiServiceOptions, ApiServiceResponse} from "@/apiService/types";
+import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
 
-export const AuthService = {
+export const ApiAuth = {
     login: async (options: ApiServiceOptions<{
         login: string;
         password: string;
-    }>): Promise<ApiServiceResponse<PostAuthLoginResponse>> => {
+    }>): Promise<ApiServiceResponse<GetAuthMeResponse>> => {
         return await api.post("/auth/login", {
             login: options.login,
             password: options.password,
@@ -16,9 +16,10 @@ export const AuthService = {
                 r.status === 200 && r.data,
                 options.errorOptions?.placeholder
             );
-        }).catch((e: any) => handleApiError(e, options.errorOptions));
+        }).catch((e: any) => handleApiError(e, options.errorOptions, true));
     },
-    me: async (options: ApiServiceOptions): Promise<ApiServiceResponse<UserInfo>> => {
+
+    me: async (options: ApiServiceOptions): Promise<ApiServiceResponse<GetAuthMeResponse>> => {
         return await api.get("/auth/me").then(r => {
             return handleApiSuccess(
                 r.data,
@@ -27,6 +28,7 @@ export const AuthService = {
             );
         }).catch((e: any) => handleApiError(e, options.errorOptions));
     },
+
     logout: async (options: ApiServiceOptions): Promise<ApiServiceResponse<{}>> => {
         return await api.post("/auth/logout").then(r => {
             return handleApiSuccess(

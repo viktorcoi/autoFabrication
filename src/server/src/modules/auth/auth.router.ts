@@ -28,17 +28,14 @@ authRouter.post(
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
 
-		response.json({
-			token,
-			user,
-		});
+		response.json({...user});
 	}),
 );
 
 authRouter.get(
 	"/me",
 	asyncHandler(async (request, response) => {
-		const auth = requireAuth(request);
+		const auth = requireAuth(request, response);
 		const user = await getAuthUserById(auth.userId);
 
 		response.json({

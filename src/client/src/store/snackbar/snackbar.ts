@@ -1,23 +1,7 @@
 import { create } from 'zustand';
-import { ReactNode } from 'react';
+import {SnackbarStore} from "@/store/snackbar/types";
 
-export type SnackbarType = 'success' | 'error' | 'warning' | 'info';
-
-export type SnackbarItem = {
-    id: number;
-    text: ReactNode;
-    type: SnackbarType;
-    action?: ReactNode;
-    onActionClick?(): void;
-};
-
-type SnackbarStore = {
-    snackbars: SnackbarItem[];
-    addSnackbar: (snackbar: Omit<SnackbarItem, 'id'>) => number;
-    removeSnackbar: (id: number) => void;
-};
-
-export const useSnackbarStore = create<SnackbarStore>((set, get) => ({
+export const useSnackbarStore = create<SnackbarStore>((set) => ({
     snackbars: [],
 
     addSnackbar: (snackbar) => {

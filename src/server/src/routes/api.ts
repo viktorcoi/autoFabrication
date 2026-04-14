@@ -15,11 +15,11 @@ apiRouter.get("/", (_request, response) => {
 
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/roles", (request, _response, next) => {
-	requireAuth(request);
+	requireAuth(request, _response);
 	next();
 });
 apiRouter.use("/users", (request, _response, next) => {
-	requireAuth(request);
+	requireAuth(request, _response);
 	next();
 });
 
