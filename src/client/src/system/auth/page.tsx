@@ -1,5 +1,4 @@
 import { SubmitEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
 	Button,
 	FormItem,
@@ -18,7 +17,6 @@ import { useSnackbarStore } from "@/store/snackbar/snackbar";
 const LOGIN_PATTERN = /^[\x21-\x7E]+$/;
 
 const LoginPage = () => {
-	const router = useRouter();
 
 	const addSnackbar = useSnackbarStore((state) => state.addSnackbar);
 	const {

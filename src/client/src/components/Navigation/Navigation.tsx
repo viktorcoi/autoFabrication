@@ -1,5 +1,5 @@
 import styles from './Navigation.module.scss';
-import {ActionSheet, ActionSheetItem, Avatar, classNames, Popover, Separator, SimpleCell} from "@vkontakte/vkui";
+import {ActionSheet, ActionSheetItem, Avatar, classNames, Separator, SimpleCell} from "@vkontakte/vkui";
 import Link from "next/link";
 import {
     Icon20DoorArrowRightOutline,

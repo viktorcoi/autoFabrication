@@ -15,14 +15,18 @@ const roleSelect = {
 } satisfies Prisma.RoleSelect;
 
 export const listRoles = async () =>
+	// Обращаемся к таблице role и просим все записи.
 	prisma.role.findMany({
 		select: roleSelect,
+		// Сортируем роли по id по возрастанию.
 		orderBy: {
 			id: "asc",
 		},
 	});
 
+// Функция получения одной роли по id.
 export const getRoleById = async (id: number) => {
+	// Ищем одну роль по уникальному полю `id`.
 	const role = await prisma.role.findUnique({
 		where: { id },
 		select: roleSelect,
@@ -35,8 +39,11 @@ export const getRoleById = async (id: number) => {
 	return role;
 };
 
+// Функция создания новой роли.
 export const createRole = async (data: Prisma.RoleCreateInput) => {
+	// Сначала проверяем, нет ли уже роли с таким названием
 	const existingRole = await prisma.role.findUnique({
+		// Ищем по уникальному имени роли.
 		where: {
 			name: data.name,
 		},
@@ -72,6 +79,7 @@ export const updateRole = async (id: number, data: Prisma.RoleUpdateInput) => {
 	return prisma.role.update({
 		where: { id },
 		data,
+		// Какие поля вернуть после обновления.
 		select: roleSelect,
 	});
 };

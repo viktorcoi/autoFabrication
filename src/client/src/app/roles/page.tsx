@@ -36,17 +36,6 @@ const RolesPage = () => {
 
         ApiService.roles.get({}).then(({status, data}) => {
             if (status === 'success') {
-                data.push({
-                    id: 2,
-                    name: 'Александр',
-                    description: '',
-                    permissions: {},
-                    createdAt: '',
-                    updatedAt: '',
-                    _count: {
-                        users: 345
-                    }
-                })
                 setRoles(data);
             }
         }).finally(() => setLoading(false));
