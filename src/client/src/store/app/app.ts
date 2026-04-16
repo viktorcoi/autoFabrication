@@ -19,6 +19,7 @@ export const useAppStore = create<AppStore>((
     role: null,
     appReady: false,
     theme: "light",
+    delaySearch: 500,
 
     initializeApp: () => {
         if (get().appReady || typeof window === "undefined") {
@@ -50,4 +51,8 @@ export const useAppStore = create<AppStore>((
         set({ theme: nextTheme });
         localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
     },
+
+    setDelaySearch: (delay: number) => {
+        set({ delaySearch: delay });
+    }
 }));

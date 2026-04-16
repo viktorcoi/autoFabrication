@@ -1,23 +1,46 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {useAppStore} from "@/store/app/app";
 
-const DEFAULT_DALAY_SEACRH = 500;
-
-export const useSearch = () => {
+export const useSearch = (loading: boolean) => {
+    const delay = useAppStore(state => state.delaySearch);
 
     const [search, setSearch] = useState('');
     const [delaySearch, setDelaySearch] = useState('');
 
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    const shouldRestoreFocusRef = useRef(false);
+
     useEffect(() => {
         const timer = setTimeout(() => {
+            if (
+                inputRef.current &&
+                document.activeElement === inputRef.current &&
+                search !== delaySearch
+            ) {
+                shouldRestoreFocusRef.current = true;
+            }
+
             setDelaySearch(search);
-        }, DEFAULT_DALAY_SEACRH);
+        }, delay);
 
         return () => clearTimeout(timer);
-    }, [search, DEFAULT_DALAY_SEACRH]);
+    }, [delay, delaySearch, search]);
+
+    useEffect(() => {
+        if (!loading && shouldRestoreFocusRef.current) {
+            const restoreTimer = window.setTimeout(() => {
+                inputRef.current?.focus();
+                shouldRestoreFocusRef.current = false;
+            }, 0);
+
+            return () => window.clearTimeout(restoreTimer);
+        }
+    }, [loading]);
 
     return {
         search,
         setSearch,
         delaySearch,
+        inputRef,
     };
 };

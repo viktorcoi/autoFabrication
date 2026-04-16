@@ -6,6 +6,8 @@ export type AppStore = {
     role: GetAuthMeResponse['role'] | null;
     appReady: boolean;
     theme: ColorSchemeType;
+    delaySearch: number;
+    setDelaySearch(delay: number): void;
     setUser(user: GetAuthMeResponse | null): void;
     initializeApp(): void;
     toggleTheme(): void;

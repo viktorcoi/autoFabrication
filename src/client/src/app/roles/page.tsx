@@ -32,8 +32,6 @@ import {useSearch} from "@/hooks";
 
 const RolesPage = () => {
 
-    const {search, setSearch, delaySearch} = useSearch();
-
     const [roles, setRoles] = useState<GetRolesResponse[]>([]);
     const [actionSheet, setActionSheet] = useState<ReactNode>(null);
     const [selectedRole, setSelectedRole] = useState<number | null>(null);
@@ -44,6 +42,13 @@ const RolesPage = () => {
     const [modals, setModals] = useState<OpenModalsType<
         'modal-manage-role' | 'modal-remove-role'
     >>({id: null, show: false, data: null});
+
+    const {
+        search,
+        setSearch,
+        delaySearch,
+        inputRef
+    } = useSearch(loading.page);
 
     const controllerRef = useRef<AbortController>(null);
 
@@ -143,6 +148,7 @@ const RolesPage = () => {
                             disabled={loading.page}
                             noPadding={true}
                             className={'search'}
+                            slotProps={{ input: { getRootRef: inputRef } }}
                         />
                     </>
                 )}
