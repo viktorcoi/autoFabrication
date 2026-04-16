@@ -4,18 +4,23 @@ import { prisma } from "../src/lib/prisma.js";
 import { adminPermissions } from "../src/modules/roles/role.types.js";
 import { AppError } from "../src/shared/errors/app-error.js";
 
+const ADMIN_ROLE_NAME = "Admin";
+const ADMIN_ROLE_DESCRIPTION = "Главная системная роль с полным доступом.";
+
 const seed = async () => {
 	const adminRole = await prisma.role.upsert({
 		where: {
-			name: "Admin",
+			name: ADMIN_ROLE_NAME,
 		},
 		update: {
-			description: "Главная системная роль с полным доступом.",
+			description: ADMIN_ROLE_DESCRIPTION,
+			isConst: true,
 			permissions: adminPermissions,
 		},
 		create: {
-			name: "Admin",
-			description: "Главная системная роль с полным доступом.",
+			name: ADMIN_ROLE_NAME,
+			description: ADMIN_ROLE_DESCRIPTION,
+			isConst: true,
 			permissions: adminPermissions,
 		},
 	});

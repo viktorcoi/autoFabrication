@@ -5,8 +5,8 @@ import {
     FormItem,
     Input,
     ModalPage,
-    ModalPageHeader, PanelSpinner,
-    PlatformProvider,
+    ModalPageHeader,
+    PlatformProvider, Spinner,
     Textarea
 } from "@vkontakte/vkui";
 import {SubmitEvent, useEffect, useMemo, useRef, useState} from "react";
@@ -163,7 +163,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
             )}
             {...restProps}
         >
-            {loading.get ? <PanelSpinner size={'xl'} className={styles.plug}/> : (
+            {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
                 <form id={'save-role'} className={'modalForm'} onSubmit={saveRole}>
                     <FormItem
                         top={'Название'}

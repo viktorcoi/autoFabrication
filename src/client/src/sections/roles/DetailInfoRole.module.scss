@@ -1,0 +1,24 @@
+.wrap {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+.access {
+    flex-grow: 1;
+    padding: var(--app-default-padding);
+    display: flex;
+    flex-direction: column;
+    gap: var(--app-default-padding);
+}
+
+.head {
+    padding: var(--app-default-padding);
+    border-bottom: 1px solid var(--vkui--color_separator_primary);
+}
+
+.foot {
+    padding: var(--app-default-padding);
+    border-top: 1px solid var(--vkui--color_separator_primary);
+}

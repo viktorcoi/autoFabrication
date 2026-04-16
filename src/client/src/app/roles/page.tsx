@@ -16,7 +16,7 @@ import {
     Spinner,
 } from "@vkontakte/vkui";
 import {
-    Icon24Add,
+    Icon24Add, Icon24ListDeleteOutline,
     Icon24MoreVertical,
     Icon24PenOutline,
     Icon24TrashSimpleOutline,
@@ -29,6 +29,7 @@ import ModalManageRole from "@/components/modals/ModalManageRole/ModalManageRole
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import {useSearch} from "@/hooks";
+import DetailInfoRole from "@/sections/roles/DetailInfoRole";
 
 const RolesPage = () => {
 
@@ -156,7 +157,14 @@ const RolesPage = () => {
                 {actionSheet}
                 <div className={styles.wrap}>
                     <div className={classNames('island scroll', styles.list)}>
-                        {loading.page ? <Spinner size={'xl'}/> : roles.map(r => (
+                        {loading.page ? <Spinner size={'xl'}/> : !roles.length && !!delaySearch.trim() ? (
+                            <Placeholder
+                                noPadding={true}
+                                icon={<Icon24ListDeleteOutline width={42} height={42} />}
+                            >
+                                Совпадений не найдено
+                            </Placeholder>
+                        ): roles.map(r => (
                             <SimpleCell
                                 key={r.id}
                                 className={classNames(selectedRole === r.id && 'activated')}
@@ -169,7 +177,7 @@ const RolesPage = () => {
                                             <Counter size={'s'}>{r._count.users}</Counter>
                                         )}
                                         <IconButton
-                                            disabled={r.id === 1}
+                                            disabled={r.isConst}
                                             className={styles.menu}
                                             label={'Меню'}
                                             onClick={e => {
@@ -197,10 +205,9 @@ const RolesPage = () => {
                                 Выберите роль для настройки
                             </Placeholder>
                         ) : (
-                            <>
-
-                                `Выбрана роль с id ${selectedRole}`
-                            </>
+                            <DetailInfoRole
+                                id={selectedRole}
+                            />
                         )}
                     </div>
                 </div>

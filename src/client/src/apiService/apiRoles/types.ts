@@ -2,6 +2,7 @@ export interface GetByIdRoleResponse {
     id: number,
     name: string,
     description: string,
+    isConst: boolean,
     permissions: Record<string, unknown>;
     createdAt: string,
     updatedAt: string,
@@ -13,6 +14,7 @@ export interface GetByIdRoleResponse {
 export interface GetRolesResponse {
     id: number,
     name: string,
+    isConst: boolean,
     _count: {
         users: number
     }
