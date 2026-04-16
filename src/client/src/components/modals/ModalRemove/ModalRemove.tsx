@@ -1,0 +1,88 @@
+import {Icon24TrashSimpleOutline} from "@vkontakte/icons";
+import {Button, ButtonGroup, ModalCard, Spacing} from "@vkontakte/vkui";
+import {ModalManageRoleProps} from "@/components/modals/ModalRemove/types";
+import {useState} from "react";
+import {ApiService} from "@/apiService/apiService";
+import {useSnackbarStore} from "@/store/snackbar/snackbar";
+
+const urlList = {
+    '/roles': ApiService.roles.delete
+};
+
+const ModalRemove = (props: ModalManageRoleProps) => {
+
+    const {
+        name,
+        url,
+        preventClose,
+        removeId,
+        onLoading,
+        onClose = () => {},
+        ...restProps
+    } = props;
+
+    const addSnackbar = useSnackbarStore(state => state.addSnackbar)
+
+    const [loading, setLoading] = useState(false);
+
+    const onRemove = async () => {
+        setLoading(true);
+        onLoading(true);
+
+        await urlList[url]({
+            id: removeId
+        }).then(({status}) => {
+            if (status === 'success') {
+                addSnackbar({
+                    type: 'success',
+                    text: `Успешно удалено: "${name}"`
+                });
+                onClose('updated-data');
+            }
+        }).finally(() => {
+            setLoading(false);
+            onLoading(false);
+        });
+    };
+
+    return (
+        <ModalCard
+            onClose={onClose}
+            icon={<Icon24TrashSimpleOutline width={56} height={56} fill={'var(--vkui--color_icon_negative)'} />}
+            preventClose={preventClose}
+            dismissButtonMode={loading ? 'none' : undefined}
+            title={`Вы действительно хотите удалить "${name}"?`}
+            actions={
+                <>
+                    <Spacing size={16} />
+                    <ButtonGroup gap="m" stretched>
+                        <Button
+                            disabled={loading}
+                            onClick={(e) => {
+                                if (preventClose) return;
+                                onClose('cancel', e);
+                            }}
+                            mode={'secondary'}
+                            stretched={true}
+                            size={'l'}
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            appearance={'negative'}
+                            stretched={true}
+                            size={'l'}
+                            loading={loading}
+                            onClick={onRemove}
+                        >
+                            Удалить
+                        </Button>
+                    </ButtonGroup>
+                </>
+            }
+            {...restProps}
+        />
+    )
+};
+
+export default ModalRemove;

@@ -8,6 +8,7 @@
 		"build": "tsc -p tsconfig.json",
 		"start": "node dist/index.js",
 		"lint": "tsc --noEmit -p tsconfig.json",
+		"clean": "node ../../scripts/clean-workspace-artifacts.cjs server",
 		"db:up": "docker compose up -d postgres",
 		"db:down": "docker compose down",
 		"prisma:generate": "prisma generate",

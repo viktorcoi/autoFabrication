@@ -3,10 +3,11 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev",
+		"dev": "npm run clean && next dev --webpack",
 		"build": "next build",
 		"start": "next start",
-		"lint": "eslint ."
+		"lint": "eslint .",
+		"clean": "node ../../scripts/clean-workspace-artifacts.cjs client"
 	},
 	"dependencies": {
 		"@tanstack/react-table": "^8.21.3",

@@ -4,7 +4,8 @@
 
 :root {
 	--app-border_radius: 12px;
-	--app-distance-empty: 20px
+	--app-distance-empty: 20px;
+	--app-default-padding: 12px
 }
 
 * { box-sizing: border-box }
@@ -40,17 +41,36 @@ body {
 	background-color: var(--vkui--color_background_content);
 	border-radius: var(--app-border_radius);
 	box-shadow: var(--vkui--elevation2);
-	padding: 12px;
+	padding: var(--app-default-padding);
 }
 
 .modalForm {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	padding: 12px;
+	padding: var(--app-default-padding);
 }
 
 .modalFooter {
 	border-top: 1px solid var(--vkui--color_separator_primary);
-	padding: 12px;
+	padding: var(--app-default-padding);
+}
+
+.scroll {
+	max-height: 100%;
+	overflow: auto;
+	&::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: var(--vkui--color_transparent--active);
+		border-radius: var(--app-border_radius);
+	}
+	&::-webkit-scrollbar-button {
+		height: calc(var(--app-default-padding) / 2);
+	}
 }

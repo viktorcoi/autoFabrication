@@ -2,7 +2,10 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 15px;
+    gap: 3px;
+    max-height: 100%;
+    overflow: hidden;
+    padding: unset;
 }
 
 .nav {
@@ -10,9 +13,11 @@
     flex-direction: column;
     justify-content: space-between;
     gap: 8px;
+    padding: var(--app-default-padding);
 }
 
 .user {
+    margin: 0 12px 12px 12px;
     background-color: var(--vkui--color_transparent--active);
     padding: 6px;
     :global(.vkuiSimpleCell__before), :global(.vkuiSimpleCell__middle) {

@@ -44,8 +44,15 @@ export const createRoleSchema = z.object({
 	permissions: rolePermissionsSchema.optional(),
 });
 
-export const updateRoleSchema = z.object({
-	name: z.string().trim().min(1, "Название роли обязательно").optional(),
-	description: z.string().trim().max(1000, "Описание роли слишком длинное").optional(),
-	permissions: rolePermissionsSchema.optional(),
+export const updateRoleDetailsSchema = z
+	.object({
+		name: z.string().trim().min(1, "Название роли обязательно").optional(),
+		description: z.string().trim().max(1000, "Описание роли слишком длинное").optional(),
+	})
+	.refine((value) => value.name !== undefined || value.description !== undefined, {
+		message: "Нужно передать хотя бы одно поле для обновления",
+	});
+
+export const updateRolePermissionsSchema = z.object({
+	permissions: rolePermissionsSchema,
 });

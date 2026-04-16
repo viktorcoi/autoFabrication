@@ -1,6 +1,6 @@
 'use client'
 
-import {ReactNode, useEffect, useRef, useState} from "react";
+import React, {ReactNode, useEffect, useRef, useState} from "react";
 import {ApiService} from "@/apiService/apiService";
 import {GetRolesResponse} from "@/apiService/apiRoles/types";
 import {
@@ -26,9 +26,13 @@ import Container from "@/components/Container/Container";
 import styles from './page.module.scss';
 import {mergeState} from "@/helpers";
 import ModalManageRole from "@/components/modals/ModalManageRole/ModalManageRole";
-import {OpenModalsType} from "@/components/modals/types";
+import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
+import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
+import {useSearch} from "@/hooks";
 
 const RolesPage = () => {
+
+    const {search, setSearch, delaySearch} = useSearch();
 
     const [roles, setRoles] = useState<GetRolesResponse[]>([]);
     const [actionSheet, setActionSheet] = useState<ReactNode>(null);
@@ -37,10 +41,11 @@ const RolesPage = () => {
         page: true,
         modal: false
     });
-    const [modals, setModals] = useState<OpenModalsType>({id: null, data: null});
+    const [modals, setModals] = useState<OpenModalsType<
+        'modal-manage-role' | 'modal-remove-role'
+    >>({id: null, show: false, data: null});
 
     const controllerRef = useRef<AbortController>(null);
-    const menuRef = useRef(null);
 
     const getRoles = async () => {
         mergeState({page: true}, setLoading);
@@ -49,7 +54,8 @@ const RolesPage = () => {
         controllerRef.current = controller;
 
         await ApiService.roles.get({
-            controller
+            controller,
+            options: { search: delaySearch || undefined }
         }).then(({status, data}) => {
             if (status === 'success') {
                 setRoles(data);
@@ -63,22 +69,24 @@ const RolesPage = () => {
         return () => {
             if (controllerRef.current) controllerRef.current.abort();
         }
-    }, []);
+    }, [delaySearch]);
 
-    const openMenu = () => {
+    const openMenu = (role: GetRolesResponse, target: HTMLElement) => {
         setActionSheet(
             <ActionSheet
                 placement={'bottom-end'}
                 popupOffsetDistance={8}
-                toggleRef={menuRef}
+                toggleRef={target}
                 onClosed={() => setActionSheet(null)}
             >
                 <ActionSheetItem
+                    onClick={() => setModals({id: 'modal-manage-role', show: true, data: role.id})}
                     before={<Icon24PenOutline width={20} height={20}/>}
                 >
                     Редактировать
                 </ActionSheetItem>
                 <ActionSheetItem
+                    onClick={() => setModals({id: 'modal-remove-role', show: true, data: {id: role.id, name: role.name}})}
                     mode={'destructive'}
                     before={<Icon24TrashSimpleOutline width={20} height={20}/>}
                 >
@@ -86,23 +94,38 @@ const RolesPage = () => {
                 </ActionSheetItem>
             </ActionSheet>,
         );
-    }
+    };
+
+    const closeModal = (r: ModalPageCloseReasonType) => {
+        mergeState({show: false}, setModals);
+        if (r === 'updated-data') {
+            getRoles().finally(() => mergeState({page: false}, setLoading));
+        }
+    };
 
     return (
         <>
-            <ModalManageRole
-                idRole={modals.data}
-                preventClose={loading.modal}
-                onLoading={v => mergeState({modal: v}, setLoading)}
-                open={'modal-manage-role' === modals.id}
-                onClose={r => {
-                    mergeState({id: null}, setModals);
-                    if (r === 'updated-data') {
-                        getRoles().finally(() => mergeState({page: false}, setLoading));
-                    }
-                }}
-                onClosed={() => setModals({id: null, data: null})}
-            />
+            {'modal-remove-role' === modals.id ? (
+                <ModalRemove
+                    removeId={modals.data?.id}
+                    name={modals.data?.name}
+                    url={'/roles'}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                    open={modals.show}
+                    preventClose={loading.modal}
+                />
+            ) : 'modal-manage-role' === modals.id && (
+                <ModalManageRole
+                    idRole={modals.data}
+                    preventClose={loading.modal}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    open={modals.show}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null,  show: false, data: null})}
+                />
+            )}
             <Container
                 header={(
                     <>
@@ -110,11 +133,13 @@ const RolesPage = () => {
                             size={'m'}
                             disabled={loading.page}
                             before={<Icon24Add/>}
-                            onClick={() => mergeState({id: 'modal-manage-role'}, setModals)}
+                            onClick={() => mergeState({id: 'modal-manage-role', show: true}, setModals)}
                         >
                             Добавить
                         </Button>
                         <Search
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
                             disabled={loading.page}
                             noPadding={true}
                             className={'search'}
@@ -124,7 +149,7 @@ const RolesPage = () => {
             >
                 {actionSheet}
                 <div className={styles.wrap}>
-                    <div className={classNames('island', styles.list)}>
+                    <div className={classNames('island scroll', styles.list)}>
                         {loading.page ? <Spinner size={'xl'}/> : roles.map(r => (
                             <SimpleCell
                                 key={r.id}
@@ -140,11 +165,10 @@ const RolesPage = () => {
                                         <IconButton
                                             disabled={r.id === 1}
                                             className={styles.menu}
-                                            getRootRef={menuRef}
                                             label={'Меню'}
                                             onClick={e => {
                                                 e.stopPropagation();
-                                                openMenu();
+                                                openMenu(r, e.currentTarget);
                                             }}
                                         >
                                             <Icon24MoreVertical fill={'var(--vkui--color_icon_primary)'} width={24} height={24}/>

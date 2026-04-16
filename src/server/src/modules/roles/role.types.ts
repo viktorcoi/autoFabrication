@@ -42,6 +42,17 @@ export type RolePermissions = {
 	3: GuidePermissionItem;
 };
 
+export type PermissionItem = RolePermissions[keyof RolePermissions];
+
+export type PermissionUrl = PermissionItem["url"];
+
+export type PermissionItemByUrl<TUrl extends PermissionUrl> = Extract<
+	PermissionItem,
+	{ url: TUrl }
+>;
+
+export type PermissionAction<TUrl extends PermissionUrl> = keyof PermissionItemByUrl<TUrl>["access"];
+
 export const defaultRolePermissions: RolePermissions = {
 	1: {
 		url: "/roles",

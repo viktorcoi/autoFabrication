@@ -1,15 +1,15 @@
 .wrap {
     display: grid;
     grid-template-columns: minmax(0, 320px) 1fr;
-    height: 100%;
-    gap: var(--app-distance-empty);;
+    height: calc(100% - 56px + var(--app-distance-empty));
+    gap: var(--app-distance-empty);
+    overflow: hidden;
 }
 
 .list {
     display: flex;
     flex-direction: column;
-    height: max-content;
-    width: 320px;
+    height: fit-content;
     gap: 8px;
 }
 

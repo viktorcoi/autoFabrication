@@ -18,6 +18,10 @@ export interface GetRolesResponse {
     }
 }
 
+export interface GetRolesOptions {
+    search?: string;
+}
+
 export interface PostRolesOptions {
     name: string,
     description: string,

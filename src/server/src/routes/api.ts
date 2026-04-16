@@ -2,7 +2,6 @@ import { Router } from "express";
 import { authRouter } from "../modules/auth/auth.router.js";
 import { roleRouter } from "../modules/roles/role.router.js";
 import { userRouter } from "../modules/users/user.router.js";
-import { requireAuth } from "../shared/http/auth.js";
 
 export const apiRouter = Router();
 
@@ -14,14 +13,5 @@ apiRouter.get("/", (_request, response) => {
 });
 
 apiRouter.use("/auth", authRouter);
-apiRouter.use("/roles", (request, _response, next) => {
-	requireAuth(request, _response);
-	next();
-});
-apiRouter.use("/users", (request, _response, next) => {
-	requireAuth(request, _response);
-	next();
-});
-
 apiRouter.use("/roles", roleRouter);
 apiRouter.use("/users", userRouter);

@@ -29,14 +29,19 @@ type CreateRoleData = {
 	permissions?: RolePermissions;
 };
 
-type UpdateRoleData = {
+type UpdateRoleDetailsData = {
 	name?: string;
 	description?: string;
-	permissions?: RolePermissions;
 };
 
-export const listRoles = async () =>
+export const listRoles = async (search?: string) =>
 	prisma.role.findMany({
+		where: search ? {
+			name: {
+				contains: search,
+				mode: "insensitive",
+			},
+		} : undefined,
 		select: byList,
 		orderBy: {
 			id: "asc",
@@ -80,7 +85,7 @@ export const createRole = async (data: CreateRoleData) => {
 	});
 };
 
-export const updateRole = async (id: number, data: UpdateRoleData) => {
+export const updateRoleDetails = async (id: number, data: UpdateRoleDetailsData) => {
 	await getRoleById(id);
 
 	if (typeof data.name === "string") {
@@ -98,5 +103,41 @@ export const updateRole = async (id: number, data: UpdateRoleData) => {
 		where: { id },
 		data,
 		select: byFull,
+	});
+};
+
+export const updateRolePermissions = async (id: number, permissions: RolePermissions) => {
+	await getRoleById(id);
+
+	return prisma.role.update({
+		where: { id },
+		data: {
+			permissions,
+		},
+		select: byFull,
+	});
+};
+
+export const deleteRole = async (id: number) => {
+	const role = await prisma.role.findUnique({
+		where: { id },
+		select: {
+			id: true,
+			_count: {
+				select: { users: true },
+			},
+		},
+	});
+
+	if (!role) {
+		throw new AppError(404, "Роль не найдена");
+	}
+
+	if (role._count.users > 0) {
+		throw new AppError(409, "Нельзя удалить роль, пока она назначена пользователям");
+	}
+
+	await prisma.role.delete({
+		where: { id },
 	});
 };

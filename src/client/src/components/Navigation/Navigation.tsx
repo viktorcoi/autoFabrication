@@ -96,7 +96,7 @@ const Navigation = () => {
             styles.wrap
         )}>
             {actionSheet}
-            <div className={styles.nav}>
+            <div className={classNames('scroll', styles.nav)}>
                 {navigations.map(({name, url, icon}, key) => {
                     if (name === 'separator') return key !== 0 ? (
                         <Separator key={key} />

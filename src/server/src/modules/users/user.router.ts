@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AppError } from "../../shared/errors/app-error.js";
 import { asyncHandler } from "../../shared/http/async-handler.js";
+import { requirePermission } from "../../shared/http/permissions.js";
 import { validate } from "../../shared/http/validate.js";
 import { createUserSchema, updateUserSchema } from "./user.schemas.js";
 import { createUser, getUserById, listUsers, updateUser } from "./user.service.js";
@@ -19,6 +20,7 @@ export const userRouter = Router();
 
 userRouter.get(
 	"/",
+	requirePermission("/users", "view"),
 	asyncHandler(async (_request, response) => {
 		const users = await listUsers();
 
@@ -28,6 +30,7 @@ userRouter.get(
 
 userRouter.get(
 	"/:id",
+	requirePermission("/users", "view"),
 	asyncHandler(async (request, response) => {
 		const user = await getUserById(parseId(String(request.params.id)));
 
@@ -37,6 +40,7 @@ userRouter.get(
 
 userRouter.post(
 	"/",
+	requirePermission("/users", "adding"),
 	asyncHandler(async (request, response) => {
 		const payload = validate(createUserSchema, request.body);
 		const user = await createUser(payload);
@@ -47,6 +51,7 @@ userRouter.post(
 
 userRouter.patch(
 	"/:id",
+	requirePermission("/users", "editing"),
 	asyncHandler(async (request, response) => {
 		const payload = validate(updateUserSchema, request.body);
 		const user = await updateUser(parseId(String(request.params.id)), payload);

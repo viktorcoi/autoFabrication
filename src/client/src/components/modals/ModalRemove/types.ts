@@ -1,9 +1,11 @@
+import {ModalCardProps} from "@vkontakte/vkui";
 import React from "react";
-import {ModalPageProps} from "@vkontakte/vkui";
 import {ModalPageCloseReasonType} from "@/components/modals/types";
 
-export interface ModalManageRoleProps extends Omit<ModalPageProps, 'onClose'> {
-    idRole: number | null;
+export interface ModalManageRoleProps extends Omit<ModalCardProps, 'onClose'> {
+    removeId: number;
+    name: string;
+    url: '/roles';
     onClose(reason: ModalPageCloseReasonType, event?:  React.UIEvent<HTMLElement>): void;
     onLoading(v: boolean): void;
 }

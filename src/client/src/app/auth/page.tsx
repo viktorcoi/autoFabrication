@@ -37,8 +37,8 @@ const LoginPage = () => {
 	const [loading, setLoading] = useState(false);
 	const [wasError, setWasError] = useState(false);
 
-	const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
-		event.preventDefault();
+	const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
+		e.preventDefault();
 
 		const normalizedLogin = login.trim();
 		const normalizedPassword = password.trim();
