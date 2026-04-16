@@ -7,11 +7,13 @@ import {
     ActionSheet,
     ActionSheetItem,
     Button,
-    classNames, Counter, FormStatus,
+    classNames,
+    Counter,
     IconButton,
     Placeholder,
     Search,
-    SimpleCell, Spinner
+    SimpleCell,
+    Spinner,
 } from "@vkontakte/vkui";
 import {
     Icon24Add,
@@ -22,23 +24,45 @@ import {
 } from "@vkontakte/icons";
 import Container from "@/components/Container/Container";
 import styles from './page.module.scss';
+import {mergeState} from "@/helpers";
+import ModalManageRole from "@/components/modals/ModalManageRole/ModalManageRole";
+import {OpenModalsType} from "@/components/modals/types";
 
 const RolesPage = () => {
 
     const [roles, setRoles] = useState<GetRolesResponse[]>([]);
     const [actionSheet, setActionSheet] = useState<ReactNode>(null);
     const [selectedRole, setSelectedRole] = useState<number | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState({
+        page: true,
+        modal: false
+    });
+    const [modals, setModals] = useState<OpenModalsType>({id: null, data: null});
+
+    const controllerRef = useRef<AbortController>(null);
     const menuRef = useRef(null);
 
-    useEffect(() => {
-        setLoading(true);
+    const getRoles = async () => {
+        mergeState({page: true}, setLoading);
 
-        ApiService.roles.get({}).then(({status, data}) => {
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
+        await ApiService.roles.get({
+            controller
+        }).then(({status, data}) => {
             if (status === 'success') {
                 setRoles(data);
             }
-        }).finally(() => setLoading(false));
+        })
+    };
+
+    useEffect(() => {
+        getRoles().finally(() => mergeState({page: false}, setLoading));
+
+        return () => {
+            if (controllerRef.current) controllerRef.current.abort();
+        }
     }, []);
 
     const openMenu = () => {
@@ -65,39 +89,56 @@ const RolesPage = () => {
     }
 
     return (
-        <Container
-            header={(
-                <>
-                    <Button
-                        disabled={loading}
-                        before={<Icon24Add/>}
-                        size={'m'}
-                    >
-                        Добавить
-                    </Button>
-                    <Search
-                        disabled={loading}
-                        noPadding={true}
-                        className={'search'}
-                    />
-                </>
-            )}
-        >
-            {actionSheet}
-            <div className={styles.wrap}>
-                <div className={styles.list}>
-                    {loading ? <Spinner size={'xl'}/> : roles.map(r => (
-                        <SimpleCell
-                            key={r.id}
-                            className={classNames(selectedRole === r.id && 'activated')}
-                            activated={selectedRole === r.id}
-                            hasHoverWithChildren={true}
-                            onClick={() => setSelectedRole(r.id)}
-                            after={
-                                <>
-                                    <Counter size={'s'}>{r._count.users}</Counter>
-                                    {r.id !== 1 && (
+        <>
+            <ModalManageRole
+                idRole={modals.data}
+                preventClose={loading.modal}
+                onLoading={v => mergeState({modal: v}, setLoading)}
+                open={'modal-manage-role' === modals.id}
+                onClose={r => {
+                    mergeState({id: null}, setModals);
+                    if (r === 'updated-data') {
+                        getRoles().finally(() => mergeState({page: false}, setLoading));
+                    }
+                }}
+                onClosed={() => setModals({id: null, data: null})}
+            />
+            <Container
+                header={(
+                    <>
+                        <Button
+                            size={'m'}
+                            disabled={loading.page}
+                            before={<Icon24Add/>}
+                            onClick={() => mergeState({id: 'modal-manage-role'}, setModals)}
+                        >
+                            Добавить
+                        </Button>
+                        <Search
+                            disabled={loading.page}
+                            noPadding={true}
+                            className={'search'}
+                        />
+                    </>
+                )}
+            >
+                {actionSheet}
+                <div className={styles.wrap}>
+                    <div className={classNames('island', styles.list)}>
+                        {loading.page ? <Spinner size={'xl'}/> : roles.map(r => (
+                            <SimpleCell
+                                key={r.id}
+                                className={classNames(selectedRole === r.id && 'activated')}
+                                activated={selectedRole === r.id}
+                                hasHoverWithChildren={true}
+                                onClick={() => setSelectedRole(r.id)}
+                                after={
+                                    <>
+                                        {!!r._count.users && (
+                                            <Counter size={'s'}>{r._count.users}</Counter>
+                                        )}
                                         <IconButton
+                                            disabled={r.id === 1}
                                             className={styles.menu}
                                             getRootRef={menuRef}
                                             label={'Меню'}
@@ -108,33 +149,33 @@ const RolesPage = () => {
                                         >
                                             <Icon24MoreVertical fill={'var(--vkui--color_icon_primary)'} width={24} height={24}/>
                                         </IconButton>
-                                    )}
-                                </>
-                            }
-                        >
-                            {r.name}
-                        </SimpleCell>
-                    ))}
+                                    </>
+                                }
+                            >
+                                {r.name}
+                            </SimpleCell>
+                        ))}
+                    </div>
+                    <div
+                        className={classNames('island', styles.detail)}
+                    >
+                        {selectedRole === null ? (
+                            <Placeholder
+                                stretched={true}
+                                icon={<Icon28BriefcaseOutline width={130} height={130}/>}
+                            >
+                                Выберите роль для настройки
+                            </Placeholder>
+                        ) : (
+                            <>
+
+                                `Выбрана роль с id ${selectedRole}`
+                            </>
+                        )}
+                    </div>
                 </div>
-                <div
-                    className={styles.detail}
-                >
-                    {selectedRole === null ? (
-                        <Placeholder
-                            stretched={true}
-                            icon={<Icon28BriefcaseOutline width={130} height={130}/>}
-                        >
-                            Выберите роль для настройки
-                        </Placeholder>
-                    ) : (
-                        <>
-                            <FormStatus>{roles.find(({id}) => id === selectedRole)?.description}</FormStatus>
-                            `Выбрана роль с id ${selectedRole}`
-                        </>
-                    )}
-                </div>
-            </div>
-        </Container>
+            </Container>
+        </>
     )
 };
 

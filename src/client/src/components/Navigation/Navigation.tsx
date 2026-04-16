@@ -1,4 +1,3 @@
-import styles from './Navigation.module.scss';
 import {ActionSheet, ActionSheetItem, Avatar, classNames, Separator, SimpleCell} from "@vkontakte/vkui";
 import Link from "next/link";
 import {
@@ -13,6 +12,7 @@ import {usePathname} from "next/navigation";
 import {useAppStore} from "@/store/app/app";
 import {ReactNode, useMemo, useRef, useState} from "react";
 import {ApiService} from "@/apiService/apiService";
+import styles from './Navigation.module.scss';
 
 const navigations = [
     {
@@ -41,7 +41,6 @@ const Navigation = () => {
 
     const {
         user,
-        setUser,
         role,
         theme,
         toggleTheme
@@ -55,7 +54,7 @@ const Navigation = () => {
     const logout = async () => {
         await ApiService.auth.logout({}).then(({status}) => {
             if (status === 'success') {
-                setUser(null);
+                window.location.reload();
             }
         })
     };
@@ -92,13 +91,16 @@ const Navigation = () => {
     const rootPath = useMemo(() => `/${pathname.split("/")[1] ?? ""}`, [pathname]);
 
     return (
-        <div className={styles.wrap}>
+        <div className={classNames(
+            'island',
+            styles.wrap
+        )}>
             {actionSheet}
             <div className={styles.nav}>
                 {navigations.map(({name, url, icon}, key) => {
-                    if (name === 'separator') return (
+                    if (name === 'separator') return key !== 0 ? (
                         <Separator key={key} />
-                    )
+                    ) : null;
                     return (
                         <Link
                             key={key}

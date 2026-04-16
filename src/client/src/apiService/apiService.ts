@@ -1,5 +1,4 @@
 import axios, {AxiosError} from "axios";
-import {useAppStore} from "@/store/app/app";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {ApiAuth} from "@/apiService/apiAuth/apiAuth";
 import {ApiRoles} from "@/apiService/apiRoles/apiRoles";
@@ -18,7 +17,7 @@ export const ApiService = {
 export const handleApiError = <T>(
     e: AxiosError<{message?: string}>,
     errorOptions?: ApiServiceErrorOptions,
-    fromLogin?: boolean
+    from?: 'me' | 'auth'
 ): ApiServiceResponse<T> => {
     if (axios.isCancel(e) || e?.name === 'CanceledError') {
         return {
@@ -28,8 +27,9 @@ export const handleApiError = <T>(
     }
 
     if (e.response) {
-        if (e.response.status === 401 && !fromLogin) {
-            useAppStore.getState().setUser(null);
+        if (e.response.status === 401 && from !== 'auth') {
+            if (from !== 'me') window.location.reload();
+
             return {
                 status: 'error',
                 data: 'Unauthorized'

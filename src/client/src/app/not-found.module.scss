@@ -1,6 +1,7 @@
 .wrap {
     display: grid;
     place-items: center;
+    height: 100%;
 }
 
 .error {
@@ -8,7 +9,7 @@
     place-items: center;
     position: relative;
     user-select: none;
-    gap: 20px;
+    gap: var(--app-distance-empty);
 }
 
 .code {

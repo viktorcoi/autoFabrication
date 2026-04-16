@@ -1,3 +1,5 @@
+'use client'
+
 import { SubmitEvent, useState } from "react";
 import {
 	Button,
@@ -13,10 +15,15 @@ import { useAppStore } from "@/store/app/app";
 import styles from "./page.module.scss";
 import PasswordInput from "@/components/PasswordInput/PasswordInput";
 import { useSnackbarStore } from "@/store/snackbar/snackbar";
+import { usePathname, useRouter } from "next/navigation";
+import {hasPathPermission} from "@/helpers";
 
 const LOGIN_PATTERN = /^[\x21-\x7E]+$/;
 
 const LoginPage = () => {
+
+	const router = useRouter();
+	const pathname = usePathname();
 
 	const addSnackbar = useSnackbarStore((state) => state.addSnackbar);
 	const {
@@ -74,7 +81,12 @@ const LoginPage = () => {
 			password: normalizedPassword,
 		}).then(({ status, data }) => {
 			if (status === "success") {
+				const targetPath = hasPathPermission(data.role.permissions, pathname)
+					? pathname
+					: data.mainUrl;
+
 				setUser(data);
+				router.push(targetPath);
 			} else setWasError(true);
 		}).finally(() => setLoading(false));
 	};

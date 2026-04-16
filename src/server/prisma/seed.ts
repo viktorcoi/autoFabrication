@@ -7,21 +7,21 @@ import { AppError } from "../src/shared/errors/app-error.js";
 const seed = async () => {
 	const adminRole = await prisma.role.upsert({
 		where: {
-			name: "ADMIN",
+			name: "Admin",
 		},
 		update: {
 			description: "Главная системная роль с полным доступом.",
 			permissions: adminPermissions,
 		},
 		create: {
-			name: "ADMIN",
+			name: "Admin",
 			description: "Главная системная роль с полным доступом.",
 			permissions: adminPermissions,
 		},
 	});
 
-	if (env.ADMIN_PASSWORD.length < 6 || !/\d/.test(env.ADMIN_PASSWORD)) {
-		throw new AppError(500, "ADMIN_PASSWORD должен содержать минимум 6 символов и хотя бы одну цифру");
+	if (env.ADMIN_PASSWORD.length < 6) {
+		throw new AppError(500, "ADMIN_PASSWORD должен содержать минимум 6 символов");
 	}
 
 	const passwordHash = await bcrypt.hash(env.ADMIN_PASSWORD, 12);

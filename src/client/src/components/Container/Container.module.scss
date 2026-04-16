@@ -1,7 +1,16 @@
 .wrap {
+    gap: var(--app-distance-empty);
+    padding: var(--app-distance-empty);
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 300px) 1fr;
+}
+
+.content {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: var(--app-distance-empty);
     height: 100%;
 }
 

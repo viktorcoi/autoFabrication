@@ -1,4 +1,4 @@
-export type PermissionFlags = {
+export type RolePermissionFlags = {
 	view: boolean;
 	adding: boolean;
 	changeAccess: boolean;
@@ -6,20 +6,102 @@ export type PermissionFlags = {
 	removing: boolean;
 };
 
-export type RolePermissions = Record<string, PermissionFlags>;
+export type UserPermissionFlags = {
+	view: boolean;
+	adding: boolean;
+	editing: boolean;
+	resetPassword: boolean;
+	removing: boolean;
+};
 
-export const fullAccess: PermissionFlags = {
-	view: true,
-	adding: true,
-	changeAccess: true,
-	editing: true,
-	removing: true,
+export type GuidePermissionFlags = {
+	view: boolean;
+	adding: boolean;
+	editing: boolean;
+	removing: boolean;
+};
+
+export type RolePermissionItem = {
+	url: "/roles";
+	access: RolePermissionFlags;
+};
+
+export type UserPermissionItem = {
+	url: "/users";
+	access: UserPermissionFlags;
+};
+
+export type GuidePermissionItem = {
+	url: "/guide";
+	access: GuidePermissionFlags;
+};
+
+export type RolePermissions = {
+	1: RolePermissionItem;
+	2: UserPermissionItem;
+	3: GuidePermissionItem;
+};
+
+export const defaultRolePermissions: RolePermissions = {
+	1: {
+		url: "/roles",
+		access: {
+			view: false,
+			adding: false,
+			changeAccess: false,
+			editing: false,
+			removing: false,
+		},
+	},
+	2: {
+		url: "/users",
+		access: {
+			view: false,
+			adding: false,
+			editing: false,
+			resetPassword: false,
+			removing: false,
+		},
+	},
+	3: {
+		url: "/guide",
+		access: {
+			view: false,
+			adding: false,
+			editing: false,
+			removing: false,
+		},
+	},
 };
 
 export const adminPermissions: RolePermissions = {
-	dashboard: fullAccess,
-	users: fullAccess,
-	roles: fullAccess,
-	files: fullAccess,
-	settings: fullAccess,
+	1: {
+		url: "/roles",
+		access: {
+			view: true,
+			adding: true,
+			changeAccess: true,
+			editing: true,
+			removing: true,
+		},
+	},
+	2: {
+		url: "/users",
+		access: {
+			view: true,
+			adding: true,
+			editing: true,
+			resetPassword: true,
+			removing: true,
+		},
+	},
+	3: {
+		url: "/guide",
+		access: {
+			view: true,
+			adding: true,
+			editing: true,
+			removing: true,
+		},
+	},
 };

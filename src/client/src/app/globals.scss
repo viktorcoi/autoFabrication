@@ -1,31 +1,13 @@
-html[data-color-scheme="light"] {
-	--vkui--color_background: #141414;
-}
+//html[data-color-scheme="light"] {
+//	--vkui--color_background: #141414;
+//}
 
 :root {
 	--app-border_radius: 12px;
-	--app-bg-start: #f7f9fc;
-	--app-bg-end: #edf2f8;
-	--app-radial: rgba(37, 99, 235, 0.12);
-	--app-text: #0f172a;
-	font-family: "Segoe UI", sans-serif;
+	--app-distance-empty: 20px
 }
 
-html[data-color-scheme="light"] {
-	color-scheme: light;
-}
-
-html[data-color-scheme="dark"] {
-	color-scheme: dark;
-	--app-bg-start: #0f172a;
-	--app-bg-end: #111827;
-	--app-radial: rgba(56, 189, 248, 0.12);
-	--app-text: #e5eefb;
-}
-
-* {
-	box-sizing: border-box;
-}
+* { box-sizing: border-box }
 
 a {
 	all: unset;
@@ -52,6 +34,23 @@ body {
 	}
 }
 
-.search {
-	width: 250px;
+.search { width: 250px }
+
+.island {
+	background-color: var(--vkui--color_background_content);
+	border-radius: var(--app-border_radius);
+	box-shadow: var(--vkui--elevation2);
+	padding: 12px;
+}
+
+.modalForm {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 12px;
+}
+
+.modalFooter {
+	border-top: 1px solid var(--vkui--color_separator_primary);
+	padding: 12px;
 }

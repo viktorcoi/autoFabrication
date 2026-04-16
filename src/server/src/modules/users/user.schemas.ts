@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-const passwordSchema = z
-	.string()
-	.min(6, "Пароль должен содержать минимум 6 символов")
-	.regex(/\d/, "Пароль должен содержать хотя бы одну цифру");
+const passwordSchema = z.string().min(6, "Пароль должен содержать минимум 6 символов");
 
 export const createUserSchema = z.object({
 	firstName: z.string().trim().min(1, "Имя обязательно"),

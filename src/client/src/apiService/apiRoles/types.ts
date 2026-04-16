@@ -1,4 +1,4 @@
-export interface GetRolesResponse {
+export interface GetByIdRoleResponse {
     id: number,
     name: string,
     description: string,
@@ -8,4 +8,17 @@ export interface GetRolesResponse {
     _count: {
         users: number
     }
+}
+
+export interface GetRolesResponse {
+    id: number,
+    name: string,
+    _count: {
+        users: number
+    }
+}
+
+export interface PostRolesOptions {
+    name: string,
+    description: string,
 }

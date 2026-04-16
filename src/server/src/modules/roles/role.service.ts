@@ -1,8 +1,17 @@
 import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../shared/errors/app-error.js";
+import { defaultRolePermissions, type RolePermissions } from "./role.types.js";
 
-const roleSelect = {
+const byList = {
+	id: true,
+	name: true,
+	_count: {
+		select: { users: true },
+	},
+} satisfies Prisma.RoleSelect;
+
+const byFull = {
 	id: true,
 	name: true,
 	description: true,
@@ -14,22 +23,30 @@ const roleSelect = {
 	},
 } satisfies Prisma.RoleSelect;
 
+type CreateRoleData = {
+	name: string;
+	description?: string;
+	permissions?: RolePermissions;
+};
+
+type UpdateRoleData = {
+	name?: string;
+	description?: string;
+	permissions?: RolePermissions;
+};
+
 export const listRoles = async () =>
-	// Обращаемся к таблице role и просим все записи.
 	prisma.role.findMany({
-		select: roleSelect,
-		// Сортируем роли по id по возрастанию.
+		select: byList,
 		orderBy: {
 			id: "asc",
 		},
 	});
 
-// Функция получения одной роли по id.
 export const getRoleById = async (id: number) => {
-	// Ищем одну роль по уникальному полю `id`.
 	const role = await prisma.role.findUnique({
 		where: { id },
-		select: roleSelect,
+		select: byFull,
 	});
 
 	if (!role) {
@@ -39,11 +56,8 @@ export const getRoleById = async (id: number) => {
 	return role;
 };
 
-// Функция создания новой роли.
-export const createRole = async (data: Prisma.RoleCreateInput) => {
-	// Сначала проверяем, нет ли уже роли с таким названием
+export const createRole = async (data: CreateRoleData) => {
 	const existingRole = await prisma.role.findUnique({
-		// Ищем по уникальному имени роли.
 		where: {
 			name: data.name,
 		},
@@ -57,12 +71,16 @@ export const createRole = async (data: Prisma.RoleCreateInput) => {
 	}
 
 	return prisma.role.create({
-		data,
-		select: roleSelect,
+		data: {
+			name: data.name,
+			description: data.description,
+			permissions: data.permissions ?? defaultRolePermissions,
+		},
+		select: byFull,
 	});
 };
 
-export const updateRole = async (id: number, data: Prisma.RoleUpdateInput) => {
+export const updateRole = async (id: number, data: UpdateRoleData) => {
 	await getRoleById(id);
 
 	if (typeof data.name === "string") {
@@ -79,7 +97,6 @@ export const updateRole = async (id: number, data: Prisma.RoleUpdateInput) => {
 	return prisma.role.update({
 		where: { id },
 		data,
-		// Какие поля вернуть после обновления.
-		select: roleSelect,
+		select: byFull,
 	});
 };

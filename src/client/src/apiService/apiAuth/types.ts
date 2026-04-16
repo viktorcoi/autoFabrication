@@ -14,4 +14,5 @@ export type GetAuthMeResponse = {
         description: string | null;
         permissions: Record<string, unknown>;
     };
+    mainUrl: string;
 }

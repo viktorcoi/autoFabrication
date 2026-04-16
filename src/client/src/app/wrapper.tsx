@@ -1,14 +1,11 @@
 "use client";
 
-import {PropsWithChildren, ReactNode, useEffect, useRef, useState} from "react";
+import {PropsWithChildren, useEffect, useState} from "react";
 import { AdaptivityProvider, AppRoot, ConfigProvider } from "@vkontakte/vkui";
 import SnackbarProvider from "@/components/SnackbarProvider/SnackbarProvider";
 import { useAppStore } from "@/store/app/app";
 import {ApiService} from "@/apiService/apiService";
-import LoginPage from "@/system/auth/page";
 import LoadingPage from "@/system/loading/page";
-import Navigation from "@/components/Navigation/Navigation";
-import styles from './wrapper.module.scss';
 
 const Wrapper = ({ children }: PropsWithChildren) => {
 
@@ -49,24 +46,15 @@ const Wrapper = ({ children }: PropsWithChildren) => {
     }
 
     return (
-        <ConfigProvider colorScheme={theme}>
+        <ConfigProvider
+            colorScheme={theme}
+        >
             <AdaptivityProvider>
                 <AppRoot
                     disableSettingVKUIClassesInRuntime={true}
                 >
                     <SnackbarProvider>
-                        {loading ? <LoadingPage/> :
-                            (!user ? (
-                                <LoginPage/>
-                            ) : (
-                                <div
-                                    className={styles.wrap}
-                                >
-                                    <Navigation/>
-                                    {children}
-                                </div>
-                            ))
-                        }
+                        {loading ? <LoadingPage/> : children}
                     </SnackbarProvider>
                 </AppRoot>
             </AdaptivityProvider>

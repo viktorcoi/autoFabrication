@@ -3,7 +3,7 @@
     height: 100%;
     display: grid;
     place-items: center;
-    padding: 20px;
+    padding: var(--app-distance-empty);
 }
 
 .loading {
