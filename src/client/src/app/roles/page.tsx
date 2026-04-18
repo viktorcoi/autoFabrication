@@ -38,7 +38,8 @@ const RolesPage = () => {
     const [selectedRole, setSelectedRole] = useState<number | null>(null);
     const [loading, setLoading] = useState({
         page: true,
-        modal: false
+        modal: false,
+        permissions: false
     });
     const [modals, setModals] = useState<OpenModalsType<
         'modal-manage-role' | 'modal-remove-role'
@@ -65,6 +66,9 @@ const RolesPage = () => {
         }).then(({status, data}) => {
             if (status === 'success') {
                 setRoles(data);
+                if (selectedRole !== null && !(data.some(({id}) => id === selectedRole))) {
+                    setSelectedRole(null);
+                }
             }
         })
     };
@@ -137,7 +141,7 @@ const RolesPage = () => {
                     <>
                         <Button
                             size={'m'}
-                            disabled={loading.page}
+                            disabled={loading.page || loading.permissions}
                             before={<Icon24Add/>}
                             onClick={() => mergeState({id: 'modal-manage-role', show: true}, setModals)}
                         >
@@ -146,7 +150,7 @@ const RolesPage = () => {
                         <Search
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            disabled={loading.page}
+                            disabled={loading.page || loading.permissions}
                             noPadding={true}
                             className={'search'}
                             slotProps={{ input: { getRootRef: inputRef } }}
@@ -167,7 +171,10 @@ const RolesPage = () => {
                         ): roles.map(r => (
                             <SimpleCell
                                 key={r.id}
-                                className={classNames(selectedRole === r.id && 'activated')}
+                                className={classNames(
+                                    selectedRole === r.id && 'activated',
+                                    loading.permissions && 'disabled'
+                                )}
                                 activated={selectedRole === r.id}
                                 hasHoverWithChildren={true}
                                 onClick={() => setSelectedRole(r.id)}
@@ -178,7 +185,10 @@ const RolesPage = () => {
                                         )}
                                         <IconButton
                                             disabled={r.isConst}
-                                            className={styles.menu}
+                                            className={classNames(
+                                                styles.menu,
+                                                loading.permissions && 'disabled'
+                                            )}
                                             label={'Меню'}
                                             onClick={e => {
                                                 e.stopPropagation();
@@ -207,6 +217,7 @@ const RolesPage = () => {
                         ) : (
                             <DetailInfoRole
                                 id={selectedRole}
+                                onLoading={v => mergeState({permissions: v}, setLoading)}
                             />
                         )}
                     </div>

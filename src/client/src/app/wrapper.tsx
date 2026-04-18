@@ -47,6 +47,7 @@ const Wrapper = ({ children }: PropsWithChildren) => {
 
     return (
         <ConfigProvider
+            platform={'vkcom'}
             colorScheme={theme}
         >
             <AdaptivityProvider>

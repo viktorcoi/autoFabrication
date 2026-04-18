@@ -1,6 +1,12 @@
 import {ApiServiceOptions, ApiServiceResponse} from "@/apiService/types";
 import {api, handleApiError, handleApiSuccess} from "@/apiService/apiService";
-import {GetByIdRoleResponse, GetRolesOptions, GetRolesResponse, PostRolesOptions} from "@/apiService/apiRoles/types";
+import {
+    GetByIdRoleResponse,
+    GetRolesOptions,
+    GetRolesResponse,
+    PatchRolePermissionsOptions,
+    PostRolesOptions
+} from "@/apiService/apiRoles/types";
 
 export const ApiRoles = {
     getById: async (options: ApiServiceOptions<{
@@ -61,6 +67,24 @@ export const ApiRoles = {
                 options.errorOptions?.placeholder
             );
         }).catch((e) => handleApiError(e, options.errorOptions));
+    },
+
+    permissions: {
+        patch: async (options: ApiServiceOptions<{
+            id: number,
+            options: PatchRolePermissionsOptions;
+        }>): Promise<ApiServiceResponse<GetByIdRoleResponse>> => {
+            return await api.patch(`/roles/${options.id}/permissions`,
+                {...options.options},
+                { signal: options.controller?.signal }
+            ).then(r => {
+                return handleApiSuccess(
+                    r.data,
+                    r.status === 200 && r.data,
+                    options.errorOptions?.placeholder
+                );
+            }).catch((e) => handleApiError(e, options.errorOptions));
+        },
     },
 
     delete: async (options: ApiServiceOptions<{
