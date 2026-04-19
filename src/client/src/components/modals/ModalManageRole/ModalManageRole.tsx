@@ -11,7 +11,7 @@ import {
 } from "@vkontakte/vkui";
 import {SubmitEvent, useEffect, useMemo, useRef, useState} from "react";
 import styles from './ModalManageRole.module.scss'
-import {mergeState} from "@/helpers";
+import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 

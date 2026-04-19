@@ -24,11 +24,11 @@ import {
 } from "@vkontakte/icons";
 import Container from "@/components/Container/Container";
 import styles from './page.module.scss';
-import {mergeState} from "@/helpers";
+import {mergeState} from "@/shared/helpers";
 import ModalManageRole from "@/components/modals/ModalManageRole/ModalManageRole";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
-import {useSearch} from "@/hooks";
+import {useSearch} from "@/shared/hooks";
 import DetailInfoRole from "@/sections/roles/DetailInfoRole";
 
 const RolesPage = () => {

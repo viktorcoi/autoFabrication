@@ -17,7 +17,7 @@ import {
 } from "@vkontakte/icons";
 import styles from './DetailInfoRole.module.scss';
 import {ApiService} from "@/apiService/apiService";
-import {mergeState} from "@/helpers";
+import {mergeState} from "@/shared/helpers";
 import {
     GetByIdRoleResponse,
     RolePermissionSection,

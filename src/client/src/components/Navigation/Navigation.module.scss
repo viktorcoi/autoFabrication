@@ -6,6 +6,8 @@
     max-height: 100%;
     overflow: hidden;
     padding: unset;
+    min-width: 300px;
+    margin: var(--app-distance-empty) 0 var(--app-distance-empty) var(--app-distance-empty);
 }
 
 .nav {

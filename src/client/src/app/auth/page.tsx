@@ -16,7 +16,7 @@ import styles from "./page.module.scss";
 import PasswordInput from "@/components/PasswordInput/PasswordInput";
 import { useSnackbarStore } from "@/store/snackbar/snackbar";
 import { usePathname, useRouter } from "next/navigation";
-import {hasPathPermission} from "@/helpers";
+import {hasPathPermission} from "@/shared/helpers";
 
 const LOGIN_PATTERN = /^[\x21-\x7E]+$/;
 

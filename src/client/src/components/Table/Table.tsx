@@ -14,7 +14,6 @@ import {
     ActionSheet,
     ActionSheetItem,
     Button,
-    Card,
     Input,
     Select,
     Spinner,
@@ -28,7 +27,7 @@ import {
     Icon16ChevronLeft,
     Icon16SortArrowDown,
     Icon16SortArrowUp,
-    Icon16SortOutline,
+    Icon16SortOutline, Icon24Cancel, Icon24ChevronCompactLeft, Icon24ChevronCompactRight, Icon24Done,
 } from '@vkontakte/icons';
 import styles from './Table.module.scss';
 
@@ -56,7 +55,7 @@ type TableEvent =
 } & TableClickMeta)
     | ({ type: 'contextMenu'; row: any; column: string; value: unknown } & TableClickMeta)
     | ({ type: 'pageChange'; page: number } & TableClickMeta)
-    | ({ type: 'pageSizeChange'; pageSize: number } & TableClickMeta)
+    | ({ type: 'rowsChange'; rows: number } & TableClickMeta)
     | ({ type: 'sortChange'; sorting: SortingState } & TableClickMeta)
     | ({ type: 'selected'; rowIds: string[]; rows: any[] } & TableClickMeta);
 
@@ -67,7 +66,7 @@ type Props = {
     columns: Column[];
     total: number;
     page: number;
-    pageSize: number;
+    rows: number;
     loading?: boolean;
     onEvent: (e: TableEvent) => void;
     emptyState?: {
@@ -131,7 +130,7 @@ const normalizeSettings = (value: unknown): TableSettings => {
     return [];
 };
 
-const PAGE_SIZE_OPTIONS = [25, 50, 100];
+const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
 const safeJsonParse = <T, >(value: string | null, fallback: T): T => {
     if (!value) {
@@ -186,7 +185,7 @@ const Table = ({
     columns,
     total,
     page,
-    pageSize,
+    rows,
     loading,
     onEvent,
     emptyState,
@@ -262,7 +261,7 @@ const Table = ({
         },
     });
 
-    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+    const pageCount = Math.max(1, Math.ceil(total / rows));
     const currentPage = page + 1;
     const visibleRows = table.getRowModel().rows;
     const visibleRowIds = visibleRows.map((row) => row.id);
@@ -502,11 +501,6 @@ const Table = ({
         });
     };
 
-    const resetCurrentColumnSorting = (columnId: string) => {
-        sortDirtyRef.current = true;
-        setSorting((prev) => prev.filter((item) => item.id !== columnId));
-    };
-
     const resetCurrentColumnSettings = (columnId: string) => {
         sortDirtyRef.current = true;
         setSorting((prev) => prev.filter((item) => item.id !== columnId));
@@ -540,28 +534,18 @@ const Table = ({
     };
 
     return (
-        <Card Component="div" className={styles.card}>
-            <div className={styles.toolbar}>
-                <Button
-                    size="m"
-                    mode="secondary"
-                    onClick={(event) => {
-                        pendingSortTargetRef.current = event.target;
-                        sortDirtyRef.current = true;
-                        setSorting([]);
-                    }}
-                >
-                    Сбросить сортировку
-                </Button>
-            </div>
-
-            <div className={styles.viewport}>
+        <>
+            <div className={classNames(
+                'island',
+                styles.wrap
+            )}>
                 <div
                     ref={viewportRef}
                     className={classNames(
+                        'scroll',
                         styles.scroll,
-                        loading && styles.scrollLoading,
-                        draggingColumnId && styles.scrollDragging,
+                        loading && styles['scroll--loading'],
+                        draggingColumnId && styles.scroll,
                     )}
                 >
                     <table className={styles.table} style={{width: table.getTotalSize()}}>
@@ -636,30 +620,20 @@ const Table = ({
                                                 setHeaderContextPoint({x: event.clientX, y: event.clientY});
                                             }}
                                         >
-                                            <div className={styles.headerInner}>
-                                                <div className={styles.dragHandle}>
-                                                    <Icon16ArrowsUpDown/>
-                                                </div>
-
-                                                <button
-                                                    type="button"
-                                                    className={styles.sortButton}
-                                                    onClick={(event) => {
-                                                        pendingSortTargetRef.current = event.target;
-                                                        sortDirtyRef.current = true;
-                                                        header.column.toggleSorting(undefined, false);
-                                                    }}
-                                                >
-                                                    <Text Component="span" className={styles.headerTitle}>
+                                            <div
+                                                className={styles.headerInner}
+                                                onClick={(event) => {
+                                                    pendingSortTargetRef.current = event.target;
+                                                    sortDirtyRef.current = true;
+                                                    header.column.toggleSorting(undefined, false);
+                                                }}
+                                            >
+                                                    <Text className={styles.headerTitle}>
                                                         {flexRender(header.column.columnDef.header, header.getContext())}
                                                     </Text>
-                                                    <span className={styles.sortIcon}>
-                              {header.column.getIsSorted() === 'asc' && <Icon16SortArrowUp/>}
-                                                        {header.column.getIsSorted() === 'desc' &&
-                                                            <Icon16SortArrowDown/>}
-                                                        {!header.column.getIsSorted() && <Icon16SortOutline/>}
-                            </span>
-                                                </button>
+                                                    {header.column.getIsSorted() === 'asc' && <Icon16SortArrowUp fill={'var(--vkui--color_icon_tertiary)'}/>}
+                                                    {header.column.getIsSorted() === 'desc' && <Icon16SortArrowDown fill={'var(--vkui--color_icon_tertiary)'}/>}
+                                                    {!header.column.getIsSorted() && <Icon16SortOutline fill={'var(--vkui--color_icon_tertiary)'}/>}
                                             </div>
 
                                             {header.column.getCanResize() && (
@@ -689,11 +663,11 @@ const Table = ({
                         {data.length === 0 ? (
                             <tr>
                                 <td className={styles.emptyCell} colSpan={columns.length}>
-                                    <Text Component="div" className={styles.emptyTitle}>
+                                    <Text className={styles.emptyTitle}>
                                         {emptyState?.title || 'Нет данных'}
                                     </Text>
                                     {emptyState?.description && (
-                                        <Text Component="div" className={styles.emptyDescription}>
+                                        <Text className={styles.emptyDescription}>
                                             {emptyState.description}
                                         </Text>
                                     )}
@@ -727,7 +701,6 @@ const Table = ({
                                         {row.getVisibleCells().map((cell) => {
                                             const columnId = cell.column.id;
                                             const renderedCell = flexRender(cell.column.columnDef.cell, cell.getContext());
-                                            const isPrimitive = typeof renderedCell === 'string' || typeof renderedCell === 'number';
                                             const isResizing = resizingColumnId === columnId;
 
                                             return (
@@ -771,13 +744,9 @@ const Table = ({
                                                         });
                                                     }}
                                                 >
-                                                    {isPrimitive ? (
-                                                        <Text Component="span" className={styles.cellText}>
-                                                            {renderedCell}
-                                                        </Text>
-                                                    ) : (
-                                                        renderedCell
-                                                    )}
+                                                    <Text className={styles.cellText}>
+                                                        {renderedCell}
+                                                    </Text>
                                                 </td>
                                             );
                                         })}
@@ -794,125 +763,22 @@ const Table = ({
                         </div>
                     )}
                 </div>
+                {dragGhost &&
+                    createPortal(
+                        <div
+                            className={styles.dragGhost}
+                            style={{
+                                width: dragGhost.width,
+                                height: dragGhost.height,
+                                left: dragGhost.x,
+                                top: dragGhost.y,
+                            }}
+                            dangerouslySetInnerHTML={{__html: dragGhost.html}}
+                        />,
+                        document.body,
+                    )
+                }
             </div>
-
-            {dragGhost &&
-                createPortal(
-                    <div
-                        className={styles.dragGhost}
-                        style={{
-                            width: dragGhost.width,
-                            height: dragGhost.height,
-                            left: dragGhost.x,
-                            top: dragGhost.y,
-                        }}
-                        dangerouslySetInnerHTML={{__html: dragGhost.html}}
-                    />,
-                    document.body,
-                )}
-
-            <div className={styles.pagination}>
-                <Button
-                    size="m"
-                    mode="secondary"
-                    className={styles.paginationIconButton}
-                    before={<Icon16ChevronLeft/>}
-                    disabled={page === 0}
-                    onClick={(event) => onEvent({type: 'pageChange', page: page - 1, target: event.target})}
-                />
-
-                <div className={styles.pageRail}>
-                    {jumpMode ? (
-                        <div className={styles.jumpWrap}>
-                            <Input
-                                type="number"
-                                min={1}
-                                max={pageCount}
-                                value={jumpValue}
-                                className={styles.jumpInput}
-                                onChange={(event) => setJumpValue(event.target.value)}
-                                onWheel={(event) => {
-                                    event.preventDefault();
-                                    const delta = event.deltaY > 0 ? -1 : 1;
-                                    const next = Math.min(pageCount, Math.max(1, Number(jumpValue || currentPage) + delta));
-                                    setJumpValue(String(next));
-                                }}
-                            />
-                            <Button
-                                size="m"
-                                mode="secondary"
-                                className={styles.paginationIconButton}
-                                before={<Icon16Cancel/>}
-                                onClick={() => setJumpMode(null)}
-                            />
-                            <Button
-                                size="m"
-                                mode="primary"
-                                className={styles.paginationIconButton}
-                                before={<Icon16CheckOutline/>}
-                                onClick={submitJump}
-                            />
-                        </div>
-                    ) : (
-                        paginationItems.map((item) => {
-                            if (typeof item === 'number') {
-                                const isActive = item === currentPage;
-                                return (
-                                    <button
-                                        key={item}
-                                        type="button"
-                                        className={classNames(styles.pageButton, isActive && styles.pageButtonActive)}
-                                        onClick={(event) => onEvent({
-                                            type: 'pageChange',
-                                            page: item - 1,
-                                            target: event.target
-                                        })}
-                                    >
-                                        {item}
-                                    </button>
-                                );
-                            }
-
-                            return (
-                                <button
-                                    key={item}
-                                    type="button"
-                                    className={styles.pageEllipsis}
-                                    onClick={() => setJumpMode(item === 'ellipsis-left' ? 'left' : 'right')}
-                                >
-                                    ...
-                                </button>
-                            );
-                        })
-                    )}
-                </div>
-
-                <Button
-                    size="m"
-                    mode="secondary"
-                    className={styles.paginationIconButton}
-                    before={<Icon16ArrowRightOutline/>}
-                    disabled={page + 1 >= pageCount}
-                    onClick={(event) => onEvent({type: 'pageChange', page: page + 1, target: event.target})}
-                />
-
-                <Select
-                    className={styles.pageSizeSelect}
-                    value={String(pageSize)}
-                    options={PAGE_SIZE_OPTIONS.map((size) => ({
-                        label: `${size} строк`,
-                        value: String(size),
-                    }))}
-                    onChange={(event) =>
-                        onEvent({
-                            type: 'pageSizeChange',
-                            pageSize: Number(event.target.value),
-                            target: event.target,
-                        })
-                    }
-                />
-            </div>
-
             {headerContextColumnId && (
                 <>
                     <div
@@ -943,14 +809,6 @@ const Table = ({
                         </ActionSheetItem>
                         <ActionSheetItem
                             onClick={() => {
-                                resetCurrentColumnSorting(headerContextColumnId);
-                                setHeaderContextColumnId(null);
-                            }}
-                        >
-                            Сбросить сортировку колонки
-                        </ActionSheetItem>
-                        <ActionSheetItem
-                            onClick={() => {
                                 resetTableSettings();
                                 setHeaderContextColumnId(null);
                             }}
@@ -968,7 +826,112 @@ const Table = ({
                     </ActionSheet>
                 </>
             )}
-        </Card>
+            <div className={classNames(
+                'island',
+                styles.footer
+            )}>
+                <Select
+
+                    className={styles.footer__select}
+                    value={String(rows)}
+                    options={PAGE_SIZE_OPTIONS.map((size) => ({
+                        label: String(size),
+                        value: String(size),
+                    }))}
+                    onChange={(event) =>
+                        onEvent({
+                            type: 'rowsChange',
+                            rows: Number(event.target.value),
+                            target: event.target,
+                        })
+                    }
+                />
+                <div className={styles.pagination}>
+                     <Button
+                        size="m"
+                        mode="secondary"
+                        before={<Icon24ChevronCompactLeft/>}
+                        disabled={page === 0}
+                        onClick={(event) => onEvent({type: 'pageChange', page: page - 1, target: event.target})}
+                    />
+
+                    <div className={styles.pagination__pages}>
+                        {jumpMode ? (
+                            <div className={styles.pagination__jump}>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    max={pageCount}
+                                    value={jumpValue}
+                                    className={styles.pagination__input}
+                                    onChange={(event) => setJumpValue(event.target.value)}
+                                    onWheel={(event) => {
+                                        event.preventDefault();
+                                        const delta = event.deltaY > 0 ? -1 : 1;
+                                        const next = Math.min(pageCount, Math.max(1, Number(jumpValue || currentPage) + delta));
+                                        setJumpValue(String(next));
+                                    }}
+                                />
+                                <Button
+                                    size={"m"}
+                                    mode={'tertiary'}
+                                    before={<Icon24Done/>}
+                                    onClick={submitJump}
+                                    appearance={'positive'}
+                                />
+                                <Button
+                                    mode={'tertiary'}
+                                    appearance={'negative'}
+                                    size={"m"}
+                                    before={<Icon24Cancel/>}
+                                    onClick={() => setJumpMode(null)}
+                                />
+                            </div>
+                        ) : (
+                            paginationItems.map((item) => {
+                                if (typeof item === 'number') {
+                                    const isActive = item === currentPage;
+                                    return (
+                                        <Button
+                                            key={item}
+                                            size={'m'}
+                                            mode={isActive ? 'primary' : 'tertiary'}
+                                            className={classNames(
+                                                styles.pagination__page,
+                                                isActive && styles['pagination__page--active']
+                                            )}
+                                            after={item}
+                                            onClick={(event) => onEvent({
+                                                type: 'pageChange',
+                                                page: item - 1,
+                                                target: event.target
+                                            })}
+                                        />
+                                    );
+                                }
+                                return (
+                                    <Button
+                                        key={item}
+                                        size={'m'}
+                                        mode={'tertiary'}
+                                        after={'...'}
+                                        onClick={() => setJumpMode(item === 'ellipsis-left' ? 'left' : 'right')}
+                                    />
+                                );
+                            })
+                        )}
+                    </div>
+
+                    <Button
+                        size="m"
+                        mode="secondary"
+                        before={<Icon24ChevronCompactRight/>}
+                        disabled={page + 1 >= pageCount}
+                        onClick={(event) => onEvent({type: 'pageChange', page: page + 1, target: event.target})}
+                    />
+                </div>
+            </div>
+        </>
     );
 }
 

@@ -1,9 +1,8 @@
 .wrap {
     display: grid;
     grid-template-columns: minmax(0, 320px) 1fr;
-    height: calc(100% - 56px + var(--app-distance-empty));
+    height: calc(100% - (56px + var(--app-distance-empty)));
     gap: var(--app-distance-empty);
-    overflow: hidden;
 }
 
 .list {

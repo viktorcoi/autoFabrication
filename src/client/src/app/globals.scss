@@ -1,6 +1,12 @@
-//html[data-color-scheme="light"] {
-//	--vkui--color_background: #141414;
-//}
+html.vkui--vkCom--light {
+	--app-table-hover: #8cb9eb;
+	--app-table-selected: #b3d4f1;
+}
+
+html.vkui--vkCom--dark {
+	--app-table-hover: #919191 ;
+	--app-table-selected: #474747;
+}
 
 :root {
 	--app-border-radius: 12px;
@@ -70,8 +76,14 @@ body {
 		background: var(--vkui--color_transparent--active);
 		border-radius: var(--app-border-radius);
 	}
+
+	&::-webkit-scrollbar-corner {
+		background: inherit;
+	}
+
 	&::-webkit-scrollbar-button {
 		height: calc(var(--app-default-padding) / 2);
+		width: calc(var(--app-default-padding) / 2);
 	}
 }
 
