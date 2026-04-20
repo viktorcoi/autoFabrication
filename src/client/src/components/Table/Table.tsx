@@ -109,12 +109,26 @@ type ColumnDragInteraction = {
     ghostFrameId: number | null;
 } | null;
 
+type ColumnResizeInteraction = {
+    columnId: string;
+    startX: number;
+    startWidth: number;
+    currentWidth: number;
+    minWidth: number;
+    maxWidth: number;
+    frameId: number | null;
+} | null;
+
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
 const EMPTY_STATE = {
     title: 'Нет данных',
     description: '',
 };
 const DRAG_START_THRESHOLD = 4;
+const DEFAULT_COLUMN_SIZE = 180;
+const DEFAULT_COLUMN_MIN_SIZE = 120;
+const DEFAULT_COLUMN_MAX_SIZE = 520;
+const TABLE_TOTAL_WIDTH_CSS_VAR = '--table-total-width';
 
 const safeJsonParse = <T, >(value: string | null, fallback: T): T => {
     if (!value) {
@@ -260,6 +274,25 @@ const areSortingEqual = (left: SortingState, right: SortingState) => {
     return true;
 };
 
+const areColumnSizingEqual = (left: ColumnSizingState, right: ColumnSizingState) => {
+    const leftKeys = Object.keys(left);
+    const rightKeys = Object.keys(right);
+
+    if (leftKeys.length !== rightKeys.length) {
+        return false;
+    }
+
+    for (let index = 0; index < leftKeys.length; index += 1) {
+        const key = leftKeys[index];
+
+        if (left[key] !== right[key]) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 const moveColumnOrder = (order: string[], activeId: string, overId: string, placeAfter: boolean) => {
     if (!activeId || !overId || activeId === overId) {
         return order;
@@ -316,6 +349,50 @@ const renderContent = (content: React.ReactNode, className: string) => {
     return <div className={className}>{content}</div>;
 };
 
+const getColumnDefaultWidth = (column?: Column) => column?.size ?? DEFAULT_COLUMN_SIZE;
+
+const getColumnMinWidth = (column?: Column) => column?.minSize ?? DEFAULT_COLUMN_MIN_SIZE;
+
+const getColumnMaxWidth = (column?: Column) => column?.maxSize ?? DEFAULT_COLUMN_MAX_SIZE;
+
+const clampColumnWidth = (width: number, column?: Column) => {
+    return Math.min(getColumnMaxWidth(column), Math.max(getColumnMinWidth(column), Math.round(width)));
+};
+
+const getColumnWidthCssVarName = (columnId: string) => {
+    return `--table-column-${columnId.replace(/[^a-zA-Z0-9_-]/g, '_')}-width`;
+};
+
+const getResolvedColumnWidth = (column: Column, sizing: ColumnSizingState) => {
+    const explicitWidth = sizing[column.key];
+
+    if (typeof explicitWidth === 'number') {
+        return clampColumnWidth(explicitWidth, column);
+    }
+
+    return getColumnDefaultWidth(column);
+};
+
+const applyColumnSizingPreview = (
+    tableElement: HTMLTableElement | null,
+    columns: Column[],
+    sizing: ColumnSizingState,
+) => {
+    if (!tableElement) {
+        return;
+    }
+
+    let totalWidth = 0;
+
+    columns.forEach((column) => {
+        const width = getResolvedColumnWidth(column, sizing);
+        totalWidth += width;
+        tableElement.style.setProperty(getColumnWidthCssVarName(column.key), `${width}px`);
+    });
+
+    tableElement.style.setProperty(TABLE_TOTAL_WIDTH_CSS_VAR, `${totalWidth}px`);
+};
+
 const getStorageId = (tableId?: string, componentName?: string) => {
     if (tableId) {
         return tableId;
@@ -348,6 +425,7 @@ const Table = ({
     const storageId = useMemo(() => getStorageId(tableId, componentName), [componentName, tableId]);
     const settingsKey = useMemo(() => `table_settings_${storageId}`, [storageId]);
     const availableColumnIds = useMemo(() => columns.map((column) => column.key), [columns]);
+    const columnMap = useMemo(() => new Map(columns.map((column) => [column.key, column])), [columns]);
 
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => availableColumnIds);
@@ -373,10 +451,15 @@ const Table = ({
     });
     const sortingRef = useRef<SortingState>([]);
     const resolvedColumnOrderRef = useRef<string[]>(availableColumnIds);
+    const previewColumnOrderRef = useRef<string[]>(availableColumnIds);
+    const committedColumnSizingRef = useRef<ColumnSizingState>({});
+    const liveColumnSizingRef = useRef<ColumnSizingState>({});
     const pendingSortTargetRef = useRef<EventTarget | null>(null);
     const resizeActiveRef = useRef(false);
     const headerCellRefsRef = useRef<Record<string, HTMLTableCellElement | null>>({});
+    const tableRef = useRef<HTMLTableElement>(null);
     const dragInteractionRef = useRef<ColumnDragInteraction>(null);
+    const resizeInteractionRef = useRef<ColumnResizeInteraction>(null);
     const dragGhostRef = useRef<HTMLDivElement>(null);
     const bodyStyleSnapshotRef = useRef<{userSelect: string; cursor: string} | null>(null);
     const headerContextToggleRef = useRef<HTMLDivElement>(null);
@@ -392,9 +475,9 @@ const Table = ({
             id: column.key,
             accessorFn: (row) => row[column.key],
             header: () => column.header ?? '',
-            size: column.size ?? 180,
-            minSize: column.minSize ?? 120,
-            maxSize: column.maxSize ?? 520,
+            size: getColumnDefaultWidth(column),
+            minSize: getColumnMinWidth(column),
+            maxSize: getColumnMaxWidth(column),
             cell: (info) => {
                 if (column.render) {
                     return column.render(info.getValue(), info.row.original);
@@ -404,6 +487,64 @@ const Table = ({
             },
         }));
     }, [columns]);
+
+    const commitColumnSizing = (nextSizing: ColumnSizingState) => {
+        const normalizedSizing: ColumnSizingState = {};
+
+        columns.forEach((column) => {
+            const width = nextSizing[column.key];
+
+            if (typeof width !== 'number') {
+                return;
+            }
+
+            const normalizedWidth = clampColumnWidth(width, column);
+
+            if (normalizedWidth !== getColumnDefaultWidth(column)) {
+                normalizedSizing[column.key] = normalizedWidth;
+            }
+        });
+
+        const previousSizing = committedColumnSizingRef.current;
+        committedColumnSizingRef.current = normalizedSizing;
+        liveColumnSizingRef.current = {...normalizedSizing};
+        applyColumnSizingPreview(tableRef.current, columns, normalizedSizing);
+
+        if (!areColumnSizingEqual(previousSizing, normalizedSizing)) {
+            setColumnSizing(normalizedSizing);
+        }
+    };
+
+    const applyPreviewColumnOrder = (nextOrder: string[]) => {
+        const tableElement = tableRef.current;
+
+        if (!tableElement) {
+            return;
+        }
+
+        const rows = tableElement.querySelectorAll('thead tr, tbody tr');
+
+        rows.forEach((row) => {
+            const cells = Array.from(row.children).filter(
+                (cell): cell is HTMLTableCellElement =>
+                    cell instanceof HTMLTableCellElement && typeof cell.dataset.columnId === 'string',
+            );
+
+            if (cells.length === 0) {
+                return;
+            }
+
+            const cellsByColumnId = new Map(cells.map((cell) => [cell.dataset.columnId as string, cell]));
+
+            nextOrder.forEach((columnId) => {
+                const cell = cellsByColumnId.get(columnId);
+
+                if (cell) {
+                    row.appendChild(cell);
+                }
+            });
+        });
+    };
 
     const applySorting = (nextSorting: SortingState, target: EventTarget | null) => {
         if (areSortingEqual(sortingRef.current, nextSorting)) {
@@ -437,11 +578,11 @@ const Table = ({
         onColumnSizingChange: setColumnSizing,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        columnResizeMode: 'onChange',
+        columnResizeMode: 'onEnd',
         defaultColumn: {
-            size: 180,
-            minSize: 120,
-            maxSize: 520,
+            size: DEFAULT_COLUMN_SIZE,
+            minSize: DEFAULT_COLUMN_MIN_SIZE,
+            maxSize: DEFAULT_COLUMN_MAX_SIZE,
         },
         getRowId: (row, index) => {
             if (getRowId) {
@@ -482,7 +623,17 @@ const Table = ({
 
     useEffect(() => {
         resolvedColumnOrderRef.current = resolvedColumnOrder;
+
+        if (!dragInteractionRef.current?.started) {
+            previewColumnOrderRef.current = resolvedColumnOrder;
+        }
     }, [resolvedColumnOrder]);
+
+    useEffect(() => {
+        committedColumnSizingRef.current = columnSizing;
+        liveColumnSizingRef.current = {...columnSizing};
+        applyColumnSizingPreview(tableRef.current, columns, columnSizing);
+    }, [columnSizing, columns]);
 
     useEffect(() => {
         const storedSettings = getStoredSettings(settingsKey);
@@ -511,6 +662,9 @@ const Table = ({
         setSettingsReady(false);
         sortingRef.current = nextSorting;
         resolvedColumnOrderRef.current = [...storedOrder, ...missingColumnIds];
+        previewColumnOrderRef.current = [...storedOrder, ...missingColumnIds];
+        committedColumnSizingRef.current = nextSizing;
+        liveColumnSizingRef.current = {...nextSizing};
         setSorting(nextSorting);
         setColumnOrder([...storedOrder, ...missingColumnIds]);
         setColumnSizing(nextSizing);
@@ -569,10 +723,56 @@ const Table = ({
         setJumpValue(String(currentPage));
     }, [currentPage]);
 
+    const restoreBodyInteractionStyles = () => {
+        if (!bodyStyleSnapshotRef.current) {
+            return;
+        }
+
+        document.body.style.userSelect = bodyStyleSnapshotRef.current.userSelect;
+        document.body.style.cursor = bodyStyleSnapshotRef.current.cursor;
+        bodyStyleSnapshotRef.current = null;
+    };
+
+    const startBodyInteractionStyles = (cursor: string) => {
+        if (!bodyStyleSnapshotRef.current) {
+            bodyStyleSnapshotRef.current = {
+                userSelect: document.body.style.userSelect,
+                cursor: document.body.style.cursor,
+            };
+        }
+
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = cursor;
+    };
+
+    const stopColumnResizing = useEffectEvent((shouldCommit: boolean) => {
+        const interaction = resizeInteractionRef.current;
+
+        if (interaction && interaction.frameId !== null) {
+            window.cancelAnimationFrame(interaction.frameId);
+        }
+
+        if (interaction && shouldCommit) {
+            commitColumnSizing({
+                ...committedColumnSizingRef.current,
+                [interaction.columnId]: interaction.currentWidth,
+            });
+        } else {
+            liveColumnSizingRef.current = {...committedColumnSizingRef.current};
+            applyColumnSizingPreview(tableRef.current, columns, committedColumnSizingRef.current);
+        }
+
+        resizeInteractionRef.current = null;
+        setResizingColumnId(null);
+        resizeActiveRef.current = false;
+        restoreBodyInteractionStyles();
+    });
+
     useEffect(() => {
         const onMouseUp = () => {
-            setResizingColumnId(null);
-            resizeActiveRef.current = false;
+            if (resizeInteractionRef.current) {
+                stopColumnResizing(true);
+            }
 
             if (!selectionStateRef.current.active) {
                 return;
@@ -604,18 +804,10 @@ const Table = ({
         return () => window.removeEventListener('mouseup', onMouseUp);
     }, []);
 
-    const clearBodyDragStyles = useEffectEvent(() => {
-        if (!bodyStyleSnapshotRef.current) {
-            return;
-        }
-
-        document.body.style.userSelect = bodyStyleSnapshotRef.current.userSelect;
-        document.body.style.cursor = bodyStyleSnapshotRef.current.cursor;
-        bodyStyleSnapshotRef.current = null;
-    });
-
-    const stopColumnDragging = useEffectEvent(() => {
+    const stopColumnDragging = useEffectEvent((shouldCommit: boolean) => {
         const interaction = dragInteractionRef.current;
+        const committedOrder = resolvedColumnOrderRef.current;
+        const previewOrder = previewColumnOrderRef.current;
 
         if (interaction && interaction.ghostFrameId !== null) {
             window.cancelAnimationFrame(interaction.ghostFrameId);
@@ -624,7 +816,22 @@ const Table = ({
         dragInteractionRef.current = null;
         setDraggingColumnId(null);
         setDragGhost(null);
-        clearBodyDragStyles();
+        restoreBodyInteractionStyles();
+
+        if (shouldCommit) {
+            if (!areArraysEqual(previewOrder, committedOrder)) {
+                resolvedColumnOrderRef.current = previewOrder;
+                setColumnOrder(previewOrder);
+            }
+
+            return;
+        }
+
+        previewColumnOrderRef.current = committedOrder;
+
+        if (!areArraysEqual(previewOrder, committedOrder)) {
+            applyPreviewColumnOrder(committedOrder);
+        }
     });
 
     const scheduleGhostPosition = useEffectEvent((clientX: number) => {
@@ -655,6 +862,38 @@ const Table = ({
         });
     });
 
+    const scheduleResizePreview = useEffectEvent((nextWidth: number) => {
+        const interaction = resizeInteractionRef.current;
+
+        if (!interaction) {
+            return;
+        }
+
+        interaction.currentWidth = nextWidth;
+
+        if (interaction.frameId !== null) {
+            return;
+        }
+
+        interaction.frameId = window.requestAnimationFrame(() => {
+            const nextInteraction = resizeInteractionRef.current;
+
+            if (!nextInteraction) {
+                return;
+            }
+
+            nextInteraction.frameId = null;
+
+            const nextSizing = {
+                ...committedColumnSizingRef.current,
+                [nextInteraction.columnId]: nextInteraction.currentWidth,
+            };
+
+            liveColumnSizingRef.current = nextSizing;
+            applyColumnSizingPreview(tableRef.current, columns, nextSizing);
+        });
+    });
+
     const reorderDraggedColumn = useEffectEvent((clientX: number) => {
         const interaction = dragInteractionRef.current;
 
@@ -662,7 +901,7 @@ const Table = ({
             return;
         }
 
-        const currentOrder = resolvedColumnOrderRef.current;
+        const currentOrder = previewColumnOrderRef.current;
         let nextOrder = currentOrder;
         let currentIndex = nextOrder.indexOf(interaction.columnId);
 
@@ -707,15 +946,36 @@ const Table = ({
         }
 
         if (!areArraysEqual(nextOrder, currentOrder)) {
-            resolvedColumnOrderRef.current = nextOrder;
-            setColumnOrder(nextOrder);
+            previewColumnOrderRef.current = nextOrder;
+            applyPreviewColumnOrder(nextOrder);
         }
+    });
+
+    const handleResizeMouseMove = useEffectEvent((event: MouseEvent) => {
+        const interaction = resizeInteractionRef.current;
+
+        if (!interaction) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const nextWidth = Math.min(
+            interaction.maxWidth,
+            Math.max(interaction.minWidth, Math.round(interaction.startWidth + (event.clientX - interaction.startX))),
+        );
+
+        if (nextWidth === interaction.currentWidth) {
+            return;
+        }
+
+        scheduleResizePreview(nextWidth);
     });
 
     const handleColumnMouseMove = useEffectEvent((event: MouseEvent) => {
         const interaction = dragInteractionRef.current;
 
-        if (!interaction) {
+        if (!interaction || resizeInteractionRef.current) {
             return;
         }
 
@@ -728,12 +988,8 @@ const Table = ({
             }
 
             interaction.started = true;
-            bodyStyleSnapshotRef.current = {
-                userSelect: document.body.style.userSelect,
-                cursor: document.body.style.cursor,
-            };
-            document.body.style.userSelect = 'none';
-            document.body.style.cursor = 'grabbing';
+            previewColumnOrderRef.current = resolvedColumnOrderRef.current;
+            startBodyInteractionStyles('grabbing');
             setDraggingColumnId(interaction.columnId);
             setDragGhost({
                 columnId: interaction.columnId,
@@ -760,7 +1016,7 @@ const Table = ({
         const columnId = interaction.columnId;
         const target = interaction.target;
 
-        stopColumnDragging();
+        stopColumnDragging(interaction.started);
 
         if (!shouldToggleSort || event.button !== 0) {
             return;
@@ -771,19 +1027,23 @@ const Table = ({
     });
 
     const handleWindowBlur = useEffectEvent(() => {
-        if (!dragInteractionRef.current) {
-            return;
+        if (resizeInteractionRef.current) {
+            stopColumnResizing(true);
         }
 
-        stopColumnDragging();
+        if (dragInteractionRef.current) {
+            stopColumnDragging(Boolean(dragInteractionRef.current.started));
+        }
     });
 
     useEffect(() => {
+        window.addEventListener('mousemove', handleResizeMouseMove);
         window.addEventListener('mousemove', handleColumnMouseMove);
         window.addEventListener('mouseup', handleColumnMouseUp);
         window.addEventListener('blur', handleWindowBlur);
 
         return () => {
+            window.removeEventListener('mousemove', handleResizeMouseMove);
             window.removeEventListener('mousemove', handleColumnMouseMove);
             window.removeEventListener('mouseup', handleColumnMouseUp);
             window.removeEventListener('blur', handleWindowBlur);
@@ -871,23 +1131,20 @@ const Table = ({
             sortingRef.current.filter((item) => item.id !== columnId),
             null,
         );
-
-        setColumnSizing((previousSizing) => {
-            if (!(columnId in previousSizing)) {
-                return previousSizing;
-            }
-
-            const nextSizing = {...previousSizing};
-            delete nextSizing[columnId];
-            return nextSizing;
-        });
+        const nextSizing = {...committedColumnSizingRef.current};
+        delete nextSizing[columnId];
+        commitColumnSizing(nextSizing);
     };
 
     const resetTableSettings = () => {
+        const nextColumnOrder = columns.map((column) => column.key);
+
         applySorting([], null);
-        setColumnSizing({});
-        resolvedColumnOrderRef.current = columns.map((column) => column.key);
-        setColumnOrder(columns.map((column) => column.key));
+        commitColumnSizing({});
+        resolvedColumnOrderRef.current = nextColumnOrder;
+        previewColumnOrderRef.current = nextColumnOrder;
+        applyPreviewColumnOrder(nextColumnOrder);
+        setColumnOrder(nextColumnOrder);
         setSelectedRowIds([]);
         selectedRowIdsRef.current = [];
         selectionAnchorRowIdRef.current = null;
@@ -917,8 +1174,38 @@ const Table = ({
         });
     };
 
+    const beginColumnResize = (columnId: string, event: React.MouseEvent<HTMLDivElement>) => {
+        if (loading || event.button !== 0 || dragInteractionRef.current || resizeActiveRef.current) {
+            return;
+        }
+
+        const cell = headerCellRefsRef.current[columnId];
+
+        if (!cell) {
+            return;
+        }
+
+        const column = columnMap.get(columnId);
+        const startWidth = clampColumnWidth(cell.getBoundingClientRect().width, column);
+
+        resizeInteractionRef.current = {
+            columnId,
+            startX: event.clientX,
+            startWidth,
+            currentWidth: startWidth,
+            minWidth: getColumnMinWidth(column),
+            maxWidth: getColumnMaxWidth(column),
+            frameId: null,
+        };
+        resizeActiveRef.current = true;
+        setResizingColumnId(columnId);
+        startBodyInteractionStyles('col-resize');
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
     const beginColumnInteraction = (columnId: string, event: React.MouseEvent<HTMLDivElement>) => {
-        if (loading || event.button !== 0 || resizeActiveRef.current) {
+        if (loading || event.button !== 0 || resizeActiveRef.current || resizeInteractionRef.current) {
             return;
         }
 
@@ -943,6 +1230,7 @@ const Table = ({
             target: event.target,
             ghostFrameId: null,
         };
+        previewColumnOrderRef.current = resolvedColumnOrderRef.current;
 
         event.preventDefault();
     };
@@ -963,7 +1251,11 @@ const Table = ({
                         draggingColumnId && styles.scrollDragging,
                     )}
                 >
-                    <table className={styles.table} style={{width: table.getTotalSize()}}>
+                    <table
+                        ref={tableRef}
+                        className={styles.table}
+                        style={{width: `var(${TABLE_TOTAL_WIDTH_CSS_VAR}, ${table.getTotalSize()}px)`}}
+                    >
                         <thead>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <tr key={headerGroup.id}>
@@ -978,6 +1270,7 @@ const Table = ({
                                             ref={(element) => {
                                                 headerCellRefsRef.current[columnId] = element;
                                             }}
+                                            data-column-id={columnId}
                                             data-cell-key={`h:${header.id}`}
                                             className={classNames(
                                                 styles.headerCell,
@@ -985,7 +1278,7 @@ const Table = ({
                                                 isDragging && styles.headerCellActiveDrag,
                                                 isResizing && styles.headerCellResizing,
                                             )}
-                                            style={{width: header.getSize()}}
+                                            style={{width: `var(${getColumnWidthCssVarName(columnId)}, ${header.getSize()}px)`}}
                                             onContextMenu={(event) => {
                                                 event.preventDefault();
                                                 setHeaderContextColumnId(columnId);
@@ -1020,16 +1313,7 @@ const Table = ({
                                                 <div
                                                     className={styles.resizeHandle}
                                                     onMouseDown={(event) => {
-                                                        event.stopPropagation();
-                                                        resizeActiveRef.current = true;
-                                                        setResizingColumnId(columnId);
-                                                        header.getResizeHandler()(event);
-                                                    }}
-                                                    onTouchStart={(event) => {
-                                                        event.stopPropagation();
-                                                        resizeActiveRef.current = true;
-                                                        setResizingColumnId(columnId);
-                                                        header.getResizeHandler()(event);
+                                                        beginColumnResize(columnId, event);
                                                     }}
                                                 />
                                             )}
@@ -1088,13 +1372,14 @@ const Table = ({
                                             return (
                                                 <td
                                                     key={cell.id}
+                                                    data-column-id={columnId}
                                                     data-cell-key={`c:${cell.id}`}
                                                     className={classNames(
                                                         styles.bodyCell,
                                                         isDragging && styles.bodyCellActiveDrag,
                                                         isResizing && styles.bodyCellResizing,
                                                     )}
-                                                    style={{width: cell.column.getSize()}}
+                                                    style={{width: `var(${getColumnWidthCssVarName(columnId)}, ${cell.column.getSize()}px)`}}
                                                     onClick={(event) => {
                                                         if (isInteractiveTarget(event.target) && event.target !== event.currentTarget) {
                                                             return;
