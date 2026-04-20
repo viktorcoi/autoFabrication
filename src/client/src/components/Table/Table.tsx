@@ -4,11 +4,9 @@ import {
     type ColumnDef,
     type ColumnOrderState,
     type ColumnSizingState,
-    type SortingState,
     flexRender,
     functionalUpdate,
     getCoreRowModel,
-    getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
 import {
@@ -34,7 +32,7 @@ import {
     applyColumnSizingPreview,
     areArraysEqual,
     areColumnSizingEqual,
-    areSortingEqual,
+    areSortingsEqual,
     buildPagination,
     clampColumnWidth,
     DEFAULT_COLUMN_MAX_SIZE,
@@ -54,8 +52,11 @@ import {
     moveColumnOrder,
     PAGE_SIZE_OPTIONS,
     removeStoredSettings,
+    restoreColumnOrderFromDefaults,
     saveStoredSettings,
+    sortingStateToTableSorting,
     TABLE_TOTAL_WIDTH_CSS_VAR,
+    tableSortingToSortingState,
 } from './helpers';
 import styles from './Table.module.scss';
 import type {
@@ -65,6 +66,7 @@ import type {
     DragGhostState,
     TableProps,
     TableRow,
+    TableSorting,
     TableSettings,
 } from './types';
 
@@ -113,7 +115,7 @@ const Table = (props: TableProps) => {
     const availableColumnIds = useMemo(() => columns.map((column) => column.key), [columns]);
     const columnMap = useMemo(() => new Map(columns.map((column) => [column.key, column])), [columns]);
 
-    const [sorting, setSorting] = useState<SortingState>([]);
+    const [sorting, setSorting] = useState<TableSorting>(null);
     const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => availableColumnIds);
     const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
     const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
@@ -135,7 +137,7 @@ const Table = (props: TableProps) => {
         dirty: false,
         target: null as EventTarget | null,
     });
-    const sortingRef = useRef<SortingState>([]);
+    const sortingRef = useRef<TableSorting>(null);
     const resolvedColumnOrderRef = useRef<string[]>(availableColumnIds);
     const previewColumnOrderRef = useRef<string[]>(availableColumnIds);
     const committedColumnSizingRef = useRef<ColumnSizingState>({});
@@ -232,8 +234,10 @@ const Table = (props: TableProps) => {
         });
     };
 
-    const applySorting = (nextSorting: SortingState, target: EventTarget | null) => {
-        if (areSortingEqual(sortingRef.current, nextSorting)) {
+    const tableSortingState = useMemo(() => tableSortingToSortingState(sorting), [sorting]);
+
+    const applySorting = (nextSorting: TableSorting, target: EventTarget | null, force = false) => {
+        if (!force && areSortingsEqual(sortingRef.current, nextSorting)) {
             pendingSortTargetRef.current = null;
             return;
         }
@@ -252,18 +256,20 @@ const Table = (props: TableProps) => {
         data,
         columns: tableColumns,
         state: {
-            sorting,
+            sorting: tableSortingState,
             columnOrder: resolvedColumnOrder,
             columnSizing,
         },
+        manualSorting: true,
         onSortingChange: (updater) => {
-            const nextSorting = functionalUpdate(updater, sortingRef.current);
+            const nextSorting = sortingStateToTableSorting(
+                functionalUpdate(updater, tableSortingToSortingState(sortingRef.current)),
+            );
             applySorting(nextSorting, pendingSortTargetRef.current);
         },
         onColumnOrderChange: setColumnOrder,
         onColumnSizingChange: setColumnSizing,
         getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
         columnResizeMode: 'onEnd',
         defaultColumn: {
             size: DEFAULT_COLUMN_SIZE,
@@ -323,16 +329,23 @@ const Table = (props: TableProps) => {
 
     useEffect(() => {
         const storedSettings = getStoredSettings(settingsKey);
-        const nextSorting = storedSettings
-            .filter(
-                (item) =>
-                    availableColumnIds.includes(item.key)
-                    && (item.settings.sort === 'asc' || item.settings.sort === 'desc'),
-            )
-            .map((item) => ({
-                id: item.key,
-                desc: item.settings.sort === 'desc',
-            }));
+        const nextSorting = storedSettings.reduce<TableSorting>((result, item) => {
+            if (result) {
+                return result;
+            }
+
+            if (
+                availableColumnIds.includes(item.key)
+                && (item.settings.sort === 'asc' || item.settings.sort === 'desc')
+            ) {
+                return {
+                    id: item.key,
+                    sort: item.settings.sort,
+                };
+            }
+
+            return null;
+        }, null);
         const storedOrder = storedSettings
             .map((item) => item.key)
             .filter((columnId) => availableColumnIds.includes(columnId));
@@ -354,6 +367,15 @@ const Table = (props: TableProps) => {
         setSorting(nextSorting);
         setColumnOrder([...storedOrder, ...missingColumnIds]);
         setColumnSizing(nextSizing);
+
+        if (nextSorting) {
+            onEventRef.current({
+                type: 'sortChange',
+                sorting: nextSorting,
+                target: null,
+            });
+        }
+
         setSelectedRowIds([]);
         selectedRowIdsRef.current = [];
         selectionAnchorRowIdRef.current = null;
@@ -368,17 +390,11 @@ const Table = (props: TableProps) => {
         }
 
         const timeoutId = window.setTimeout(() => {
-            const sortMap = new Map<string, 'asc' | 'desc'>();
-
-            sorting.forEach((item) => {
-                sortMap.set(item.id, item.desc ? 'desc' : 'asc');
-            });
-
             const payload: TableSettings = resolvedColumnOrder.map((columnId) => ({
                 key: columnId,
                 settings: {
                     width: typeof columnSizing[columnId] === 'number' ? columnSizing[columnId] : undefined,
-                    sort: sortMap.get(columnId) ?? null,
+                    sort: sorting?.id === columnId ? sorting.sort : null,
                 },
             }));
 
@@ -779,11 +795,12 @@ const Table = (props: TableProps) => {
             return;
         }
 
+        const selectionChanged = setSelectedRows(getNextRowSelection(rowId, event));
+
         event.preventDefault();
         selectionStateRef.current.active = true;
         selectionStateRef.current.target = event.target;
-        selectionStateRef.current.dirty = true;
-        setSelectedRows(getNextRowSelection(rowId, event));
+        selectionStateRef.current.dirty = selectionChanged;
     };
 
     const extendSelection = (rowId: string, target: EventTarget | null) => {
@@ -813,19 +830,32 @@ const Table = (props: TableProps) => {
     };
 
     const resetCurrentColumnSettings = (columnId: string) => {
-        applySorting(
-            sortingRef.current.filter((item) => item.id !== columnId),
-            null,
-        );
+        if (sortingRef.current?.id === columnId) {
+            applySorting(null, null);
+        }
+
         const nextSizing = {...committedColumnSizingRef.current};
         delete nextSizing[columnId];
         commitColumnSizing(nextSizing);
+
+        const nextColumnOrder = restoreColumnOrderFromDefaults(
+            resolvedColumnOrderRef.current,
+            availableColumnIds,
+            columnId,
+        );
+
+        if (!areArraysEqual(nextColumnOrder, resolvedColumnOrderRef.current)) {
+            resolvedColumnOrderRef.current = nextColumnOrder;
+            previewColumnOrderRef.current = nextColumnOrder;
+            applyPreviewColumnOrder(nextColumnOrder);
+            setColumnOrder(nextColumnOrder);
+        }
     };
 
     const resetTableSettings = () => {
         const nextColumnOrder = columns.map((column) => column.key);
 
-        applySorting([], null);
+        applySorting(null, null);
         commitColumnSizing({});
         resolvedColumnOrderRef.current = nextColumnOrder;
         previewColumnOrderRef.current = nextColumnOrder;
@@ -1033,8 +1063,19 @@ const Table = (props: TableProps) => {
                                                     return;
                                                 }
 
+                                                    onEventRef.current({
+                                                        type: 'rowClick',
+                                                    row: row.original,
+                                                    target: event.target,
+                                                });
+                                            }}
+                                            onDoubleClick={(event) => {
+                                                if (isInteractiveTarget(event.target)) {
+                                                    return;
+                                                }
+
                                                 onEventRef.current({
-                                                    type: 'rowClick',
+                                                    type: 'rowDoubleClick',
                                                     row: row.original,
                                                     target: event.target,
                                                 });
@@ -1073,16 +1114,34 @@ const Table = (props: TableProps) => {
                                                                 target: event.target,
                                                             });
                                                         }}
+                                                        onDoubleClick={(event) => {
+                                                            if (isInteractiveTarget(event.target) && event.target !== event.currentTarget) {
+                                                                return;
+                                                            }
+
+                                                            event.stopPropagation();
+
+                                                            onEventRef.current({
+                                                                type: 'cellDoubleClick',
+                                                                row: row.original,
+                                                                column: columnId,
+                                                                value: cell.getValue(),
+                                                                event,
+                                                                target: event.target,
+                                                            });
+                                                        }}
                                                         onContextMenu={(event) => {
                                                             event.preventDefault();
 
                                                             const nextSelection = getNextRowSelection(row.id, event);
-                                                            setSelectedRows(nextSelection);
+                                                            const selectionChanged = setSelectedRows(nextSelection);
                                                             selectionStateRef.current.active = false;
                                                             selectionStateRef.current.dirty = false;
                                                             selectionStateRef.current.target = null;
 
-                                                            emitSelectedRows(event.target);
+                                                            if (selectionChanged) {
+                                                                emitSelectedRows(event.target);
+                                                            }
 
                                                             onEventRef.current({
                                                                 type: 'contextMenu',
@@ -1097,7 +1156,7 @@ const Table = (props: TableProps) => {
                                                             {renderContent(renderedCell, styles.cellText)}
                                                         </Text>
                                                     </td>
-                                                );
+                                                )
                                             })}
                                         </tr>
                                     );
@@ -1179,14 +1238,12 @@ const Table = (props: TableProps) => {
                         }}
                     />
                     <ActionSheet
-                        onClosed={() => undefined}
-                        onClose={() => setHeaderContextColumnId(null)}
+                        onClosed={() => setHeaderContextColumnId(null)}
                         toggleRef={headerContextToggleRef}
                     >
                         <ActionSheetItem
                             onClick={() => {
-                                applySorting([], null);
-                                setHeaderContextColumnId(null);
+                                applySorting(null, null, true);
                             }}
                         >
                             Сбросить сортировку
@@ -1194,7 +1251,6 @@ const Table = (props: TableProps) => {
                         <ActionSheetItem
                             onClick={() => {
                                 resetTableSettings();
-                                setHeaderContextColumnId(null);
                             }}
                         >
                             Сбросить настройки таблицы
@@ -1204,7 +1260,6 @@ const Table = (props: TableProps) => {
                                 if (headerContextColumnId) {
                                     resetCurrentColumnSettings(headerContextColumnId);
                                 }
-                                setHeaderContextColumnId(null);
                             }}
                         >
                             Сбросить настройки колонки

@@ -1,4 +1,3 @@
-import type {SortingState} from '@tanstack/react-table';
 import type {MouseEvent as ReactMouseEvent, ReactNode} from 'react';
 
 export type TableRow = Record<string, unknown>;
@@ -16,10 +15,23 @@ type TableEventMeta = {
     target: EventTarget | null;
 };
 
+export type TableSorting = {
+    id: string;
+    sort: 'asc' | 'desc';
+} | null;
+
 export type TableEvent =
     | ({type: 'rowClick'; row: TableRow} & TableEventMeta)
+    | ({type: 'rowDoubleClick'; row: TableRow} & TableEventMeta)
     | ({
     type: 'cellClick';
+    row: TableRow;
+    column: string;
+    value: unknown;
+    event: ReactMouseEvent<HTMLTableCellElement>;
+} & TableEventMeta)
+    | ({
+    type: 'cellDoubleClick';
     row: TableRow;
     column: string;
     value: unknown;
@@ -28,7 +40,7 @@ export type TableEvent =
     | ({type: 'contextMenu'; row: TableRow; column: string; value: unknown} & TableEventMeta)
     | ({type: 'pageChange'; page: number} & TableEventMeta)
     | ({type: 'rowsChange'; rows: number} & TableEventMeta)
-    | ({type: 'sortChange'; sorting: SortingState} & TableEventMeta)
+    | ({type: 'sortChange'; sorting: TableSorting} & TableEventMeta)
     | ({type: 'selected'; rowIds: string[]; rows: TableRow[]} & TableEventMeta);
 
 export type TableEmptyState = {

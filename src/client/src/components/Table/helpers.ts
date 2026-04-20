@@ -1,5 +1,5 @@
 import type {ColumnSizingState, SortingState} from '@tanstack/react-table';
-import type {Column, PaginationItem, TableRow, TableSettings} from './types';
+import type {Column, PaginationItem, TableRow, TableSettings, TableSorting} from './types';
 
 export const PAGE_SIZE_OPTIONS = [20, 50, 100];
 export const EMPTY_STATE = {
@@ -142,18 +142,16 @@ export const areArraysEqual = (left: string[], right: string[]) => {
     return true;
 };
 
-export const areSortingEqual = (left: SortingState, right: SortingState) => {
-    if (left.length !== right.length) {
+export const areSortingsEqual = (left: TableSorting, right: TableSorting) => {
+    if (left === right) {
+        return true;
+    }
+
+    if (!left || !right) {
         return false;
     }
 
-    for (let index = 0; index < left.length; index += 1) {
-        if (left[index].id !== right[index].id || left[index].desc !== right[index].desc) {
-            return false;
-        }
-    }
-
-    return true;
+    return left.id === right.id && left.sort === right.sort;
 };
 
 export const areColumnSizingEqual = (left: ColumnSizingState, right: ColumnSizingState) => {
@@ -189,6 +187,63 @@ export const moveColumnOrder = (order: string[], activeId: string, overId: strin
 
     nextOrder.splice(placeAfter ? targetIndex + 1 : targetIndex, 0, activeId);
     return areArraysEqual(nextOrder, order) ? order : nextOrder;
+};
+
+export const restoreColumnOrderFromDefaults = (order: string[], defaultOrder: string[], columnId: string) => {
+    const orderWithoutColumn = order.filter((value) => value !== columnId);
+    const defaultIndex = defaultOrder.indexOf(columnId);
+
+    if (defaultIndex < 0) {
+        return order;
+    }
+
+    for (let index = defaultIndex - 1; index >= 0; index -= 1) {
+        const previousColumnId = defaultOrder[index];
+        const previousOrderIndex = orderWithoutColumn.indexOf(previousColumnId);
+
+        if (previousOrderIndex >= 0) {
+            const nextOrder = [...orderWithoutColumn];
+            nextOrder.splice(previousOrderIndex + 1, 0, columnId);
+            return areArraysEqual(nextOrder, order) ? order : nextOrder;
+        }
+    }
+
+    for (let index = defaultIndex + 1; index < defaultOrder.length; index += 1) {
+        const nextColumnId = defaultOrder[index];
+        const nextOrderIndex = orderWithoutColumn.indexOf(nextColumnId);
+
+        if (nextOrderIndex >= 0) {
+            const nextOrder = [...orderWithoutColumn];
+            nextOrder.splice(nextOrderIndex, 0, columnId);
+            return areArraysEqual(nextOrder, order) ? order : nextOrder;
+        }
+    }
+
+    return [...orderWithoutColumn, columnId];
+};
+
+export const tableSortingToSortingState = (sorting: TableSorting): SortingState => {
+    if (!sorting) {
+        return [];
+    }
+
+    return [{
+        id: sorting.id,
+        desc: sorting.sort === 'desc',
+    }];
+};
+
+export const sortingStateToTableSorting = (sortingState: SortingState): TableSorting => {
+    const item = sortingState[0];
+
+    if (!item) {
+        return null;
+    }
+
+    return {
+        id: item.id,
+        sort: item.desc ? 'desc' : 'asc',
+    };
 };
 
 export const getDefaultRowId = (row: TableRow, index: number) => {
