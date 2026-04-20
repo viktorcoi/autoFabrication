@@ -218,27 +218,35 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                         );
                                     } else if (columnType === 'boolean') {
                                         cellContent = (
-                                            <Checkbox
+                                            <span
+                                                data-table-ignore-row={true}
                                                 data-table-ignore-hover={true}
-                                                className={styles.checkbox}
-                                                key={`${row.id}:${columnId}:${checkboxValue ? '1' : '0'}`}
-                                                defaultChecked={checkboxValue}
-                                                disabled={loading || disabled}
+                                                className={styles.checkboxWrap}
                                                 onMouseDown={(event) => event.stopPropagation()}
                                                 onClick={(event) => event.stopPropagation()}
                                                 onDoubleClick={(event) => event.stopPropagation()}
-                                                onChange={(event) => {
-                                                    event.stopPropagation();
-                                                    emitBooleanChange({
-                                                        row: row.original,
-                                                        column: columnId,
-                                                        value: cellValue,
-                                                        event,
-                                                        target: event.target,
-                                                        nextValue: event.target.checked,
-                                                    });
-                                                }}
-                                            />
+                                            >
+                                                <Checkbox
+                                                    className={styles.checkbox}
+                                                    key={`${row.id}:${columnId}:${checkboxValue ? '1' : '0'}`}
+                                                    defaultChecked={checkboxValue}
+                                                    disabled={loading || disabled}
+                                                    onMouseDown={(event) => event.stopPropagation()}
+                                                    onClick={(event) => event.stopPropagation()}
+                                                    onDoubleClick={(event) => event.stopPropagation()}
+                                                    onChange={(event) => {
+                                                        event.stopPropagation();
+                                                        emitBooleanChange({
+                                                            row: row.original,
+                                                            column: columnId,
+                                                            value: cellValue,
+                                                            event,
+                                                            target: event.target,
+                                                            nextValue: event.target.checked,
+                                                        });
+                                                    }}
+                                                />
+                                            </span>
                                         );
                                     } else {
                                         cellContent = (

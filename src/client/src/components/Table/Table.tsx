@@ -950,8 +950,6 @@ const Table = (props: TableProps) => {
         previewColumnOrderRef.current = nextColumnOrder;
         applyPreviewColumnOrder(nextColumnOrder);
         setColumnOrder(nextColumnOrder);
-        commitSelectedRows([]);
-        selectionAnchorRowIdRef.current = null;
         selectionStateRef.current.active = false;
         selectionStateRef.current.dirty = false;
         removeStoredSettings(settingsKey);
