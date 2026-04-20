@@ -16,6 +16,21 @@
     }
 }
 
+.plug {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    &--drug {
+        cursor: move;
+    }
+    &--resize {
+        cursor: col-resize;
+    }
+}
+
 .scrollDragging .resizeHandle {
     pointer-events: none;
 }
@@ -47,13 +62,17 @@
 .headerCell:first-child {
     border-left: 0;
 }
-
-.headerCellDragging {
-    opacity: 0.45;
-}
-
 .headerCellResizing {
     box-shadow: inset -2px 0 0 0 var(--vkui--color_stroke_accent_themed);
+}
+
+.headerCellActiveDrag::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: var(--vkui--color_accent_azure);
+    opacity: .2;
 }
 
 .headerInner {
@@ -121,10 +140,20 @@
 }
 
 .bodyCell {
+    position: relative;
     border-right: 1px solid var(--vkui--color_separator_primary);
     padding: 10px 10px 10px 15px;
     vertical-align: middle;
     text-align: left;
+}
+
+.bodyCellActiveDrag::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: var(--vkui--color_accent_azure);
+    opacity: .2;
 }
 
 .bodyCellResizing {
@@ -168,16 +197,11 @@
     left: 0;
     top: 0;
     z-index: 10000;
-    box-sizing: border-box;
     border: 1px solid var(--vkui--color_separator_primary);
-    border-radius: 10px;
-    background: var(--vkui--color_background_secondary);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
-    display: block;
+    border-radius: var(--app-border-radius);
+    background: var(--vkui--color_background_content--hover);
     pointer-events: none;
     overflow: hidden;
-    opacity: 0.98;
-    will-change: left, top;
 }
 
 .dragGhost .headerInner {

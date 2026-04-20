@@ -739,7 +739,7 @@ const Table = ({
                 columnId: interaction.columnId,
                 width: interaction.width,
                 height: interaction.height,
-                top: interaction.top,
+                top: interaction.top + 1,
                 left: interaction.startX - interaction.offsetX,
             });
         }
@@ -982,6 +982,7 @@ const Table = ({
                                             className={classNames(
                                                 styles.headerCell,
                                                 isDragging && styles.headerCellDragging,
+                                                isDragging && styles.headerCellActiveDrag,
                                                 isResizing && styles.headerCellResizing,
                                             )}
                                             style={{width: header.getSize()}}
@@ -1081,6 +1082,7 @@ const Table = ({
                                         {row.getVisibleCells().map((cell) => {
                                             const columnId = cell.column.id;
                                             const renderedCell = flexRender(cell.column.columnDef.cell, cell.getContext());
+                                            const isDragging = draggingColumnId === columnId;
                                             const isResizing = resizingColumnId === columnId;
 
                                             return (
@@ -1089,6 +1091,7 @@ const Table = ({
                                                     data-cell-key={`c:${cell.id}`}
                                                     className={classNames(
                                                         styles.bodyCell,
+                                                        isDragging && styles.bodyCellActiveDrag,
                                                         isResizing && styles.bodyCellResizing,
                                                     )}
                                                     style={{width: cell.column.getSize()}}
@@ -1148,6 +1151,13 @@ const Table = ({
                     )}
                 </div>
 
+                {(dragGhost || resizingColumnId) &&(
+                    <div className={classNames(
+                        styles.plug,
+                        dragGhost && styles['plug--drag'],
+                        resizingColumnId && styles['plug--resize']
+                    )}/>
+                )}
                 {dragGhost && dragGhostHeader && createPortal(
                     <div
                         ref={dragGhostRef}
@@ -1160,10 +1170,12 @@ const Table = ({
                         }}
                     >
                         <div className={styles.headerInner}>
-                            {renderContent(
-                                flexRender(dragGhostHeader.column.columnDef.header, dragGhostHeader.getContext()),
-                                styles.headerTitle,
-                            )}
+                            <Text>
+                                {renderContent(
+                                    flexRender(dragGhostHeader.column.columnDef.header, dragGhostHeader.getContext()),
+                                    styles.headerTitle,
+                                )}
+                            </Text>
                             {dragGhostHeader.column.getIsSorted() === 'asc' && (
                                 <Icon16SortArrowUp fill="var(--vkui--color_icon_tertiary)"/>
                             )}
