@@ -196,6 +196,8 @@ const Table = (props: TableProps) => {
     const dragGhostRef = useRef<HTMLDivElement>(null);
     const bodyStyleSnapshotRef = useRef<{userSelect: string; cursor: string} | null>(null);
     const headerContextToggleRef = useRef<HTMLDivElement>(null);
+    const rowRefsRef = useRef<Record<string, HTMLTableRowElement | null>>({});
+    const previewSelectedRowIdsRef = useRef<string[]>([]);
 
     const emitCellClick = (params: {
         row: TableRow;
@@ -425,6 +427,7 @@ const Table = (props: TableProps) => {
 
     useEffect(() => {
         selectedRowIdsRef.current = selectedRowIds;
+        previewSelectedRowIdsRef.current = selectedRowIds;
     }, [selectedRowIds]);
 
     useEffect(() => {
@@ -494,8 +497,7 @@ const Table = (props: TableProps) => {
             });
         }
 
-        setSelectedRowIds([]);
-        selectedRowIdsRef.current = [];
+        commitSelectedRows([]);
         selectionAnchorRowIdRef.current = null;
         selectionStateRef.current.active = false;
         selectionStateRef.current.dirty = false;
@@ -527,8 +529,7 @@ const Table = (props: TableProps) => {
         const nextSelectedRowIds = selectedRowIdsRef.current.filter((rowId) => visibleRowIdSet.has(rowId));
 
         if (!areArraysEqual(nextSelectedRowIds, selectedRowIdsRef.current)) {
-            selectedRowIdsRef.current = nextSelectedRowIds;
-            setSelectedRowIds(nextSelectedRowIds);
+            commitSelectedRows(nextSelectedRowIds);
         }
 
         if (
@@ -563,6 +564,51 @@ const Table = (props: TableProps) => {
 
         document.body.style.userSelect = 'none';
         document.body.style.cursor = cursor;
+    };
+
+    const syncSelectedRowsPreview = (nextRowIds: string[]) => {
+        const previousRowIdSet = new Set(previewSelectedRowIdsRef.current);
+        const nextRowIdSet = new Set(nextRowIds);
+
+        previousRowIdSet.forEach((rowId) => {
+            if (nextRowIdSet.has(rowId)) {
+                return;
+            }
+
+            rowRefsRef.current[rowId]?.classList.remove(styles['bodyRow--selected']);
+        });
+
+        nextRowIdSet.forEach((rowId) => {
+            if (previousRowIdSet.has(rowId)) {
+                return;
+            }
+
+            rowRefsRef.current[rowId]?.classList.add(styles['bodyRow--selected']);
+        });
+
+        previewSelectedRowIdsRef.current = nextRowIds;
+    };
+
+    const previewSelectedRows = (nextRowIds: string[]) => {
+        const normalizedRowIds = Array.from(new Set(nextRowIds));
+
+        if (areArraysEqual(selectedRowIdsRef.current, normalizedRowIds)) {
+            syncSelectedRowsPreview(normalizedRowIds);
+            return false;
+        }
+
+        selectedRowIdsRef.current = normalizedRowIds;
+        syncSelectedRowsPreview(normalizedRowIds);
+        return true;
+    };
+
+    const commitSelectedRows = (nextRowIds: string[]) => {
+        const normalizedRowIds = Array.from(new Set(nextRowIds));
+        selectedRowIdsRef.current = normalizedRowIds;
+        syncSelectedRowsPreview(normalizedRowIds);
+        setSelectedRowIds((previousRowIds) => (
+            areArraysEqual(previousRowIds, normalizedRowIds) ? previousRowIds : normalizedRowIds
+        ));
     };
 
     const stopColumnResizing = useEffectEvent((shouldCommit: boolean) => {
@@ -606,6 +652,7 @@ const Table = (props: TableProps) => {
             }
 
             selectionStateRef.current.dirty = false;
+            commitSelectedRows(selectedRowIdsRef.current);
             const nextSelectedRows = visibleRowsRef.current
                 .filter((row) => selectedRowIdsRef.current.includes(row.id))
                 .map((row) => row.original);
@@ -871,15 +918,7 @@ const Table = (props: TableProps) => {
     }, []);
 
     const setSelectedRows = (nextRowIds: string[]) => {
-        const normalizedRowIds = Array.from(new Set(nextRowIds));
-
-        if (areArraysEqual(selectedRowIdsRef.current, normalizedRowIds)) {
-            return false;
-        }
-
-        selectedRowIdsRef.current = normalizedRowIds;
-        setSelectedRowIds(normalizedRowIds);
-        return true;
+        return previewSelectedRows(nextRowIds);
     };
 
     const getNextRowSelection = (
@@ -979,8 +1018,7 @@ const Table = (props: TableProps) => {
         previewColumnOrderRef.current = nextColumnOrder;
         applyPreviewColumnOrder(nextColumnOrder);
         setColumnOrder(nextColumnOrder);
-        setSelectedRowIds([]);
-        selectedRowIdsRef.current = [];
+        commitSelectedRows([]);
         selectionAnchorRowIdRef.current = null;
         selectionStateRef.current.active = false;
         selectionStateRef.current.dirty = false;
@@ -1164,11 +1202,23 @@ const Table = (props: TableProps) => {
                         <tbody>
                             {(visibleRows.length !== 0 && !loading) && (
                                 visibleRows.map((row) => {
-                                    const isSelectedRow = selectedRowIdsSet.has(row.id);
+                                    const isSelectedRow = selectionStateRef.current.active
+                                        ? previewSelectedRowIdsRef.current.includes(row.id)
+                                        : selectedRowIdsSet.has(row.id);
 
                                     return (
                                         <tr
                                             key={row.id}
+                                            ref={(element) => {
+                                                rowRefsRef.current[row.id] = element;
+
+                                                if (element) {
+                                                    element.classList.toggle(
+                                                        styles['bodyRow--selected'],
+                                                        previewSelectedRowIdsRef.current.includes(row.id),
+                                                    );
+                                                }
+                                            }}
                                             className={classNames(
                                                 styles.bodyRow,
                                                 isSelectedRow && styles['bodyRow--selected'],
@@ -1219,6 +1269,7 @@ const Table = (props: TableProps) => {
                                                             mode="secondary"
                                                             data-table-ignore-hover={true}
                                                             disabled={loading || disabled}
+                                                            onMouseDown={(event) => event.stopPropagation()}
                                                             onClick={(event) => {
                                                                 event.stopPropagation();
                                                                 emitInteractiveClick('button', {
@@ -1257,6 +1308,7 @@ const Table = (props: TableProps) => {
                                                                 className={styles.button}
                                                                 label={cellTextValue}
                                                                 disabled={loading || disabled}
+                                                                onMouseDown={(event) => event.stopPropagation()}
                                                                 onClick={(event) => {
                                                                     event.stopPropagation();
                                                                     emitInteractiveClick('download', {
@@ -1289,6 +1341,7 @@ const Table = (props: TableProps) => {
                                                             key={`${row.id}:${columnId}:${checkboxValue ? '1' : '0'}`}
                                                             defaultChecked={checkboxValue}
                                                             disabled={loading || disabled}
+                                                            onMouseDown={(event) => event.stopPropagation()}
                                                             onClick={(event) => event.stopPropagation()}
                                                             onDoubleClick={(event) => event.stopPropagation()}
                                                             onChange={(event) => {
@@ -1379,14 +1432,10 @@ const Table = (props: TableProps) => {
                                                             cellContent
                                                         ) : (
                                                             <div
-                                                                data-table-ignore-row={true}
                                                                 className={classNames(
                                                                     styles.cellControl,
                                                                     columnType === 'boolean' && styles.cellControlBoolean,
                                                                 )}
-                                                                onMouseDown={(event) => event.stopPropagation()}
-                                                                onClick={(event) => event.stopPropagation()}
-                                                                onDoubleClick={(event) => event.stopPropagation()}
                                                             >
                                                                 {cellContent}
                                                             </div>

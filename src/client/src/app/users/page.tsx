@@ -22,7 +22,7 @@ const columnsUser = [
     {key: 'createdAt', header: 'createdAt', size: 180},
 ];
 
-const exampleData = Array.from({length: 100}).map((_, i) => ({
+const exampleData = Array.from({length: 1000}).map((_, i) => ({
     id: i,
     name: `User ${i + 1}`,
     email: `user${i + 1}@mail.com`,
@@ -31,7 +31,7 @@ const exampleData = Array.from({length: 100}).map((_, i) => ({
     role: `Role ${i + 1}`,
     department: `Department ${i + 1}`,
     files: `Скачать файлы`,
-    status: `${4%2 === 0}`,
+    status: i%2 === 0,
     createdAt: `Created At: ${i + 1}`,
     phone: `Phone: ${i + 1}`,
 }));
