@@ -19,7 +19,7 @@ import {
     Select,
     Spinner,
     Text,
-    classNames,
+    classNames, Placeholder,
 } from '@vkontakte/vkui';
 import {
     Icon16SortArrowDown,
@@ -91,19 +91,23 @@ const renderContent = (content: React.ReactNode, className: string) => {
     return <div className={className}>{content}</div>;
 };
 
-const Table = ({
-    tableId,
-    componentName,
-    data,
-    columns,
-    total,
-    page,
-    rows,
-    loading = false,
-    onEvent,
-    getRowId,
-    emptyState,
-}: TableProps) => {
+const Table = (props: TableProps) => {
+
+    const {
+        disabled,
+        tableId,
+        componentName,
+        data,
+        columns,
+        total,
+        page,
+        rows,
+        loading = false,
+        onEvent,
+        getRowId,
+        emptyState,
+    } = props;
+
     const storageId = useMemo(() => getStorageId(tableId, componentName), [componentName, tableId]);
     const settingsKey = useMemo(() => `table_settings_${storageId}`, [storageId]);
     const availableColumnIds = useMemo(() => columns.map((column) => column.key), [columns]);
@@ -929,7 +933,7 @@ const Table = ({
                     className={classNames(
                         'scroll',
                         styles.scroll,
-                        loading && styles['scroll--loading'],
+                        (loading || !visibleRows.length) && styles['scroll--disabled'],
                         draggingColumnId && styles.scrollDragging,
                     )}
                 >
@@ -938,183 +942,186 @@ const Table = ({
                         className={styles.table}
                         style={{width: `var(${TABLE_TOTAL_WIDTH_CSS_VAR}, ${table.getTotalSize()}px)`}}
                     >
-                        <thead>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <tr key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => {
-                                    const columnId = header.column.id;
-                                    const isDragging = draggingColumnId === columnId;
-                                    const isResizing = resizingColumnId === columnId;
+                        <thead
+                            className={classNames(
+                                (loading || disabled) && 'disabled'
+                            )}
+                        >
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <tr key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => {
+                                        const columnId = header.column.id;
+                                        const isDragging = draggingColumnId === columnId;
+                                        const isResizing = resizingColumnId === columnId;
 
-                                    return (
-                                        <th
-                                            key={header.id}
-                                            ref={(element) => {
-                                                headerCellRefsRef.current[columnId] = element;
-                                            }}
-                                            data-column-id={columnId}
-                                            data-cell-key={`h:${header.id}`}
-                                            className={classNames(
-                                                styles.headerCell,
-                                                isDragging && styles.headerCellDragging,
-                                                isDragging && styles.headerCellActiveDrag,
-                                                isResizing && styles.headerCellResizing,
-                                            )}
-                                            style={{width: `var(${getColumnWidthCssVarName(columnId)}, ${header.getSize()}px)`}}
-                                            onContextMenu={(event) => {
-                                                event.preventDefault();
-                                                setHeaderContextColumnId(columnId);
-                                                setHeaderContextPoint({x: event.clientX, y: event.clientY});
-                                            }}
-                                        >
-                                            <div
+                                        return (
+                                            <th
+                                                key={header.id}
+                                                ref={(element) => {
+                                                    headerCellRefsRef.current[columnId] = element;
+                                                }}
+                                                data-column-id={columnId}
+                                                data-cell-key={`h:${header.id}`}
                                                 className={classNames(
-                                                    styles.headerInner,
-                                                    isDragging && styles.headerInnerDragging,
+                                                    styles.headerCell,
+                                                    isDragging && styles.headerCellActiveDrag,
+                                                    isResizing && styles.headerCellResizing,
                                                 )}
-                                                onMouseDown={(event) => beginColumnInteraction(columnId, event)}
+                                                style={{width: `var(${getColumnWidthCssVarName(columnId)}, ${header.getSize()}px)`}}
+                                                onContextMenu={(event) => {
+                                                    event.preventDefault();
+                                                    setHeaderContextColumnId(columnId);
+                                                    setHeaderContextPoint({x: event.clientX, y: event.clientY});
+                                                }}
                                             >
-                                                <Text>
-                                                    {renderContent(
-                                                        flexRender(header.column.columnDef.header, header.getContext()),
-                                                        styles.headerTitle,
-                                                    )}
-                                                </Text>
-                                                {header.column.getIsSorted() === 'asc' && (
-                                                    <Icon16SortArrowUp fill="var(--vkui--color_icon_tertiary)"/>
-                                                )}
-                                                {header.column.getIsSorted() === 'desc' && (
-                                                    <Icon16SortArrowDown fill="var(--vkui--color_icon_tertiary)"/>
-                                                )}
-                                                {!header.column.getIsSorted() && (
-                                                    <Icon16SortOutline fill="var(--vkui--color_icon_tertiary)"/>
-                                                )}
-                                            </div>
-
-                                            {header.column.getCanResize() && (
                                                 <div
-                                                    className={styles.resizeHandle}
-                                                    onMouseDown={(event) => {
-                                                        beginColumnResize(columnId, event);
-                                                    }}
-                                                />
-                                            )}
-                                        </th>
-                                    );
-                                })}
-                            </tr>
-                        ))}
+                                                    className={classNames(
+                                                        styles.headerInner,
+                                                        isDragging && styles['headerInner--dragging'],
+                                                    )}
+                                                    onMouseDown={(event) => beginColumnInteraction(columnId, event)}
+                                                >
+                                                    <Text>
+                                                        {renderContent(
+                                                            flexRender(header.column.columnDef.header, header.getContext()),
+                                                            styles.headerTitle,
+                                                        )}
+                                                    </Text>
+                                                    {header.column.getIsSorted() === 'asc' && (
+                                                        <Icon16SortArrowUp fill="var(--vkui--color_icon_tertiary)"/>
+                                                    )}
+                                                    {header.column.getIsSorted() === 'desc' && (
+                                                        <Icon16SortArrowDown fill="var(--vkui--color_icon_tertiary)"/>
+                                                    )}
+                                                    {!header.column.getIsSorted() && (
+                                                        <Icon16SortOutline fill="var(--vkui--color_icon_tertiary)"/>
+                                                    )}
+                                                </div>
+
+                                                {header.column.getCanResize() && (
+                                                    <div
+                                                        className={styles.resizeHandle}
+                                                        onMouseDown={(event) => {
+                                                            beginColumnResize(columnId, event);
+                                                        }}
+                                                    />
+                                                )}
+                                            </th>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
                         </thead>
 
                         <tbody>
-                        {visibleRows.length === 0 ? (
-                            <tr>
-                                <td className={styles.emptyCell} colSpan={Math.max(columns.length, 1)}>
-                                    <Text className={styles.emptyTitle}>
-                                        {emptyState?.title || EMPTY_STATE.title}
-                                    </Text>
-                                    {emptyState?.description && (
-                                        <Text className={styles.emptyDescription}>
-                                            {emptyState.description}
-                                        </Text>
-                                    )}
-                                </td>
-                            </tr>
-                        ) : (
-                            visibleRows.map((row) => {
-                                const isSelectedRow = selectedRowIdsSet.has(row.id);
+                            {(visibleRows.length !== 0 && !loading) && (
+                                visibleRows.map((row) => {
+                                    const isSelectedRow = selectedRowIdsSet.has(row.id);
 
-                                return (
-                                    <tr
-                                        key={row.id}
-                                        className={classNames(
-                                            styles.bodyRow,
-                                            isSelectedRow && styles.bodyRowSelected,
-                                        )}
-                                        onMouseDown={(event) => beginSelection(row.id, event)}
-                                        onMouseEnter={(event) => extendSelection(row.id, event.target)}
-                                        onClick={(event) => {
-                                            if (isInteractiveTarget(event.target)) {
-                                                return;
-                                            }
+                                    return (
+                                        <tr
+                                            key={row.id}
+                                            className={classNames(
+                                                styles.bodyRow,
+                                                isSelectedRow && styles['bodyRow--selected'],
+                                                disabled && disabled,
+                                            )}
+                                            onMouseDown={(event) => beginSelection(row.id, event)}
+                                            onMouseEnter={(event) => extendSelection(row.id, event.target)}
+                                            onClick={(event) => {
+                                                if (isInteractiveTarget(event.target)) {
+                                                    return;
+                                                }
 
-                                            onEventRef.current({
-                                                type: 'rowClick',
-                                                row: row.original,
-                                                target: event.target,
-                                            });
-                                        }}
-                                    >
-                                        {row.getVisibleCells().map((cell) => {
-                                            const columnId = cell.column.id;
-                                            const renderedCell = flexRender(cell.column.columnDef.cell, cell.getContext());
-                                            const isDragging = draggingColumnId === columnId;
-                                            const isResizing = resizingColumnId === columnId;
+                                                onEventRef.current({
+                                                    type: 'rowClick',
+                                                    row: row.original,
+                                                    target: event.target,
+                                                });
+                                            }}
+                                        >
+                                            {row.getVisibleCells().map((cell) => {
+                                                const columnId = cell.column.id;
+                                                const renderedCell = flexRender(cell.column.columnDef.cell, cell.getContext());
+                                                const isDragging = draggingColumnId === columnId;
+                                                const isResizing = resizingColumnId === columnId;
 
-                                            return (
-                                                <td
-                                                    key={cell.id}
-                                                    data-column-id={columnId}
-                                                    data-cell-key={`c:${cell.id}`}
-                                                    className={classNames(
-                                                        styles.bodyCell,
-                                                        isDragging && styles.bodyCellActiveDrag,
-                                                        isResizing && styles.bodyCellResizing,
-                                                    )}
-                                                    style={{width: `var(${getColumnWidthCssVarName(columnId)}, ${cell.column.getSize()}px)`}}
-                                                    onClick={(event) => {
-                                                        if (isInteractiveTarget(event.target) && event.target !== event.currentTarget) {
-                                                            return;
-                                                        }
+                                                return (
+                                                    <td
+                                                        key={cell.id}
+                                                        data-column-id={columnId}
+                                                        data-cell-key={`c:${cell.id}`}
+                                                        className={classNames(
+                                                            styles.bodyCell,
+                                                            isDragging && styles.bodyCellActiveDrag,
+                                                            isResizing && styles.bodyCellResizing,
+                                                        )}
+                                                        style={{width: `var(${getColumnWidthCssVarName(columnId)}, ${cell.column.getSize()}px)`}}
+                                                        onClick={(event) => {
+                                                            if (isInteractiveTarget(event.target) && event.target !== event.currentTarget) {
+                                                                return;
+                                                            }
 
-                                                        event.stopPropagation();
+                                                            event.stopPropagation();
 
-                                                        onEventRef.current({
-                                                            type: 'cellClick',
-                                                            row: row.original,
-                                                            column: columnId,
-                                                            value: cell.getValue(),
-                                                            event,
-                                                            target: event.target,
-                                                        });
-                                                    }}
-                                                    onContextMenu={(event) => {
-                                                        event.preventDefault();
+                                                            onEventRef.current({
+                                                                type: 'cellClick',
+                                                                row: row.original,
+                                                                column: columnId,
+                                                                value: cell.getValue(),
+                                                                event,
+                                                                target: event.target,
+                                                            });
+                                                        }}
+                                                        onContextMenu={(event) => {
+                                                            event.preventDefault();
 
-                                                        const nextSelection = getNextRowSelection(row.id, event);
-                                                        setSelectedRows(nextSelection);
-                                                        selectionStateRef.current.active = false;
-                                                        selectionStateRef.current.dirty = false;
-                                                        selectionStateRef.current.target = null;
+                                                            const nextSelection = getNextRowSelection(row.id, event);
+                                                            setSelectedRows(nextSelection);
+                                                            selectionStateRef.current.active = false;
+                                                            selectionStateRef.current.dirty = false;
+                                                            selectionStateRef.current.target = null;
 
-                                                        emitSelectedRows(event.target);
+                                                            emitSelectedRows(event.target);
 
-                                                        onEventRef.current({
-                                                            type: 'contextMenu',
-                                                            row: row.original,
-                                                            column: columnId,
-                                                            value: cell.getValue(),
-                                                            target: event.target,
-                                                        });
-                                                    }}
-                                                >
-                                                    <Text>
-                                                        {renderContent(renderedCell, styles.cellText)}
-                                                    </Text>
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
-                                );
-                            })
-                        )}
+                                                            onEventRef.current({
+                                                                type: 'contextMenu',
+                                                                row: row.original,
+                                                                column: columnId,
+                                                                value: cell.getValue(),
+                                                                target: event.target,
+                                                            });
+                                                        }}
+                                                    >
+                                                        <Text>
+                                                            {renderContent(renderedCell, styles.cellText)}
+                                                        </Text>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
 
                     {loading && (
-                        <div className={styles.loadingOverlay}>
-                            <Spinner size="l"/>
+                        <div className={styles.loading}>
+                            <Spinner size={'xl'}/>
                         </div>
+                    )}
+                    {(visibleRows.length === 0 && !loading) && (
+                        <Placeholder
+                            className={styles.empty}
+                            title={emptyState?.title || EMPTY_STATE.title}
+                        >
+                            {emptyState?.description && (
+                                <Text>
+                                    {emptyState.description}
+                                </Text>
+                            )}
+                        </Placeholder>
                     )}
                 </div>
 
@@ -1213,9 +1220,12 @@ const Table = ({
                 )}
             >
                 <Select
-                    className={styles.footer__select}
+                    className={classNames(
+                        (loading || disabled) && 'disabled',
+                        styles.footer__select
+                    )}
                     value={String(safeRows)}
-                    disabled={loading}
+                    disabled={loading || disabled}
                     options={PAGE_SIZE_OPTIONS.map((size) => ({
                         label: String(size),
                         value: String(size),
@@ -1239,7 +1249,7 @@ const Table = ({
                         size="m"
                         mode="secondary"
                         before={<Icon24ChevronCompactLeft/>}
-                        disabled={loading || pageIndex === 0}
+                        disabled={loading || disabled || pageIndex === 0}
                         onClick={(event) => onEventRef.current({
                             type: 'pageChange',
                             page: pageIndex - 1,
@@ -1306,7 +1316,7 @@ const Table = ({
                                                 isActive && styles['pagination__page--active'],
                                             )}
                                             after={item}
-                                            disabled={loading || isActive}
+                                            disabled={loading || disabled || isActive}
                                             onClick={(event) => onEventRef.current({
                                                 type: 'pageChange',
                                                 page: item - 1,
@@ -1321,7 +1331,7 @@ const Table = ({
                                         key={item}
                                         size="m"
                                         mode="tertiary"
-                                        disabled={loading}
+                                        disabled={loading || disabled}
                                         onClick={() => setJumpMode(item === 'ellipsis-left' ? 'left' : 'right')}
                                         after="..."
                                     />
@@ -1334,7 +1344,7 @@ const Table = ({
                         size="m"
                         mode="secondary"
                         before={<Icon24ChevronCompactRight/>}
-                        disabled={loading || pageIndex + 1 >= pageCount}
+                        disabled={(loading || disabled) || pageIndex + 1 >= pageCount}
                         onClick={(event) => onEventRef.current({
                             type: 'pageChange',
                             page: pageIndex + 1,

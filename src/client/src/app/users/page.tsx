@@ -14,12 +14,12 @@ const columnsUser = [
     {key: 'name', header: 'Name', size: 170},
     {key: 'email', header: 'Email', size: 240, minSize: 180, maxSize: 380},
     {key: 'phone', header: 'Phone', size: 180},
-    {key: 'city', header: 'ID', size: 90, minSize: 80, maxSize: 140},
-    {key: 'company', header: 'Name', size: 170},
-    {key: 'role', header: 'Email', size: 240, minSize: 180, maxSize: 380},
-    {key: 'status', header: 'Phone', size: 180},
-    {key: 'department', header: 'Email', size: 240, minSize: 180, maxSize: 380},
-    {key: 'createdAt', header: 'Phone', size: 180},
+    {key: 'city', header: 'city', size: 90, minSize: 80, maxSize: 140},
+    {key: 'company', header: 'company', size: 170},
+    {key: 'role', header: 'role', size: 240, minSize: 180, maxSize: 380},
+    {key: 'status', header: 'status', size: 180},
+    {key: 'department', header: 'department', size: 240, minSize: 180, maxSize: 380},
+    {key: 'createdAt', header: 'createdAt', size: 180},
 ];
 
 const exampleData = Array.from({length: 100}).map((_, i) => ({
@@ -73,8 +73,8 @@ const UsersPage = () => {
                 total: exampleData.length,
             });
             mergeState({page: false}, setLoading)
-        }, 500)
-    }, [])
+        }, 500);
+    }, []);
 
     return (
         <Container

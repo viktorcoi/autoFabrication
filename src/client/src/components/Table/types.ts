@@ -37,6 +37,7 @@ export type TableEmptyState = {
 };
 
 export type TableProps = {
+    disabled?: boolean;
     tableId?: string;
     componentName?: string;
     data: TableRow[];
