@@ -70,7 +70,7 @@ const UsersPage = () => {
                 page: 0,
                 rows: 20,
                 data: exampleData,
-                total: exampleData.length,
+                total: 1000,
             });
             mergeState({page: false}, setLoading)
         }, 500);

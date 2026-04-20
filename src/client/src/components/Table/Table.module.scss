@@ -131,7 +131,7 @@
 
 .bodyRow {
     cursor: pointer;
-    &:nth-child(2n + 1) {
+    &--odd {
         background: var(--vkui--color_background);
     }
     &:hover:not(:has([data-table-ignore-hover]:hover)) {
@@ -140,6 +140,15 @@
     &--selected {
         background: var(--app-table-selected) !important;
     }
+}
+
+.bodySpacer {
+    pointer-events: none;
+}
+
+.bodySpacerCell {
+    padding: 0 !important;
+    border: 0 !important;
 }
 
 .bodyCell {

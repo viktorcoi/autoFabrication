@@ -9,12 +9,12 @@ import {
     getCoreRowModel,
     useReactTable,
 } from '@tanstack/react-table';
+import {useVirtualizer} from '@tanstack/react-virtual';
 import {
     ActionSheet,
     ActionSheetItem,
     Button,
     Checkbox,
-    IconButton,
     Input,
     Placeholder,
     Select,
@@ -138,6 +138,9 @@ const getBooleanCellValue = (value: unknown) => {
     return Boolean(value);
 };
 
+const DEFAULT_ROW_HEIGHT = 41;
+const ROW_VIRTUAL_OVERSCAN = 8;
+
 const Table = (props: TableProps) => {
 
     const {
@@ -191,6 +194,7 @@ const Table = (props: TableProps) => {
     const resizeActiveRef = useRef(false);
     const headerCellRefsRef = useRef<Record<string, HTMLTableCellElement | null>>({});
     const tableRef = useRef<HTMLTableElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
     const dragInteractionRef = useRef<ColumnDragInteraction>(null);
     const resizeInteractionRef = useRef<ColumnResizeInteraction>(null);
     const dragGhostRef = useRef<HTMLDivElement>(null);
@@ -413,9 +417,27 @@ const Table = (props: TableProps) => {
     const visibleRowIds = useMemo(() => visibleRows.map((row) => row.id), [visibleRows]);
     const selectedRowIdsSet = useMemo(() => new Set(selectedRowIds), [selectedRowIds]);
     const paginationItems = useMemo(() => buildPagination(currentPage, pageCount), [currentPage, pageCount]);
+    const visibleColumnCount = table.getVisibleFlatColumns().length;
     const dragGhostHeader = draggingColumnId
         ? table.getFlatHeaders().find((header) => header.column.id === draggingColumnId) ?? null
         : null;
+    const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
+        count: visibleRows.length,
+        getItemKey: (index) => visibleRows[index]?.id ?? index,
+        getScrollElement: () => scrollRef.current,
+        estimateSize: () => DEFAULT_ROW_HEIGHT,
+        measureElement:
+            typeof window !== 'undefined' && !window.navigator.userAgent.includes('Firefox')
+                ? (element) => element?.getBoundingClientRect().height ?? DEFAULT_ROW_HEIGHT
+                : undefined,
+        overscan: ROW_VIRTUAL_OVERSCAN,
+        useFlushSync: false,
+    });
+    const virtualRows = rowVirtualizer.getVirtualItems();
+    const paddingTop = virtualRows[0]?.start ?? 0;
+    const paddingBottom = virtualRows.length > 0
+        ? rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end
+        : 0;
 
     useEffect(() => {
         onEventRef.current = onEvent;
@@ -1116,6 +1138,7 @@ const Table = (props: TableProps) => {
                 )}
             >
                 <div
+                    ref={scrollRef}
                     className={classNames(
                         'scroll',
                         styles.scroll,
@@ -1201,7 +1224,24 @@ const Table = (props: TableProps) => {
 
                         <tbody>
                             {(visibleRows.length !== 0 && !loading) && (
-                                visibleRows.map((row) => {
+                                <>
+                                    {paddingTop > 0 && (
+                                        <tr className={styles.bodySpacer}>
+                                            <td
+                                                className={styles.bodySpacerCell}
+                                                colSpan={visibleColumnCount}
+                                                style={{height: `${paddingTop}px`}}
+                                            />
+                                        </tr>
+                                    )}
+
+                                    {virtualRows.map((virtualRow) => {
+                                        const row = visibleRows[virtualRow.index];
+
+                                        if (!row) {
+                                            return null;
+                                        }
+
                                     const isSelectedRow = selectionStateRef.current.active
                                         ? previewSelectedRowIdsRef.current.includes(row.id)
                                         : selectedRowIdsSet.has(row.id);
@@ -1209,6 +1249,7 @@ const Table = (props: TableProps) => {
                                     return (
                                         <tr
                                             key={row.id}
+                                            data-index={virtualRow.index}
                                             ref={(element) => {
                                                 rowRefsRef.current[row.id] = element;
 
@@ -1217,10 +1258,12 @@ const Table = (props: TableProps) => {
                                                         styles['bodyRow--selected'],
                                                         previewSelectedRowIdsRef.current.includes(row.id),
                                                     );
+                                                    rowVirtualizer.measureElement(element);
                                                 }
                                             }}
                                             className={classNames(
                                                 styles.bodyRow,
+                                                virtualRow.index % 2 === 0 && styles['bodyRow--odd'],
                                                 isSelectedRow && styles['bodyRow--selected'],
                                                 disabled && disabled,
                                             )}
@@ -1445,7 +1488,18 @@ const Table = (props: TableProps) => {
                                             })}
                                         </tr>
                                     );
-                                })
+                                    })}
+
+                                    {paddingBottom > 0 && (
+                                        <tr className={styles.bodySpacer}>
+                                            <td
+                                                className={styles.bodySpacerCell}
+                                                colSpan={visibleColumnCount}
+                                                style={{height: `${paddingBottom}px`}}
+                                            />
+                                        </tr>
+                                    )}
+                                </>
                             )}
                         </tbody>
                     </table>
