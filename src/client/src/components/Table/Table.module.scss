@@ -134,7 +134,7 @@
     &:nth-child(2n + 1) {
         background: var(--vkui--color_background);
     }
-    &:hover {
+    &:hover:not(:has([data-table-ignore-hover]:hover)) {
         background: var(--app-table-hover) !important;
     }
     &--selected {
@@ -152,6 +152,16 @@
     min-width: 0;
     color: var(--vkui--color_text_primary);
     line-height: 20px;
+}
+
+.cellControl {
+    display: flex;
+    align-items: center;
+    min-height: 20px;
+
+    &Boolean {
+        justify-content: center;
+    }
 }
 
 .empty, .loading {
@@ -227,4 +237,13 @@
             height: 32px;
         }
     }
+}
+
+.button {
+    margin: auto;
+}
+
+.checkbox {
+    height: 28px !important;
+    width: 28px !important;
 }

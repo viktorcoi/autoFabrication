@@ -1,10 +1,17 @@
-import type {MouseEvent as ReactMouseEvent, ReactNode} from 'react';
+import type {
+    ChangeEvent as ReactChangeEvent,
+    MouseEvent as ReactMouseEvent,
+    ReactNode,
+} from 'react';
 
 export type TableRow = Record<string, unknown>;
+
+export type ColumnType = 'text' | 'button' | 'download' | 'boolean';
 
 export type Column = {
     key: string;
     header: ReactNode;
+    type?: ColumnType | string;
     size?: number;
     minSize?: number;
     maxSize?: number;
@@ -28,14 +35,36 @@ export type TableEvent =
     row: TableRow;
     column: string;
     value: unknown;
-    event: ReactMouseEvent<HTMLTableCellElement>;
+    event: ReactMouseEvent<HTMLElement>;
 } & TableEventMeta)
     | ({
     type: 'cellDoubleClick';
     row: TableRow;
     column: string;
     value: unknown;
-    event: ReactMouseEvent<HTMLTableCellElement>;
+    event: ReactMouseEvent<HTMLElement>;
+} & TableEventMeta)
+    | ({
+    type: 'button';
+    row: TableRow;
+    column: string;
+    value: unknown;
+    event: ReactMouseEvent<HTMLElement>;
+} & TableEventMeta)
+    | ({
+    type: 'download';
+    row: TableRow;
+    column: string;
+    value: unknown;
+    event: ReactMouseEvent<HTMLElement>;
+} & TableEventMeta)
+    | ({
+    type: 'boolean';
+    row: TableRow;
+    column: string;
+    value: unknown;
+    nextValue: unknown;
+    event: ReactChangeEvent<HTMLInputElement>;
 } & TableEventMeta)
     | ({type: 'contextMenu'; row: TableRow; column: string; value: unknown} & TableEventMeta)
     | ({type: 'pageChange'; page: number} & TableEventMeta)

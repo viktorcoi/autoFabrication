@@ -13,13 +13,18 @@ import {
     ActionSheet,
     ActionSheetItem,
     Button,
+    Checkbox,
+    IconButton,
     Input,
+    Placeholder,
     Select,
     Spinner,
     Text,
-    classNames, Placeholder,
+    Tooltip,
+    classNames,
 } from '@vkontakte/vkui';
 import {
+    Icon16DownloadOutline,
     Icon16SortArrowDown,
     Icon16SortArrowUp,
     Icon16SortOutline,
@@ -61,6 +66,7 @@ import {
 import styles from './Table.module.scss';
 import type {
     Column,
+    ColumnType,
     ColumnDragInteraction,
     ColumnResizeInteraction,
     DragGhostState,
@@ -91,6 +97,45 @@ const renderContent = (content: React.ReactNode, className: string) => {
     }
 
     return <div className={className}>{content}</div>;
+};
+
+const getColumnType = (column?: Column): ColumnType => {
+    if (
+        column?.type === 'button'
+        || column?.type === 'download'
+        || column?.type === 'boolean'
+        || column?.type === 'text'
+    ) {
+        return column.type;
+    }
+
+    return 'text';
+};
+
+const getCellTextValue = (value: unknown) => {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    return String(value);
+};
+
+const getBooleanCellValue = (value: unknown) => {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+
+    if (typeof value === 'string') {
+        const normalizedValue = value.trim().toLowerCase();
+
+        return normalizedValue === 'true' || normalizedValue === '1' || normalizedValue === 'yes';
+    }
+
+    if (typeof value === 'number') {
+        return value !== 0;
+    }
+
+    return Boolean(value);
 };
 
 const Table = (props: TableProps) => {
@@ -151,6 +196,79 @@ const Table = (props: TableProps) => {
     const dragGhostRef = useRef<HTMLDivElement>(null);
     const bodyStyleSnapshotRef = useRef<{userSelect: string; cursor: string} | null>(null);
     const headerContextToggleRef = useRef<HTMLDivElement>(null);
+
+    const emitCellClick = (params: {
+        row: TableRow;
+        column: string;
+        value: unknown;
+        event: React.MouseEvent<HTMLElement>;
+        target: EventTarget | null;
+    }) => {
+        onEventRef.current({
+            type: 'cellClick',
+            row: params.row,
+            column: params.column,
+            value: params.value,
+            event: params.event,
+            target: params.target,
+        });
+    };
+
+    const emitCellDoubleClick = (params: {
+        row: TableRow;
+        column: string;
+        value: unknown;
+        event: React.MouseEvent<HTMLElement>;
+        target: EventTarget | null;
+    }) => {
+        onEventRef.current({
+            type: 'cellDoubleClick',
+            row: params.row,
+            column: params.column,
+            value: params.value,
+            event: params.event,
+            target: params.target,
+        });
+    };
+
+    const emitInteractiveClick = (
+        type: 'button' | 'download',
+        params: {
+            row: TableRow;
+            column: string;
+            value: unknown;
+            event: React.MouseEvent<HTMLElement>;
+            target: EventTarget | null;
+        },
+    ) => {
+        onEventRef.current({
+            type,
+            row: params.row,
+            column: params.column,
+            value: params.value,
+            event: params.event,
+            target: params.target,
+        });
+    };
+
+    const emitBooleanChange = (params: {
+        row: TableRow;
+        column: string;
+        value: unknown;
+        nextValue: unknown;
+        event: React.ChangeEvent<HTMLInputElement>;
+        target: EventTarget | null;
+    }) => {
+        onEventRef.current({
+            type: 'boolean',
+            row: params.row,
+            column: params.column,
+            value: params.value,
+            nextValue: params.nextValue,
+            event: params.event,
+            target: params.target,
+        });
+    };
 
     const resolvedColumnOrder = useMemo(() => {
         const filtered = columnOrder.filter((columnId) => availableColumnIds.includes(columnId));
@@ -1063,8 +1181,8 @@ const Table = (props: TableProps) => {
                                                     return;
                                                 }
 
-                                                    onEventRef.current({
-                                                        type: 'rowClick',
+                                                onEventRef.current({
+                                                    type: 'rowClick',
                                                     row: row.original,
                                                     target: event.target,
                                                 });
@@ -1083,9 +1201,116 @@ const Table = (props: TableProps) => {
                                         >
                                             {row.getVisibleCells().map((cell) => {
                                                 const columnId = cell.column.id;
+                                                const columnConfig = columnMap.get(columnId);
+                                                const columnType = getColumnType(columnConfig);
+                                                const cellValue = cell.getValue();
                                                 const renderedCell = flexRender(cell.column.columnDef.cell, cell.getContext());
+                                                const cellTextValue = getCellTextValue(cellValue);
+                                                const checkboxValue = getBooleanCellValue(cellValue);
                                                 const isDragging = draggingColumnId === columnId;
                                                 const isResizing = resizingColumnId === columnId;
+                                                let cellContent: React.ReactNode;
+
+                                                if (columnType === 'button') {
+                                                    cellContent = (
+                                                        <Button
+                                                            className={styles.button}
+                                                            size="s"
+                                                            mode="secondary"
+                                                            data-table-ignore-hover={true}
+                                                            disabled={loading || disabled}
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                emitInteractiveClick('button', {
+                                                                    row: row.original,
+                                                                    column: columnId,
+                                                                    value: cellValue,
+                                                                    event,
+                                                                    target: event.target,
+                                                                });
+                                                            }}
+                                                            onDoubleClick={(event) => {
+                                                                event.stopPropagation();
+                                                                emitInteractiveClick('button', {
+                                                                    row: row.original,
+                                                                    column: columnId,
+                                                                    value: cellValue,
+                                                                    event,
+                                                                    target: event.target,
+                                                                });
+                                                            }}
+                                                        >
+                                                            {cellTextValue}
+                                                        </Button>
+                                                    );
+                                                } else if (columnType === 'download') {
+                                                    cellContent = (
+                                                        <Tooltip
+                                                            description={cellTextValue}
+                                                            usePortal={true}
+                                                            placement="top"
+                                                        >
+                                                            <Button
+                                                                data-table-ignore-hover={true}
+                                                                size={'s'}
+                                                                mode={'tertiary'}
+                                                                className={styles.button}
+                                                                label={cellTextValue}
+                                                                disabled={loading || disabled}
+                                                                onClick={(event) => {
+                                                                    event.stopPropagation();
+                                                                    emitInteractiveClick('download', {
+                                                                        row: row.original,
+                                                                        column: columnId,
+                                                                        value: cellValue,
+                                                                        event,
+                                                                        target: event.target,
+                                                                    });
+                                                                }}
+                                                                onDoubleClick={(event) => {
+                                                                    event.stopPropagation();
+                                                                    emitInteractiveClick('download', {
+                                                                        row: row.original,
+                                                                        column: columnId,
+                                                                        value: cellValue,
+                                                                        event,
+                                                                        target: event.target,
+                                                                    });
+                                                                }}
+                                                                after={ <Icon16DownloadOutline />}
+                                                            />
+                                                        </Tooltip>
+                                                    );
+                                                } else if (columnType === 'boolean') {
+                                                    cellContent = (
+                                                        <Checkbox
+                                                            data-table-ignore-hover={true}
+                                                            className={styles.checkbox}
+                                                            key={`${row.id}:${columnId}:${checkboxValue ? '1' : '0'}`}
+                                                            defaultChecked={checkboxValue}
+                                                            disabled={loading || disabled}
+                                                            onClick={(event) => event.stopPropagation()}
+                                                            onDoubleClick={(event) => event.stopPropagation()}
+                                                            onChange={(event) => {
+                                                                event.stopPropagation();
+                                                                emitBooleanChange({
+                                                                    row: row.original,
+                                                                    column: columnId,
+                                                                    value: cellValue,
+                                                                    event,
+                                                                    target: event.target,
+                                                                    nextValue: event.target.checked,
+                                                                });
+                                                            }}
+                                                        />
+                                                    );
+                                                } else {
+                                                    cellContent = (
+                                                        <Text>
+                                                            {renderContent(renderedCell, styles.cellText)}
+                                                        </Text>
+                                                    );
+                                                }
 
                                                 return (
                                                     <td
@@ -1105,11 +1330,10 @@ const Table = (props: TableProps) => {
 
                                                             event.stopPropagation();
 
-                                                            onEventRef.current({
-                                                                type: 'cellClick',
+                                                            emitCellClick({
                                                                 row: row.original,
                                                                 column: columnId,
-                                                                value: cell.getValue(),
+                                                                value: cellValue,
                                                                 event,
                                                                 target: event.target,
                                                             });
@@ -1121,11 +1345,10 @@ const Table = (props: TableProps) => {
 
                                                             event.stopPropagation();
 
-                                                            onEventRef.current({
-                                                                type: 'cellDoubleClick',
+                                                            emitCellDoubleClick({
                                                                 row: row.original,
                                                                 column: columnId,
-                                                                value: cell.getValue(),
+                                                                value: cellValue,
                                                                 event,
                                                                 target: event.target,
                                                             });
@@ -1147,16 +1370,29 @@ const Table = (props: TableProps) => {
                                                                 type: 'contextMenu',
                                                                 row: row.original,
                                                                 column: columnId,
-                                                                value: cell.getValue(),
+                                                                value: cellValue,
                                                                 target: event.target,
                                                             });
                                                         }}
                                                     >
-                                                        <Text>
-                                                            {renderContent(renderedCell, styles.cellText)}
-                                                        </Text>
+                                                        {columnType === 'text' ? (
+                                                            cellContent
+                                                        ) : (
+                                                            <div
+                                                                data-table-ignore-row={true}
+                                                                className={classNames(
+                                                                    styles.cellControl,
+                                                                    columnType === 'boolean' && styles.cellControlBoolean,
+                                                                )}
+                                                                onMouseDown={(event) => event.stopPropagation()}
+                                                                onClick={(event) => event.stopPropagation()}
+                                                                onDoubleClick={(event) => event.stopPropagation()}
+                                                            >
+                                                                {cellContent}
+                                                            </div>
+                                                        )}
                                                     </td>
-                                                )
+                                                );
                                             })}
                                         </tr>
                                     );
@@ -1250,19 +1486,19 @@ const Table = (props: TableProps) => {
                         </ActionSheetItem>
                         <ActionSheetItem
                             onClick={() => {
-                                resetTableSettings();
-                            }}
-                        >
-                            Сбросить настройки таблицы
-                        </ActionSheetItem>
-                        <ActionSheetItem
-                            onClick={() => {
                                 if (headerContextColumnId) {
                                     resetCurrentColumnSettings(headerContextColumnId);
                                 }
                             }}
                         >
                             Сбросить настройки колонки
+                        </ActionSheetItem>
+                        <ActionSheetItem
+                            onClick={() => {
+                                resetTableSettings();
+                            }}
+                        >
+                            Сбросить настройки таблицы
                         </ActionSheetItem>
                     </ActionSheet>
                 </>

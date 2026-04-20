@@ -14,10 +14,10 @@ const columnsUser = [
     {key: 'name', header: 'Name', size: 170},
     {key: 'email', header: 'Email', size: 240, minSize: 180, maxSize: 380},
     {key: 'phone', header: 'Phone', size: 180},
-    {key: 'city', header: 'city', size: 90, minSize: 80, maxSize: 140},
-    {key: 'company', header: 'company', size: 170},
+    {key: 'files', header: 'Files', size: 90, minSize: 80, maxSize: 140, type: 'download'},
+    {key: 'company', header: 'company', size: 170, type: 'button'},
     {key: 'role', header: 'role', size: 240, minSize: 180, maxSize: 380},
-    {key: 'status', header: 'status', size: 180},
+    {key: 'status', header: 'status', size: 180, type: 'boolean'},
     {key: 'department', header: 'department', size: 240, minSize: 180, maxSize: 380},
     {key: 'createdAt', header: 'createdAt', size: 180},
 ];
@@ -27,14 +27,14 @@ const exampleData = Array.from({length: 100}).map((_, i) => ({
     name: `User ${i + 1}`,
     email: `user${i + 1}@mail.com`,
     city: `City ${i + 1}`,
-    company: `Company ${i + 1}`,
+    company: `Button ${i + 1}`,
     role: `Role ${i + 1}`,
     department: `Department ${i + 1}`,
-    salary: `Salary: ${i + 1}`,
-    status: `Status: ${i + 1}`,
+    files: `Скачать файлы`,
+    status: `${4%2 === 0}`,
     createdAt: `Created At: ${i + 1}`,
     phone: `Phone: ${i + 1}`,
-}))
+}));
 
 const UsersPage = () => {
 
