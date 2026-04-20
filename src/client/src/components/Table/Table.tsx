@@ -30,301 +30,43 @@ import {
     Icon24ChevronCompactRight,
     Icon24Done,
 } from '@vkontakte/icons';
+import {
+    applyColumnSizingPreview,
+    areArraysEqual,
+    areColumnSizingEqual,
+    areSortingEqual,
+    buildPagination,
+    clampColumnWidth,
+    DEFAULT_COLUMN_MAX_SIZE,
+    DEFAULT_COLUMN_MIN_SIZE,
+    DEFAULT_COLUMN_SIZE,
+    DRAG_START_THRESHOLD,
+    EMPTY_STATE,
+    getColumnDefaultWidth,
+    getColumnMaxWidth,
+    getColumnMinWidth,
+    getColumnWidthCssVarName,
+    getDefaultRowId,
+    getRange,
+    getStorageId,
+    getStoredSettings,
+    isInteractiveTarget,
+    moveColumnOrder,
+    PAGE_SIZE_OPTIONS,
+    removeStoredSettings,
+    saveStoredSettings,
+    TABLE_TOTAL_WIDTH_CSS_VAR,
+} from './helpers';
 import styles from './Table.module.scss';
-
-type TableRow = Record<string, unknown>;
-
-type Column = {
-    key: string;
-    header: React.ReactNode;
-    size?: number;
-    minSize?: number;
-    maxSize?: number;
-    render?: (value: unknown, row: TableRow) => React.ReactNode;
-};
-
-type TableEventMeta = {
-    target: EventTarget | null;
-};
-
-type TableEvent =
-    | ({type: 'rowClick'; row: TableRow} & TableEventMeta)
-    | ({
-    type: 'cellClick';
-    row: TableRow;
-    column: string;
-    value: unknown;
-    event: React.MouseEvent<HTMLTableCellElement>;
-} & TableEventMeta)
-    | ({type: 'contextMenu'; row: TableRow; column: string; value: unknown} & TableEventMeta)
-    | ({type: 'pageChange'; page: number} & TableEventMeta)
-    | ({type: 'rowsChange'; rows: number} & TableEventMeta)
-    | ({type: 'sortChange'; sorting: SortingState} & TableEventMeta)
-    | ({type: 'selected'; rowIds: string[]; rows: TableRow[]} & TableEventMeta);
-
-type Props = {
-    tableId?: string;
-    componentName?: string;
-    data: TableRow[];
-    columns: Column[];
-    total: number;
-    page: number;
-    rows: number;
-    loading?: boolean;
-    onEvent: (event: TableEvent) => void;
-    getRowId?: (row: TableRow, index: number) => string;
-    emptyState?: {
-        title?: string;
-        description?: string;
-    };
-};
-
-type TableSettings = {
-    key: string;
-    settings: {
-        width?: number;
-        sort?: 'asc' | 'desc' | null;
-    };
-}[];
-
-type DragGhostState = {
-    columnId: string;
-    width: number;
-    height: number;
-    top: number;
-    left: number;
-} | null;
-
-type ColumnDragInteraction = {
-    columnId: string;
-    startX: number;
-    startY: number;
-    currentX: number;
-    started: boolean;
-    offsetX: number;
-    top: number;
-    width: number;
-    height: number;
-    target: EventTarget | null;
-    ghostFrameId: number | null;
-} | null;
-
-type ColumnResizeInteraction = {
-    columnId: string;
-    startX: number;
-    startWidth: number;
-    currentWidth: number;
-    minWidth: number;
-    maxWidth: number;
-    frameId: number | null;
-} | null;
-
-const PAGE_SIZE_OPTIONS = [20, 50, 100];
-const EMPTY_STATE = {
-    title: 'Нет данных',
-    description: '',
-};
-const DRAG_START_THRESHOLD = 4;
-const DEFAULT_COLUMN_SIZE = 180;
-const DEFAULT_COLUMN_MIN_SIZE = 120;
-const DEFAULT_COLUMN_MAX_SIZE = 520;
-const TABLE_TOTAL_WIDTH_CSS_VAR = '--table-total-width';
-
-const safeJsonParse = <T, >(value: string | null, fallback: T): T => {
-    if (!value) {
-        return fallback;
-    }
-
-    try {
-        return JSON.parse(value) as T;
-    } catch {
-        return fallback;
-    }
-};
-
-const normalizeSettings = (value: unknown): TableSettings => {
-    if (Array.isArray(value)) {
-        return value
-            .filter((item): item is {key: string; settings?: {width?: unknown; sort?: unknown}} =>
-                Boolean(
-                    item
-                    && typeof item === 'object'
-                    && 'key' in item
-                    && typeof (item as {key: unknown}).key === 'string',
-                ),
-            )
-            .map((item) => ({
-                key: item.key,
-                settings: {
-                    width: typeof item.settings?.width === 'number' ? item.settings.width : undefined,
-                    sort:
-                        item.settings?.sort === 'asc' || item.settings?.sort === 'desc'
-                            ? item.settings.sort
-                            : null,
-                },
-            }));
-    }
-
-    if (value && typeof value === 'object' && 'columns' in value) {
-        const columns = (value as {columns?: Record<string, {width?: unknown; sort?: unknown}>}).columns;
-
-        if (columns && typeof columns === 'object') {
-            return Object.entries(columns).map(([key, settings]) => ({
-                key,
-                settings: {
-                    width: typeof settings?.width === 'number' ? settings.width : undefined,
-                    sort: settings?.sort === 'asc' || settings?.sort === 'desc' ? settings.sort : null,
-                },
-            }));
-        }
-    }
-
-    return [];
-};
-
-const getStoredSettings = (settingsKey: string): TableSettings => {
-    if (typeof window === 'undefined') {
-        return [];
-    }
-
-    try {
-        return normalizeSettings(safeJsonParse<unknown>(window.localStorage.getItem(settingsKey), []));
-    } catch {
-        return [];
-    }
-};
-
-const saveStoredSettings = (settingsKey: string, settings: TableSettings) => {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        window.localStorage.setItem(settingsKey, JSON.stringify(settings));
-    } catch {
-        // Ignore storage errors.
-    }
-};
-
-const removeStoredSettings = (settingsKey: string) => {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        window.localStorage.removeItem(settingsKey);
-    } catch {
-        // Ignore storage errors.
-    }
-};
-
-const getRange = (items: string[], from: string, to: string) => {
-    const fromIndex = items.indexOf(from);
-    const toIndex = items.indexOf(to);
-
-    if (fromIndex < 0 || toIndex < 0) {
-        return [];
-    }
-
-    const [start, end] = fromIndex <= toIndex ? [fromIndex, toIndex] : [toIndex, fromIndex];
-    return items.slice(start, end + 1);
-};
-
-const buildPagination = (currentPage: number, pageCount: number): Array<number | 'ellipsis-left' | 'ellipsis-right'> => {
-    if (pageCount <= 7) {
-        return Array.from({length: pageCount}, (_, index) => index + 1);
-    }
-
-    if (currentPage <= 4) {
-        return [1, 2, 3, 4, 5, 'ellipsis-right', pageCount];
-    }
-
-    if (currentPage >= pageCount - 3) {
-        return [1, 'ellipsis-left', pageCount - 4, pageCount - 3, pageCount - 2, pageCount - 1, pageCount];
-    }
-
-    return [1, 'ellipsis-left', currentPage - 1, currentPage, currentPage + 1, 'ellipsis-right', pageCount];
-};
-
-const areArraysEqual = (left: string[], right: string[]) => {
-    if (left.length !== right.length) {
-        return false;
-    }
-
-    for (let index = 0; index < left.length; index += 1) {
-        if (left[index] !== right[index]) {
-            return false;
-        }
-    }
-
-    return true;
-};
-
-const areSortingEqual = (left: SortingState, right: SortingState) => {
-    if (left.length !== right.length) {
-        return false;
-    }
-
-    for (let index = 0; index < left.length; index += 1) {
-        if (left[index].id !== right[index].id || left[index].desc !== right[index].desc) {
-            return false;
-        }
-    }
-
-    return true;
-};
-
-const areColumnSizingEqual = (left: ColumnSizingState, right: ColumnSizingState) => {
-    const leftKeys = Object.keys(left);
-    const rightKeys = Object.keys(right);
-
-    if (leftKeys.length !== rightKeys.length) {
-        return false;
-    }
-
-    for (let index = 0; index < leftKeys.length; index += 1) {
-        const key = leftKeys[index];
-
-        if (left[key] !== right[key]) {
-            return false;
-        }
-    }
-
-    return true;
-};
-
-const moveColumnOrder = (order: string[], activeId: string, overId: string, placeAfter: boolean) => {
-    if (!activeId || !overId || activeId === overId) {
-        return order;
-    }
-
-    const nextOrder = order.filter((columnId) => columnId !== activeId);
-    const targetIndex = nextOrder.indexOf(overId);
-
-    if (targetIndex < 0) {
-        return order;
-    }
-
-    nextOrder.splice(placeAfter ? targetIndex + 1 : targetIndex, 0, activeId);
-    return areArraysEqual(nextOrder, order) ? order : nextOrder;
-};
-
-const getDefaultRowId = (row: TableRow, index: number) => {
-    const value = row.id;
-    return typeof value === 'string' || typeof value === 'number' ? String(value) : String(index);
-};
-
-const isInteractiveTarget = (target: EventTarget | null) => {
-    if (!(target instanceof HTMLElement)) {
-        return false;
-    }
-
-    return Boolean(
-        target.closest(
-            'button, a, input, textarea, select, label, summary, [role="button"], [role="link"], [data-table-ignore-row]',
-        ),
-    );
-};
+import type {
+    Column,
+    ColumnDragInteraction,
+    ColumnResizeInteraction,
+    DragGhostState,
+    TableProps,
+    TableRow,
+    TableSettings,
+} from './types';
 
 const renderContent = (content: React.ReactNode, className: string) => {
     if (content === null || content === undefined) {
@@ -349,66 +91,6 @@ const renderContent = (content: React.ReactNode, className: string) => {
     return <div className={className}>{content}</div>;
 };
 
-const getColumnDefaultWidth = (column?: Column) => column?.size ?? DEFAULT_COLUMN_SIZE;
-
-const getColumnMinWidth = (column?: Column) => column?.minSize ?? DEFAULT_COLUMN_MIN_SIZE;
-
-const getColumnMaxWidth = (column?: Column) => column?.maxSize ?? DEFAULT_COLUMN_MAX_SIZE;
-
-const clampColumnWidth = (width: number, column?: Column) => {
-    return Math.min(getColumnMaxWidth(column), Math.max(getColumnMinWidth(column), Math.round(width)));
-};
-
-const getColumnWidthCssVarName = (columnId: string) => {
-    return `--table-column-${columnId.replace(/[^a-zA-Z0-9_-]/g, '_')}-width`;
-};
-
-const getResolvedColumnWidth = (column: Column, sizing: ColumnSizingState) => {
-    const explicitWidth = sizing[column.key];
-
-    if (typeof explicitWidth === 'number') {
-        return clampColumnWidth(explicitWidth, column);
-    }
-
-    return getColumnDefaultWidth(column);
-};
-
-const applyColumnSizingPreview = (
-    tableElement: HTMLTableElement | null,
-    columns: Column[],
-    sizing: ColumnSizingState,
-) => {
-    if (!tableElement) {
-        return;
-    }
-
-    let totalWidth = 0;
-
-    columns.forEach((column) => {
-        const width = getResolvedColumnWidth(column, sizing);
-        totalWidth += width;
-        tableElement.style.setProperty(getColumnWidthCssVarName(column.key), `${width}px`);
-    });
-
-    tableElement.style.setProperty(TABLE_TOTAL_WIDTH_CSS_VAR, `${totalWidth}px`);
-};
-
-const getStorageId = (tableId?: string, componentName?: string) => {
-    if (tableId) {
-        return tableId;
-    }
-
-    if (componentName) {
-        return componentName;
-    }
-
-    if (typeof window === 'undefined') {
-        return 'table';
-    }
-
-    return window.location.pathname.replace(/\//g, '_') || 'table';
-};
-
 const Table = ({
     tableId,
     componentName,
@@ -421,7 +103,7 @@ const Table = ({
     onEvent,
     getRowId,
     emptyState,
-}: Props) => {
+}: TableProps) => {
     const storageId = useMemo(() => getStorageId(tableId, componentName), [componentName, tableId]);
     const settingsKey = useMemo(() => `table_settings_${storageId}`, [storageId]);
     const availableColumnIds = useMemo(() => columns.map((column) => column.key), [columns]);
