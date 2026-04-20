@@ -2,12 +2,15 @@
     overflow: hidden;
     padding: unset;
     flex-grow: 1;
+    min-height: 0;
 }
 
 .scroll {
     width: 100%;
     height: 100%;
     position: relative;
+    min-height: 0;
+
     &--loading {
         overflow: hidden;
     }
@@ -59,49 +62,21 @@
     gap: 6px;
     justify-content: space-between;
     padding: 10px 10px 10px 15px;
-    cursor: pointer;
-}
-
-.dragHandle {
-    flex: 0 0 auto;
-    width: 20px;
-    height: 20px;
-    border: 0;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--vkui--color_icon_secondary);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     cursor: grab;
-    pointer-events: none;
 }
 
-.dragHandle:active {
+.headerInnerDragging {
     cursor: grabbing;
 }
 
-.sortButton {
-    width: 100%;
-    border: 0;
-    background: transparent;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    color: inherit;
-    cursor: pointer;
-    text-align: left;
-}
-
 .headerTitle {
-    color: var(--vkui--color_text_primary);
-    font-weight: 600;
-    line-height: 20px;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--vkui--color_text_primary);
+    font-weight: 600;
+    line-height: 20px;
 }
 
 .resizeHandle {
@@ -133,7 +108,7 @@
     cursor: pointer;
 }
 
-.bodyRow:nth-child(2n+1) {
+.bodyRow:nth-child(2n + 1) {
     background: var(--vkui--color_background);
 }
 
@@ -157,6 +132,7 @@
 }
 
 .cellText {
+    min-width: 0;
     color: var(--vkui--color_text_primary);
     line-height: 20px;
 }
@@ -204,8 +180,9 @@
     will-change: left, top;
 }
 
-.dragGhost :global(.headerInner) {
+.dragGhost .headerInner {
     padding: 10px 12px;
+    cursor: grabbing;
 }
 
 .footer {
@@ -215,48 +192,51 @@
     justify-content: space-between;
     &__select {
         width: 80px;
+
         :global(.vkuiFormField__host) {
             min-height: 32px;
         }
+
         :global(.vkuiCustomSelectInput__el ) {
             height: 32px;
         }
     }
 }
 
-
-
-
-
-
 .pagination {
     display: flex;
     align-items: center;
     gap: 15px;
+
     &__pages {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 2px;
     }
+
     &__page {
         min-height: calc(var(--vkui--size_button_medium_height--compact) - 2px);
         border: 1px solid var(--vkui--color_separator_primary) !important;
+
         &--active {
             border: unset !important;
             pointer-events: none;
         }
     }
+
     &__jump {
         display: flex;
         align-items: center;
         gap: 6px;
     }
+
     &__input {
         width: unset;
         min-width: 120px;
         flex-grow: 1;
         min-height: 32px;
+
         :global(.vkuiUnstyledTextField__host) {
             height: 32px;
         }

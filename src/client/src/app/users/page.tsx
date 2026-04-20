@@ -14,9 +14,15 @@ const columnsUser = [
     {key: 'name', header: 'Name', size: 170},
     {key: 'email', header: 'Email', size: 240, minSize: 180, maxSize: 380},
     {key: 'phone', header: 'Phone', size: 180},
+    {key: 'city', header: 'ID', size: 90, minSize: 80, maxSize: 140},
+    {key: 'company', header: 'Name', size: 170},
+    {key: 'role', header: 'Email', size: 240, minSize: 180, maxSize: 380},
+    {key: 'status', header: 'Phone', size: 180},
+    {key: 'department', header: 'Email', size: 240, minSize: 180, maxSize: 380},
+    {key: 'createdAt', header: 'Phone', size: 180},
 ];
 
-const exampleData = Array.from({length: 200}).map((_, i) => ({
+const exampleData = Array.from({length: 100}).map((_, i) => ({
     id: i,
     name: `User ${i + 1}`,
     email: `user${i + 1}@mail.com`,
@@ -46,8 +52,13 @@ const UsersPage = () => {
     const [modals, setModals] = useState<OpenModalsType<
         'modal-manage-user' | 'modal-remove-user'
     >>({id: null, show: false, data: null});
-    const [table, setTable] = useState({
-        page: 1,
+    const [table, setTable] = useState<{
+        page: number;
+        rows: number;
+        data: typeof exampleData;
+        total: number;
+    }>({
+        page: 0,
         rows: 20,
         data: [],
         total: 0,
@@ -56,13 +67,13 @@ const UsersPage = () => {
     useEffect(() => {
         setTimeout(() => {
             setTable({
-                page: 1,
+                page: 0,
                 rows: 20,
                 data: exampleData,
                 total: exampleData.length,
             });
             mergeState({page: false}, setLoading)
-        }, [500])
+        }, 500)
     }, [])
 
     return (
