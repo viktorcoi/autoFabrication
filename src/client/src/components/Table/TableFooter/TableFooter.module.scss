@@ -1,0 +1,58 @@
+.footer {
+    display: flex;
+    align-items: center;
+    gap: var(--app-distance-empty);
+    justify-content: space-between;
+
+    &__select {
+        width: 80px;
+
+        :global(.vkuiFormField__host) {
+            min-height: 32px;
+        }
+
+        :global(.vkuiCustomSelectInput__el) {
+            height: 32px;
+        }
+    }
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    &__pages {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    &__page {
+        min-height: calc(var(--vkui--size_button_medium_height--compact) - 2px);
+        border: 1px solid var(--vkui--color_separator_primary) !important;
+
+        &--active {
+            border: unset !important;
+            pointer-events: none;
+        }
+    }
+
+    &__jump {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    &__input {
+        width: unset;
+        min-width: 120px;
+        flex-grow: 1;
+        min-height: 32px;
+
+        :global(.vkuiUnstyledTextField__host) {
+            height: 32px;
+        }
+    }
+}

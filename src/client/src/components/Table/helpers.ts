@@ -1,5 +1,7 @@
+import React from 'react';
 import type {ColumnSizingState, SortingState} from '@tanstack/react-table';
-import type {Column, PaginationItem, TableRow, TableSettings, TableSorting} from './types';
+import {Text, classNames} from '@vkontakte/vkui';
+import type {Column, ColumnType, PaginationItem, TableRow, TableSettings, TableSorting} from './types';
 
 export const PAGE_SIZE_OPTIONS = [20, 50, 100];
 export const EMPTY_STATE = {
@@ -10,7 +12,71 @@ export const DRAG_START_THRESHOLD = 4;
 export const DEFAULT_COLUMN_SIZE = 180;
 export const DEFAULT_COLUMN_MIN_SIZE = 120;
 export const DEFAULT_COLUMN_MAX_SIZE = 520;
+export const DEFAULT_ROW_HEIGHT = 41;
+export const ROW_VIRTUAL_OVERSCAN = 8;
 export const TABLE_TOTAL_WIDTH_CSS_VAR = '--table-total-width';
+
+export const renderContent = (content: React.ReactNode, className: string) => {
+    if (content === null || content === undefined) {
+        return React.createElement(Text, {className});
+    }
+
+    if (
+        typeof content === 'string'
+        || typeof content === 'number'
+        || typeof content === 'bigint'
+        || typeof content === 'boolean'
+    ) {
+        return React.createElement(Text, {className}, String(content));
+    }
+
+    if (React.isValidElement<{className?: string}>(content) && content.type === Text) {
+        return React.cloneElement(content, {
+            className: classNames(className, content.props.className),
+        });
+    }
+
+    return React.createElement('div', {className}, content);
+};
+
+export const getColumnType = (column?: Column): ColumnType => {
+    if (
+        column?.type === 'button'
+        || column?.type === 'download'
+        || column?.type === 'boolean'
+        || column?.type === 'text'
+    ) {
+        return column.type;
+    }
+
+    return 'text';
+};
+
+export const getCellTextValue = (value: unknown) => {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    return String(value);
+};
+
+export const getBooleanCellValue = (value: unknown) => {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+
+    if (typeof value === 'string') {
+        const normalizedValue = value.trim().toLowerCase();
+
+        return normalizedValue === 'true' || normalizedValue === '1' || normalizedValue === 'yes';
+    }
+
+    if (typeof value === 'number') {
+        return value !== 0;
+    }
+
+    return Boolean(value);
+};
 
 const safeJsonParse = <T, >(value: string | null, fallback: T): T => {
     if (!value) {

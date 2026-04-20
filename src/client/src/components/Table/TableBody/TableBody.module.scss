@@ -1,0 +1,77 @@
+.bodyRow {
+    cursor: pointer;
+    &--odd {
+        background: var(--vkui--color_background);
+    }
+    &:hover:not(:has([data-table-ignore-hover]:hover)) {
+        background: var(--app-table-hover) !important;
+    }
+    &--selected {
+        background: var(--app-table-selected) !important;
+    }
+}
+
+.bodySpacer {
+    pointer-events: none;
+}
+
+.bodySpacerCell {
+    padding: 0 !important;
+    border: 0 !important;
+}
+
+.bodyCell {
+    position: relative;
+    padding: 10px 10px 10px 15px;
+    vertical-align: middle;
+    text-align: left;
+    border-right: 1px solid var(--vkui--color_separator_primary);
+}
+
+.bodyCellActiveDrag {
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-color: var(--vkui--color_accent_azure);
+        opacity: 0.2;
+    }
+}
+
+.bodyCellResizing {
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -1px;
+        bottom: 0;
+        width: 1px;
+        background: var(--vkui--color_accent_azure);
+    }
+}
+
+.cellText {
+    min-width: 0;
+    color: var(--vkui--color_text_primary);
+    line-height: 20px;
+}
+
+.cellControl {
+    display: flex;
+    align-items: center;
+    min-height: 20px;
+
+    &Boolean {
+        justify-content: center;
+    }
+}
+
+.button {
+    margin: auto;
+}
+
+.checkbox {
+    width: 28px !important;
+    height: 28px !important;
+}

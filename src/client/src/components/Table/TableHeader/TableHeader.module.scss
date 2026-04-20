@@ -1,0 +1,81 @@
+.headerCell {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding: 0;
+    vertical-align: middle;
+    text-align: left;
+    background: var(--vkui--color_background_content);
+    border-right: 1px solid var(--vkui--color_separator_primary);
+    border-bottom: 1px solid var(--vkui--color_separator_primary);
+}
+
+.headerCellActiveDrag {
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-color: var(--vkui--color_accent_azure);
+        opacity: 0.2;
+    }
+}
+
+.headerCellResizing {
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -1px;
+        bottom: 0;
+        width: 1px;
+        background: var(--vkui--color_accent_azure);
+    }
+}
+
+.headerInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 10px 10px 10px 15px;
+    cursor: pointer;
+
+    &--dragging {
+        cursor: grabbing;
+    }
+}
+
+.headerTitle {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--vkui--color_text_primary);
+    font-weight: 600;
+    line-height: 20px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.resizeHandle {
+    position: absolute;
+    top: 0;
+    right: -5px;
+    z-index: 5;
+    width: 10px;
+    height: 100%;
+    cursor: col-resize;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 4px;
+        bottom: 0;
+        width: 1px;
+        background: transparent;
+    }
+
+    &:hover::before {
+        background: var(--vkui--color_accent_azure);
+    }
+}

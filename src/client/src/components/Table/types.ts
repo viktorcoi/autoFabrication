@@ -27,6 +27,29 @@ export type TableSorting = {
     sort: 'asc' | 'desc';
 } | null;
 
+export type SelectionState = {
+    active: boolean;
+    dirty: boolean;
+    target: EventTarget | null;
+};
+
+export type CellMouseEventParams = {
+    row: TableRow;
+    column: string;
+    value: unknown;
+    event: ReactMouseEvent<HTMLElement>;
+    target: EventTarget | null;
+};
+
+export type BooleanChangeEventParams = {
+    row: TableRow;
+    column: string;
+    value: unknown;
+    nextValue: unknown;
+    event: ReactChangeEvent<HTMLInputElement>;
+    target: EventTarget | null;
+};
+
 export type TableEvent =
     | ({type: 'rowClick'; row: TableRow} & TableEventMeta)
     | ({type: 'rowDoubleClick'; row: TableRow} & TableEventMeta)
