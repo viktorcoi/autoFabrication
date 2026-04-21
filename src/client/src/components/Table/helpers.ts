@@ -1,7 +1,15 @@
 import React from 'react';
 import type {ColumnSizingState, SortingState} from '@tanstack/react-table';
 import {Text, classNames} from '@vkontakte/vkui';
-import type {Column, ColumnType, PaginationItem, TableRow, TableSettings, TableSorting} from './types';
+import type {
+    Column,
+    ColumnType,
+    PaginationItem,
+    TableDraftChanges,
+    TableRow,
+    TableSettings,
+    TableSorting,
+} from './types';
 
 export const PAGE_SIZE_OPTIONS = [20, 50, 100];
 export const EMPTY_STATE = {
@@ -58,6 +66,82 @@ export const getCellTextValue = (value: unknown) => {
     }
 
     return String(value);
+};
+
+const getRowMetaKeys = (row: TableRow, key: 'isConst' | 'isRequired') => {
+    const value = row[key];
+
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value.filter((item): item is string => typeof item === 'string');
+};
+
+export const getRowConstKeys = (row: TableRow) => getRowMetaKeys(row, 'isConst');
+
+export const getRowRequiredKeys = (row: TableRow) => getRowMetaKeys(row, 'isRequired');
+
+export const isCellConst = (row: TableRow, column?: Column) => {
+    if (!column) {
+        return false;
+    }
+
+    return Boolean(column.isConst) || getRowConstKeys(row).includes(column.key);
+};
+
+export const isCellRequired = (row: TableRow, column?: Column) => {
+    if (!column) {
+        return false;
+    }
+
+    return Boolean(column.isRequired) || getRowRequiredKeys(row).includes(column.key);
+};
+
+export const isEmptyCellValue = (value: unknown) => {
+    if (value === null || value === undefined) {
+        return true;
+    }
+
+    if (typeof value === 'string') {
+        return value.trim().length === 0;
+    }
+
+    return false;
+};
+
+export const cloneTableRow = (row: TableRow): TableRow => {
+    return {
+        ...row,
+        ...(Array.isArray(row.isConst) ? {isConst: [...row.isConst]} : {}),
+        ...(Array.isArray(row.isRequired) ? {isRequired: [...row.isRequired]} : {}),
+    };
+};
+
+export const getDraftValue = (
+    draftChanges: TableDraftChanges,
+    rowId: string,
+    columnId: string,
+    fallbackValue: unknown,
+) => {
+    const rowDraft = draftChanges[rowId];
+
+    if (!rowDraft || !Object.prototype.hasOwnProperty.call(rowDraft, columnId)) {
+        return fallbackValue;
+    }
+
+    return rowDraft[columnId];
+};
+
+export const mergeRowDraftChanges = (row: TableRow, rowDraft?: Record<string, string>) => {
+    if (!rowDraft) {
+        return row;
+    }
+
+    return {
+        ...cloneTableRow(row),
+        ...rowDraft,
+    };
 };
 
 export const getBooleanCellValue = (value: unknown) => {

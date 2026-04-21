@@ -4,7 +4,10 @@ import type {
     ReactNode,
 } from 'react';
 
-export type TableRow = Record<string, unknown>;
+export type TableRow = Record<string, unknown> & {
+    isConst?: string[];
+    isRequired?: string[];
+};
 
 export type ColumnType = 'text' | 'button' | 'download' | 'boolean';
 
@@ -15,8 +18,12 @@ export type Column = {
     size?: number;
     minSize?: number;
     maxSize?: number;
+    isConst?: boolean;
+    isRequired?: boolean;
     render?: (value: unknown, row: TableRow) => ReactNode;
 };
+
+export type TableDraftChanges = Record<string, Record<string, string>>;
 
 type TableEventMeta = {
     target: EventTarget | null;
@@ -93,7 +100,8 @@ export type TableEvent =
     | ({type: 'pageChange'; page: number} & TableEventMeta)
     | ({type: 'rowsChange'; rows: number} & TableEventMeta)
     | ({type: 'sortChange'; sorting: TableSorting} & TableEventMeta)
-    | ({type: 'selected'; rowIds: string[]; rows: TableRow[]} & TableEventMeta);
+    | ({type: 'selected'; rowIds: string[]; rows: TableRow[]} & TableEventMeta)
+    | ({type: 'editSave'; changes: TableDraftChanges} & TableEventMeta);
 
 export type TableEmptyState = {
     title?: string;
@@ -150,6 +158,7 @@ export type ColumnResizeInteraction = {
     startX: number;
     startWidth: number;
     currentWidth: number;
+    baseSizing: Record<string, number>;
     minWidth: number;
     maxWidth: number;
     frameId: number | null;

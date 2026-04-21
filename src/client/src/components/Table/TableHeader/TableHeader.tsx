@@ -22,8 +22,10 @@ const TableHeader = (props: TableHeaderProps) => {
         beginColumnResize,
     } = props;
 
+    const headerDisabled = loading || disabled;
+
     return (
-        <thead className={classNames((loading || disabled) && 'disabled')}>
+        <thead>
             {headerGroups.map((headerGroup) => (
                 <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
@@ -43,9 +45,14 @@ const TableHeader = (props: TableHeaderProps) => {
                                     styles.headerCell,
                                     isDragging && styles.headerCellActiveDrag,
                                     isResizing && styles.headerCellResizing,
+                                    headerDisabled && styles['headerCell--disabled'],
                                 )}
                                 style={{width: `var(${getColumnWidthCssVarName(columnId)}, ${header.getSize()}px)`}}
                                 onContextMenu={(event) => {
+                                    if (headerDisabled) {
+                                        return;
+                                    }
+
                                     event.preventDefault();
                                     onOpenContextMenu(columnId, {
                                         x: event.clientX,
@@ -57,6 +64,7 @@ const TableHeader = (props: TableHeaderProps) => {
                                     className={classNames(
                                         styles.headerInner,
                                         isDragging && styles['headerInner--dragging'],
+                                        headerDisabled && 'disabled',
                                     )}
                                     onMouseDown={(event) => beginColumnInteraction(columnId, event)}
                                 >

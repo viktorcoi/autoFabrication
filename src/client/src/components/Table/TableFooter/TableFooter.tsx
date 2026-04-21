@@ -14,6 +14,8 @@ const TableFooter = (props: TableFooterProps) => {
     const {
         disabled,
         loading,
+        editing,
+        saveDisabled,
         safeRows,
         pageIndex,
         pageCount,
@@ -24,20 +26,25 @@ const TableFooter = (props: TableFooterProps) => {
         setJumpMode,
         setJumpValue,
         submitJump,
+        onStartEdit,
+        onCancelEdit,
+        onSaveEdit,
         onRowsChange,
         onPageChange,
     } = props;
+
+    const controlsDisabled = loading || disabled || editing;
 
     return (
         <div className={classNames('island', styles.footer)}>
             <div className={styles.edit}>
                 <Select
                     className={classNames(
-                        (loading || disabled) && 'disabled',
+                        controlsDisabled && 'disabled',
                         styles.footer__select,
                     )}
                     value={String(safeRows)}
-                    disabled={loading || disabled}
+                    disabled={controlsDisabled}
                     options={PAGE_SIZE_OPTIONS.map((size) => ({
                         label: String(size),
                         value: String(size),
@@ -52,25 +59,56 @@ const TableFooter = (props: TableFooterProps) => {
                         onRowsChange(nextRows, event.target);
                     }}
                 />
-                <Button
-                    mode={'secondary'}
-                    before={(
-                        <Icon20WarningTriangleOutline
-                            width={16}
-                            height={16}
-                            fill={'var(--vkui--color_icon_warning)'}
-                        />
-                    )}
-                >
-                    Режим редактирования
-                </Button>
+
+                {editing ? (
+                    <>
+                        <Button
+                            size="m"
+                            mode="secondary"
+                            disabled={loading || disabled}
+                            onClick={onCancelEdit}
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            size="m"
+                            mode="primary"
+                            disabled={loading || disabled || saveDisabled}
+                            onClick={onSaveEdit}
+                        >
+                            Сохранить
+                        </Button>
+                    </>
+                ) : (
+                    <Button
+                        size="m"
+                        mode="secondary"
+                        disabled={loading || disabled}
+                        before={(
+                            <Icon20WarningTriangleOutline
+                                width={16}
+                                height={16}
+                                fill="var(--vkui--color_icon_warning)"
+                            />
+                        )}
+                        onClick={onStartEdit}
+                    >
+                        Режим редактирования
+                    </Button>
+                )}
             </div>
-            <div className={styles.pagination}>
+
+            <div
+                className={classNames(
+                    styles.pagination,
+                    controlsDisabled && 'disabled',
+                )}
+            >
                 <Button
                     size="m"
                     mode="secondary"
                     before={<Icon24ChevronCompactLeft />}
-                    disabled={loading || disabled || pageIndex === 0}
+                    disabled={controlsDisabled || pageIndex === 0}
                     onClick={(event) => onPageChange(pageIndex - 1, event.target)}
                 />
 
@@ -132,7 +170,7 @@ const TableFooter = (props: TableFooterProps) => {
                                             isActive && styles['pagination__page--active'],
                                         )}
                                         after={item}
-                                        disabled={loading || disabled || isActive}
+                                        disabled={controlsDisabled || isActive}
                                         onClick={(event) => onPageChange(item - 1, event.target)}
                                     />
                                 );
@@ -143,7 +181,7 @@ const TableFooter = (props: TableFooterProps) => {
                                     key={item}
                                     size="m"
                                     mode="tertiary"
-                                    disabled={loading || disabled}
+                                    disabled={controlsDisabled}
                                     onClick={() => setJumpMode(item === 'ellipsis-left' ? 'left' : 'right')}
                                     after="..."
                                 />
@@ -156,7 +194,7 @@ const TableFooter = (props: TableFooterProps) => {
                     size="m"
                     mode="secondary"
                     before={<Icon24ChevronCompactRight />}
-                    disabled={loading || disabled || pageIndex + 1 >= pageCount}
+                    disabled={controlsDisabled || pageIndex + 1 >= pageCount}
                     onClick={(event) => onPageChange(pageIndex + 1, event.target)}
                 />
             </div>

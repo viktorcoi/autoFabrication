@@ -8,6 +8,13 @@
     background: var(--vkui--color_background_content);
     border-right: 1px solid var(--vkui--color_separator_primary);
     border-bottom: 1px solid var(--vkui--color_separator_primary);
+
+    &--disabled {
+        .resizeHandle {
+            pointer-events: none;
+            cursor: default;
+        }
+    }
 }
 
 .headerCellActiveDrag {

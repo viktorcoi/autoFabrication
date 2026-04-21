@@ -75,6 +75,9 @@ body {
 	&::-webkit-scrollbar-thumb {
 		background: var(--vkui--color_transparent--active);
 		border-radius: var(--app-border-radius);
+		&:hover {
+			background: var(--vkui--color_transparent--hover);
+		}
 	}
 
 	&::-webkit-scrollbar-corner {

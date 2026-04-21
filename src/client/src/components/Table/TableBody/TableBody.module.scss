@@ -1,13 +1,20 @@
 .bodyRow {
     cursor: pointer;
+
     &--odd {
         background: var(--vkui--color_background);
     }
-    &:hover:not(:has([data-table-ignore-hover]:hover)) {
+
+    &:not(.bodyRow--editing):hover:not(:has([data-table-ignore-hover]:hover)) {
         background: var(--app-table-hover) !important;
     }
+
     &--selected {
         background: var(--app-table-selected) !important;
+    }
+
+    &--editing {
+        cursor: default;
     }
 }
 
@@ -26,6 +33,14 @@
     vertical-align: middle;
     text-align: left;
     border-right: 1px solid var(--vkui--color_separator_primary);
+
+    &--editing {
+        padding: 6px 7px;
+    }
+
+    &--invalid {
+        background: var(--vkui--color_background_negative_tint);
+    }
 }
 
 .bodyCellActiveDrag {
@@ -55,6 +70,16 @@
     min-width: 0;
     color: var(--vkui--color_text_primary);
     line-height: 20px;
+}
+
+.cellInput {
+    width: 100%;
+    min-height: 28px;
+
+    input {
+        height: 28px !important;
+        padding: 0 8px 1px 8px;
+    }
 }
 
 .cellControl {

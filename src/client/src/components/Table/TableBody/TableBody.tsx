@@ -2,7 +2,7 @@ import React from 'react';
 import {flexRender} from '@tanstack/react-table';
 import {useVirtualizer} from '@tanstack/react-virtual';
 import {Icon16DownloadOutline} from '@vkontakte/icons';
-import {Button, Checkbox, Text, Tooltip, classNames} from '@vkontakte/vkui';
+import {Button, Checkbox, Input, Text, Tooltip, classNames} from '@vkontakte/vkui';
 import {
     DEFAULT_ROW_HEIGHT,
     ROW_VIRTUAL_OVERSCAN,
@@ -10,6 +10,8 @@ import {
     getCellTextValue,
     getColumnType,
     getColumnWidthCssVarName,
+    getDraftValue,
+    isCellConst,
     isInteractiveTarget,
     renderContent,
 } from '../helpers';
@@ -20,13 +22,18 @@ const TableBody = React.memo((props: TableBodyProps) => {
     const {
         disabled,
         loading,
+        editing,
         scrollRef,
         visibleRows,
         columnMap,
+        draftChanges,
+        invalidRequiredCellKeys,
         draggingColumnId,
         resizingColumnId,
         selectedRowIdsSet,
         rowRefsRef,
+        measuredRowHeightsRef,
+        rowHeights,
         previewSelectedRowIdsRef,
         selectionStateRef,
         onEventRef,
@@ -39,6 +46,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
         emitCellDoubleClick,
         emitInteractiveClick,
         emitBooleanChange,
+        onDraftTextChange,
     } = props;
 
     const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
@@ -60,6 +68,8 @@ const TableBody = React.memo((props: TableBodyProps) => {
         ? rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end
         : 0;
     const visibleColumnCount = visibleRows[0]?.getVisibleCells().length ?? columnMap.size;
+    const rowActionsDisabled = loading || Boolean(disabled) || editing;
+    const controlDisabled = loading || Boolean(disabled) || editing;
 
     return (
         <tbody>
@@ -82,9 +92,12 @@ const TableBody = React.memo((props: TableBodyProps) => {
                             return null;
                         }
 
-                        const isSelectedRow = selectionStateRef.current.active
+                        const isSelectedRow = !editing && (
+                            selectionStateRef.current.active
                             ? previewSelectedRowIdsRef.current.includes(row.id)
-                            : selectedRowIdsSet.has(row.id);
+                            : selectedRowIdsSet.has(row.id)
+                        );
+                        const rowHeight = editing ? rowHeights[row.id] : undefined;
 
                         return (
                             <tr
@@ -94,23 +107,44 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                     rowRefsRef.current[row.id] = element;
 
                                     if (element) {
+                                        if (!editing) {
+                                            measuredRowHeightsRef.current[row.id] = Math.max(
+                                                DEFAULT_ROW_HEIGHT,
+                                                Math.ceil(element.getBoundingClientRect().height),
+                                            );
+                                        }
+
                                         element.classList.toggle(
                                             styles['bodyRow--selected'],
-                                            previewSelectedRowIdsRef.current.includes(row.id),
+                                            !editing && previewSelectedRowIdsRef.current.includes(row.id),
                                         );
                                         rowVirtualizer.measureElement(element);
                                     }
                                 }}
+                                style={rowHeight ? {height: `${rowHeight}px`} : undefined}
                                 className={classNames(
                                     styles.bodyRow,
                                     virtualRow.index % 2 === 0 && styles['bodyRow--odd'],
                                     isSelectedRow && styles['bodyRow--selected'],
-                                    disabled && disabled,
+                                    editing && styles['bodyRow--editing'],
+                                    disabled && !editing && 'disabled',
                                 )}
-                                onMouseDown={(event) => beginSelection(row.id, event)}
-                                onMouseEnter={(event) => extendSelection(row.id, event.target)}
+                                onMouseDown={(event) => {
+                                    if (rowActionsDisabled) {
+                                        return;
+                                    }
+
+                                    beginSelection(row.id, event);
+                                }}
+                                onMouseEnter={(event) => {
+                                    if (rowActionsDisabled) {
+                                        return;
+                                    }
+
+                                    extendSelection(row.id, event.target);
+                                }}
                                 onClick={(event) => {
-                                    if (isInteractiveTarget(event.target)) {
+                                    if (rowActionsDisabled || isInteractiveTarget(event.target)) {
                                         return;
                                     }
 
@@ -121,7 +155,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                     });
                                 }}
                                 onDoubleClick={(event) => {
-                                    if (isInteractiveTarget(event.target)) {
+                                    if (rowActionsDisabled || isInteractiveTarget(event.target)) {
                                         return;
                                     }
 
@@ -138,10 +172,14 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                     const columnType = getColumnType(columnConfig);
                                     const cellValue = cell.getValue();
                                     const renderedCell = flexRender(cell.column.columnDef.cell, cell.getContext());
-                                    const cellTextValue = getCellTextValue(cellValue);
+                                    const draftValue = getDraftValue(draftChanges, row.id, columnId, cellValue);
+                                    const cellTextValue = getCellTextValue(draftValue);
                                     const checkboxValue = getBooleanCellValue(cellValue);
                                     const isDragging = draggingColumnId === columnId;
                                     const isResizing = resizingColumnId === columnId;
+                                    const isConstCell = isCellConst(row.original, columnConfig);
+                                    const isInvalidRequiredCell = editing
+                                        && invalidRequiredCellKeys.has(`${row.id}:${columnId}`);
                                     let cellContent: React.ReactNode;
 
                                     if (columnType === 'button') {
@@ -151,10 +189,15 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 size="s"
                                                 mode="secondary"
                                                 data-table-ignore-hover={true}
-                                                disabled={loading || disabled}
+                                                disabled={controlDisabled}
                                                 onMouseDown={(event) => event.stopPropagation()}
                                                 onClick={(event) => {
                                                     event.stopPropagation();
+
+                                                    if (controlDisabled) {
+                                                        return;
+                                                    }
+
                                                     emitInteractiveClick('button', {
                                                         row: row.original,
                                                         column: columnId,
@@ -165,6 +208,11 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 }}
                                                 onDoubleClick={(event) => {
                                                     event.stopPropagation();
+
+                                                    if (controlDisabled) {
+                                                        return;
+                                                    }
+
                                                     emitInteractiveClick('button', {
                                                         row: row.original,
                                                         column: columnId,
@@ -190,10 +238,15 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     mode="tertiary"
                                                     className={styles.button}
                                                     label={cellTextValue}
-                                                    disabled={loading || disabled}
+                                                    disabled={controlDisabled}
                                                     onMouseDown={(event) => event.stopPropagation()}
                                                     onClick={(event) => {
                                                         event.stopPropagation();
+
+                                                        if (controlDisabled) {
+                                                            return;
+                                                        }
+
                                                         emitInteractiveClick('download', {
                                                             row: row.original,
                                                             column: columnId,
@@ -204,6 +257,11 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     }}
                                                     onDoubleClick={(event) => {
                                                         event.stopPropagation();
+
+                                                        if (controlDisabled) {
+                                                            return;
+                                                        }
+
                                                         emitInteractiveClick('download', {
                                                             row: row.original,
                                                             column: columnId,
@@ -230,12 +288,17 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     className={styles.checkbox}
                                                     key={`${row.id}:${columnId}:${checkboxValue ? '1' : '0'}`}
                                                     defaultChecked={checkboxValue}
-                                                    disabled={loading || disabled}
+                                                    disabled={controlDisabled}
                                                     onMouseDown={(event) => event.stopPropagation()}
                                                     onClick={(event) => event.stopPropagation()}
                                                     onDoubleClick={(event) => event.stopPropagation()}
                                                     onChange={(event) => {
                                                         event.stopPropagation();
+
+                                                        if (controlDisabled) {
+                                                            return;
+                                                        }
+
                                                         emitBooleanChange({
                                                             row: row.original,
                                                             column: columnId,
@@ -247,6 +310,21 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     }}
                                                 />
                                             </span>
+                                        );
+                                    } else if (editing) {
+                                        cellContent = (
+                                            <Input
+                                                value={cellTextValue}
+                                                className={styles.cellInput}
+                                                mode={'plain'}
+                                                disabled={isConstCell || loading || Boolean(disabled)}
+                                                onChange={(event) => {
+                                                    onDraftTextChange(row.id, columnId, event.target.value);
+                                                }}
+                                                onMouseDown={(event) => event.stopPropagation()}
+                                                onClick={(event) => event.stopPropagation()}
+                                                onDoubleClick={(event) => event.stopPropagation()}
+                                            />
                                         );
                                     } else {
                                         cellContent = (
@@ -265,9 +343,17 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 styles.bodyCell,
                                                 isDragging && styles.bodyCellActiveDrag,
                                                 isResizing && styles.bodyCellResizing,
+                                                editing && columnType === 'text' && styles['bodyCell--editing'],
+                                                isInvalidRequiredCell && styles['bodyCell--invalid'],
                                             )}
-                                            style={{width: `var(${getColumnWidthCssVarName(columnId)}, ${cell.column.getSize()}px)`}}
+                                            style={{
+                                                width: `var(${getColumnWidthCssVarName(columnId)}, ${cell.column.getSize()}px)`,
+                                            }}
                                             onClick={(event) => {
+                                                if (rowActionsDisabled) {
+                                                    return;
+                                                }
+
                                                 if (isInteractiveTarget(event.target) && event.target !== event.currentTarget) {
                                                     return;
                                                 }
@@ -283,6 +369,10 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 });
                                             }}
                                             onDoubleClick={(event) => {
+                                                if (rowActionsDisabled) {
+                                                    return;
+                                                }
+
                                                 if (isInteractiveTarget(event.target) && event.target !== event.currentTarget) {
                                                     return;
                                                 }
@@ -299,6 +389,10 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                             }}
                                             onContextMenu={(event) => {
                                                 event.preventDefault();
+
+                                                if (rowActionsDisabled) {
+                                                    return;
+                                                }
 
                                                 const nextSelection = getNextRowSelection(row.id, event);
                                                 const selectionChanged = setSelectedRows(nextSelection);

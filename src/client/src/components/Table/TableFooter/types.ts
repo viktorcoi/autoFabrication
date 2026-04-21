@@ -4,6 +4,8 @@ import type {PaginationItem} from '../types';
 export type TableFooterProps = {
     disabled?: boolean;
     loading: boolean;
+    editing: boolean;
+    saveDisabled: boolean;
     safeRows: number;
     pageIndex: number;
     pageCount: number;
@@ -14,6 +16,9 @@ export type TableFooterProps = {
     setJumpMode: Dispatch<SetStateAction<null | 'left' | 'right'>>;
     setJumpValue: Dispatch<SetStateAction<string>>;
     submitJump: () => void;
+    onStartEdit: () => void;
+    onCancelEdit: () => void;
+    onSaveEdit: () => void;
     onRowsChange: (rows: number, target: EventTarget | null) => void;
     onPageChange: (page: number, target: EventTarget | null) => void;
 };

@@ -46,6 +46,10 @@
     border-collapse: separate;
     border-spacing: 0;
     user-select: none;
+
+    &--editing {
+        user-select: text;
+    }
 }
 
 .empty,

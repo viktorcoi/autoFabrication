@@ -29,11 +29,15 @@ import {
     areSortingsEqual,
     buildPagination,
     clampColumnWidth,
+    cloneTableRow,
     DEFAULT_COLUMN_MAX_SIZE,
     DEFAULT_COLUMN_MIN_SIZE,
     DEFAULT_COLUMN_SIZE,
+    DEFAULT_ROW_HEIGHT,
     DRAG_START_THRESHOLD,
     EMPTY_STATE,
+    getCellTextValue,
+    getColumnType,
     getColumnDefaultWidth,
     getColumnMaxWidth,
     getColumnMinWidth,
@@ -41,7 +45,10 @@ import {
     getRange,
     getStorageId,
     getStoredSettings,
+    isCellRequired,
+    isEmptyCellValue,
     isInteractiveTarget,
+    mergeRowDraftChanges,
     moveColumnOrder,
     PAGE_SIZE_OPTIONS,
     removeStoredSettings,
@@ -63,6 +70,7 @@ import type {
     ColumnResizeInteraction,
     DragGhostState,
     SelectionState,
+    TableDraftChanges,
     TableProps,
     TableRow,
     TableSorting,
@@ -106,8 +114,13 @@ const Table = (props: TableProps) => {
     const [jumpMode, setJumpMode] = useState<null | 'left' | 'right'>(null);
     const [jumpValue, setJumpValue] = useState('1');
     const [settingsReady, setSettingsReady] = useState(false);
+    const [tableData, setTableData] = useState<TableRow[]>(() => data.map((row) => cloneTableRow(row)));
+    const [editing, setEditing] = useState(false);
+    const [draftChanges, setDraftChanges] = useState<TableDraftChanges>({});
+    const [editingRowHeights, setEditingRowHeights] = useState<Record<string, number>>({});
 
     const onEventRef = useRef(onEvent);
+    const externalDataRef = useRef(data);
     const visibleRowsRef = useRef<Array<{id: string; original: TableRow}>>([]);
     const selectedRowIdsRef = useRef<string[]>([]);
     const selectionAnchorRowIdRef = useRef<string | null>(null);
@@ -133,6 +146,7 @@ const Table = (props: TableProps) => {
     const bodyStyleSnapshotRef = useRef<{userSelect: string; cursor: string} | null>(null);
     const headerContextToggleRef = useRef<HTMLDivElement>(null);
     const rowRefsRef = useRef<Record<string, HTMLTableRowElement | null>>({});
+    const measuredRowHeightsRef = useRef<Record<string, number>>({});
     const previewSelectedRowIdsRef = useRef<string[]>([]);
 
     const emitCellClick = (params: {
@@ -308,8 +322,46 @@ const Table = (props: TableProps) => {
         pendingSortTargetRef.current = null;
     };
 
+    const tableRowIds = useMemo(
+        () => tableData.map((row, index) => (getRowId ? getRowId(row, index) : getDefaultRowId(row, index))),
+        [getRowId, tableData],
+    );
+    const tableRowMap = useMemo(
+        () => new Map(tableData.map((row, index) => [tableRowIds[index], row])),
+        [tableData, tableRowIds],
+    );
+    const invalidRequiredCellKeys = useMemo(() => {
+        const nextInvalidCellKeys = new Set<string>();
+
+        if (!editing) {
+            return nextInvalidCellKeys;
+        }
+
+        tableData.forEach((row, index) => {
+            const rowId = tableRowIds[index];
+
+            columns.forEach((column) => {
+                if (getColumnType(column) !== 'text' || !isCellRequired(row, column)) {
+                    return;
+                }
+
+                const rowDraft = draftChanges[rowId];
+                const value = rowDraft && Object.prototype.hasOwnProperty.call(rowDraft, column.key)
+                    ? rowDraft[column.key]
+                    : row[column.key];
+
+                if (isEmptyCellValue(value)) {
+                    nextInvalidCellKeys.add(`${rowId}:${column.key}`);
+                }
+            });
+        });
+
+        return nextInvalidCellKeys;
+    }, [columns, draftChanges, editing, tableData, tableRowIds]);
+    const hasInvalidRequiredCells = invalidRequiredCellKeys.size > 0;
+
     const table = useReactTable<TableRow>({
-        data,
+        data: tableData,
         columns: tableColumns,
         state: {
             sorting: tableSortingState,
@@ -356,6 +408,15 @@ const Table = (props: TableProps) => {
     useEffect(() => {
         onEventRef.current = onEvent;
     }, [onEvent]);
+
+    useEffect(() => {
+        if (editing || externalDataRef.current === data) {
+            return;
+        }
+
+        externalDataRef.current = data;
+        setTableData(data.map((row) => cloneTableRow(row)));
+    }, [data, editing]);
 
     useEffect(() => {
         visibleRowsRef.current = visibleRows;
@@ -556,7 +617,7 @@ const Table = (props: TableProps) => {
 
         if (interaction && shouldCommit) {
             commitColumnSizing({
-                ...committedColumnSizingRef.current,
+                ...interaction.baseSizing,
                 [interaction.columnId]: interaction.currentWidth,
             });
         } else {
@@ -728,7 +789,7 @@ const Table = (props: TableProps) => {
             nextInteraction.frameId = null;
 
             const nextSizing = {
-                ...committedColumnSizingRef.current,
+                ...nextInteraction.baseSizing,
                 [nextInteraction.columnId]: nextInteraction.currentWidth,
             };
 
@@ -978,7 +1039,7 @@ const Table = (props: TableProps) => {
     };
 
     const beginSelection = (rowId: string, event: React.MouseEvent<HTMLTableRowElement>) => {
-        if (event.button !== 0 || isInteractiveTarget(event.target)) {
+        if (editing || disabled || event.button !== 0 || isInteractiveTarget(event.target)) {
             return;
         }
 
@@ -991,7 +1052,7 @@ const Table = (props: TableProps) => {
     };
 
     const extendSelection = (rowId: string, target: EventTarget | null) => {
-        if (!selectionStateRef.current.active || !selectionAnchorRowIdRef.current) {
+        if (editing || disabled || !selectionStateRef.current.active || !selectionAnchorRowIdRef.current) {
             return;
         }
 
@@ -1054,6 +1115,10 @@ const Table = (props: TableProps) => {
     };
 
     const submitJump = () => {
+        if (editing || disabled || loading) {
+            return;
+        }
+
         const nextPage = Number(jumpValue);
 
         if (!Number.isFinite(nextPage)) {
@@ -1075,7 +1140,7 @@ const Table = (props: TableProps) => {
     };
 
     const beginColumnResize = (columnId: string, event: React.MouseEvent<HTMLDivElement>) => {
-        if (loading || event.button !== 0 || dragInteractionRef.current || resizeActiveRef.current) {
+        if (editing || disabled || loading || event.button !== 0 || dragInteractionRef.current || resizeActiveRef.current) {
             return;
         }
 
@@ -1086,13 +1151,27 @@ const Table = (props: TableProps) => {
         }
 
         const column = columnMap.get(columnId);
-        const startWidth = clampColumnWidth(cell.getBoundingClientRect().width, column);
+        const baseSizing = columns.reduce<ColumnSizingState>((result, currentColumn) => {
+            const currentCell = headerCellRefsRef.current[currentColumn.key];
+            const fallbackWidth = liveColumnSizingRef.current[currentColumn.key]
+                ?? committedColumnSizingRef.current[currentColumn.key]
+                ?? getColumnDefaultWidth(currentColumn);
+
+            result[currentColumn.key] = clampColumnWidth(
+                currentCell?.getBoundingClientRect().width ?? fallbackWidth,
+                currentColumn,
+            );
+
+            return result;
+        }, {});
+        const startWidth = baseSizing[columnId] ?? clampColumnWidth(cell.getBoundingClientRect().width, column);
 
         resizeInteractionRef.current = {
             columnId,
             startX: event.clientX,
             startWidth,
             currentWidth: startWidth,
+            baseSizing,
             minWidth: getColumnMinWidth(column),
             maxWidth: getColumnMaxWidth(column),
             frameId: null,
@@ -1105,7 +1184,7 @@ const Table = (props: TableProps) => {
     };
 
     const beginColumnInteraction = (columnId: string, event: React.MouseEvent<HTMLDivElement>) => {
-        if (loading || event.button !== 0 || resizeActiveRef.current || resizeInteractionRef.current) {
+        if (editing || disabled || loading || event.button !== 0 || resizeActiveRef.current || resizeInteractionRef.current) {
             return;
         }
 
@@ -1135,6 +1214,101 @@ const Table = (props: TableProps) => {
         event.preventDefault();
     };
 
+    const getSnapshotRowHeights = () => {
+        const nextRowHeights = {...measuredRowHeightsRef.current};
+
+        Object.entries(rowRefsRef.current).forEach(([rowId, rowElement]) => {
+            if (!rowElement) {
+                return;
+            }
+
+            nextRowHeights[rowId] = Math.max(
+                DEFAULT_ROW_HEIGHT,
+                Math.ceil(rowElement.getBoundingClientRect().height),
+            );
+        });
+
+        return nextRowHeights;
+    };
+
+    const updateDraftTextCell = (rowId: string, columnId: string, nextValue: string) => {
+        if (!editing) {
+            return;
+        }
+
+        const baseRow = tableRowMap.get(rowId);
+        const baseValue = getCellTextValue(baseRow?.[columnId]);
+
+        setDraftChanges((previousDraftChanges) => {
+            const nextDraftChanges = {...previousDraftChanges};
+            const previousRowDraft = previousDraftChanges[rowId];
+            const nextRowDraft = previousRowDraft ? {...previousRowDraft} : {};
+
+            if (nextValue === baseValue) {
+                delete nextRowDraft[columnId];
+            } else {
+                nextRowDraft[columnId] = nextValue;
+            }
+
+            if (Object.keys(nextRowDraft).length === 0) {
+                delete nextDraftChanges[rowId];
+            } else {
+                nextDraftChanges[rowId] = nextRowDraft;
+            }
+
+            return nextDraftChanges;
+        });
+    };
+
+    const startEditing = () => {
+        if (editing || loading || disabled || tableData.length === 0) {
+            return;
+        }
+
+        setHeaderContextColumnId(null);
+        setJumpMode(null);
+        selectionStateRef.current.active = false;
+        selectionStateRef.current.dirty = false;
+        selectionStateRef.current.target = null;
+        syncSelectedRowsPreview([]);
+        setEditingRowHeights(getSnapshotRowHeights());
+        setDraftChanges({});
+        setEditing(true);
+    };
+
+    const cancelEditing = () => {
+        selectionStateRef.current.active = false;
+        selectionStateRef.current.dirty = false;
+        selectionStateRef.current.target = null;
+        syncSelectedRowsPreview(selectedRowIdsRef.current);
+        setEditingRowHeights({});
+        setDraftChanges({});
+        setEditing(false);
+    };
+
+    const saveEditing = () => {
+        if (!editing || hasInvalidRequiredCells) {
+            return;
+        }
+
+        const currentDraftChanges = draftChanges;
+        const nextRows = tableData.map((row, index) => mergeRowDraftChanges(row, currentDraftChanges[tableRowIds[index]]));
+
+        selectionStateRef.current.active = false;
+        selectionStateRef.current.dirty = false;
+        selectionStateRef.current.target = null;
+        syncSelectedRowsPreview(selectedRowIdsRef.current);
+        setTableData(nextRows);
+        setEditingRowHeights({});
+        setDraftChanges({});
+        setEditing(false);
+        onEventRef.current({
+            type: 'editSave',
+            changes: currentDraftChanges,
+            target: null,
+        });
+    };
+
     return (
         <>
             <div
@@ -1154,11 +1328,14 @@ const Table = (props: TableProps) => {
                 >
                     <table
                         ref={tableRef}
-                        className={styles.table}
+                        className={classNames(
+                            styles.table,
+                            editing && styles['table--editing'],
+                        )}
                         style={{width: `var(${TABLE_TOTAL_WIDTH_CSS_VAR}, ${table.getTotalSize()}px)`}}
                     >
                         <TableHeader
-                            disabled={disabled}
+                            disabled={disabled || editing}
                             loading={loading}
                             headerGroups={table.getHeaderGroups()}
                             draggingColumnId={draggingColumnId}
@@ -1175,13 +1352,18 @@ const Table = (props: TableProps) => {
                         <TableBody
                             disabled={disabled}
                             loading={loading}
+                            editing={editing}
                             scrollRef={scrollRef}
                             visibleRows={visibleRows}
                             columnMap={columnMap}
+                            draftChanges={draftChanges}
+                            invalidRequiredCellKeys={invalidRequiredCellKeys}
                             draggingColumnId={draggingColumnId}
                             resizingColumnId={resizingColumnId}
                             selectedRowIdsSet={selectedRowIdsSet}
                             rowRefsRef={rowRefsRef}
+                            measuredRowHeightsRef={measuredRowHeightsRef}
+                            rowHeights={editingRowHeights}
                             previewSelectedRowIdsRef={previewSelectedRowIdsRef}
                             selectionStateRef={selectionStateRef}
                             onEventRef={onEventRef}
@@ -1194,6 +1376,7 @@ const Table = (props: TableProps) => {
                             emitCellDoubleClick={emitCellDoubleClick}
                             emitInteractiveClick={emitInteractiveClick}
                             emitBooleanChange={emitBooleanChange}
+                            onDraftTextChange={updateDraftTextCell}
                         />
                     </table>
 
@@ -1256,7 +1439,7 @@ const Table = (props: TableProps) => {
                 )}
             </div>
 
-            {headerContextColumnId && (
+            {!editing && headerContextColumnId && (
                 <>
                     <div
                         ref={headerContextToggleRef}
@@ -1303,6 +1486,8 @@ const Table = (props: TableProps) => {
             <TableFooter
                 disabled={disabled}
                 loading={loading}
+                editing={editing}
+                saveDisabled={hasInvalidRequiredCells}
                 safeRows={safeRows}
                 pageIndex={pageIndex}
                 pageCount={pageCount}
@@ -1313,6 +1498,9 @@ const Table = (props: TableProps) => {
                 setJumpMode={setJumpMode}
                 setJumpValue={setJumpValue}
                 submitJump={submitJump}
+                onStartEdit={startEditing}
+                onCancelEdit={cancelEditing}
+                onSaveEdit={saveEditing}
                 onRowsChange={(nextRows, target) => {
                     onEventRef.current({
                         type: 'rowsChange',

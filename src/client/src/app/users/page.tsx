@@ -10,23 +10,24 @@ import {OpenModalsType} from "@/components/modals/types";
 import Table from "@/components/Table/Table";
 
 const columnsUser = [
-    {key: 'id', header: 'ID', size: 90, minSize: 80, maxSize: 140},
+    {key: 'id', header: 'ID', size: 90, minSize: 80, maxSize: 140, isConst: true},
     {key: 'name', header: 'Name', size: 170},
+    {key: 'city', header: 'Name', size: 170},
     {key: 'email', header: 'Email', size: 240, minSize: 180, maxSize: 380},
     {key: 'phone', header: 'Phone', size: 180},
     {key: 'files', header: 'Files', size: 90, minSize: 80, maxSize: 140, type: 'download'},
-    {key: 'company', header: 'company', size: 170, type: 'button'},
+    {key: 'company', header: 'company', size: 170, type: 'button', isConst: true},
     {key: 'role', header: 'role', size: 240, minSize: 180, maxSize: 380},
-    {key: 'status', header: 'status', size: 180, type: 'boolean'},
+    {key: 'status', header: 'status', size: 180, type: 'boolean', isConst: true},
     {key: 'department', header: 'department', size: 240, minSize: 180, maxSize: 380},
-    {key: 'createdAt', header: 'createdAt', size: 180},
+    {key: 'createdAt', header: 'createdAt', size: 180, isConst: true},
 ];
 
 const exampleData = Array.from({length: 1000}).map((_, i) => ({
     id: i,
     name: `User ${i + 1}`,
     email: `user${i + 1}@mail.com`,
-    city: `City ${i + 1}`,
+    city: `City ${i + 1} ${i%10 === 0 ? 'City City City City City City City City City City City City City City City City City City City City City City' : ''}`,
     company: `Button ${i + 1}`,
     role: `Role ${i + 1}`,
     department: `Department ${i + 1}`,
@@ -34,6 +35,8 @@ const exampleData = Array.from({length: 1000}).map((_, i) => ({
     status: i%2 === 0,
     createdAt: `Created At: ${i + 1}`,
     phone: `Phone: ${i + 1}`,
+    isConst: i === 0 ? ['id', 'name', 'email', 'phone', 'files', 'company', 'role', 'status', 'department', 'createdAt'] : ['files', 'company', 'status'],
+    isRequired: ['name', 'email']
 }));
 
 const UsersPage = () => {
