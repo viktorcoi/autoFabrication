@@ -3,8 +3,8 @@ import { AppError } from "../../shared/errors/app-error.js";
 import { asyncHandler } from "../../shared/http/async-handler.js";
 import { requirePermission } from "../../shared/http/permissions.js";
 import { validate } from "../../shared/http/validate.js";
-import { createUserSchema, updateUserSchema } from "./user.schemas.js";
-import { createUser, getUserById, listUsers, updateUser } from "./user.service.js";
+import { createUserSchema, getUsersTableSchema, updateUserSchema } from "./user.schemas.js";
+import { createUser, getUserById, getUsersTable, listUsers, updateUser } from "./user.service.js";
 
 const parseId = (value: string) => {
 	const id = Number.parseInt(value, 10);
@@ -25,6 +25,17 @@ userRouter.get(
 		const users = await listUsers();
 
 		response.json(users);
+	}),
+);
+
+userRouter.get(
+	"/table",
+	requirePermission("/users", "view"),
+	asyncHandler(async (request, response) => {
+		const query = validate(getUsersTableSchema, request.query);
+		const table = await getUsersTable(query);
+
+		response.json(table);
 	}),
 );
 

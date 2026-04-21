@@ -68,20 +68,23 @@ const TableHeader = (props: TableHeaderProps) => {
                                     )}
                                     onMouseDown={(event) => beginColumnInteraction(columnId, event)}
                                 >
-                                    <Text>
+                                    <Text
+                                        weight={'1'}
+                                        className={styles.text}
+                                    >
                                         {renderContent(
                                             flexRender(header.column.columnDef.header, header.getContext()),
                                             styles.headerTitle,
                                         )}
                                     </Text>
                                     {header.column.getIsSorted() === 'asc' && (
-                                        <Icon16SortArrowUp fill="var(--vkui--color_icon_tertiary)"/>
+                                        <Icon16SortArrowUp className={styles.sort} fill="var(--vkui--color_icon_tertiary)"/>
                                     )}
                                     {header.column.getIsSorted() === 'desc' && (
-                                        <Icon16SortArrowDown fill="var(--vkui--color_icon_tertiary)"/>
+                                        <Icon16SortArrowDown className={styles.sort} fill="var(--vkui--color_icon_tertiary)"/>
                                     )}
                                     {!header.column.getIsSorted() && (
-                                        <Icon16SortOutline fill="var(--vkui--color_icon_tertiary)"/>
+                                        <Icon16SortOutline className={styles.sort} fill="var(--vkui--color_icon_tertiary)"/>
                                     )}
                                 </div>
 

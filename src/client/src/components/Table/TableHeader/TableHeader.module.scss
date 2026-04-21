@@ -56,11 +56,12 @@
 .headerTitle {
     min-width: 0;
     overflow: hidden;
-    color: var(--vkui--color_text_primary);
-    font-weight: 600;
-    line-height: 20px;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.text {
+    overflow: hidden;
 }
 
 .resizeHandle {
@@ -85,4 +86,8 @@
     &:hover::before {
         background: var(--vkui--color_accent_azure);
     }
+}
+
+.sort {
+    min-width: 16px;
 }

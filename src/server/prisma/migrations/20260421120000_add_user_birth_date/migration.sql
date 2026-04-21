@@ -1,0 +1,9 @@
+ALTER TABLE "User"
+ADD COLUMN "birthDate" TIMESTAMP(3);
+
+UPDATE "User"
+SET "birthDate" = CURRENT_TIMESTAMP
+WHERE "birthDate" IS NULL;
+
+ALTER TABLE "User"
+ALTER COLUMN "birthDate" SET NOT NULL;

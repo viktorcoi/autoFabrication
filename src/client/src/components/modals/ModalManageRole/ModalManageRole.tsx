@@ -14,8 +14,9 @@ import styles from './ModalManageRole.module.scss'
 import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
+import {PostRolesOptions} from "@/apiService/apiRoles/types";
 
-const initialData = {
+const initialData: PostRolesOptions = {
     name: "",
     description: "",
 };
@@ -50,8 +51,6 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
         const controller = new AbortController();
         controllerRef.current = controller;
 
-        mergeState({get: true}, setLoading);
-
         ApiService.roles.getById({
             id: idRole,
             controller
@@ -66,7 +65,6 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
                 setData(init);
             } else onClose('error')
         }).finally(() => mergeState({get: false}, setLoading));
-
 
         return () => {
             if (controllerRef.current) controllerRef.current.abort();
@@ -108,7 +106,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
     }
 
     const title = useMemo(
-        () => idRole === null ? 'Добавление роли' : 'Редактирование роли',
+        () => `${idRole === null ? 'Добавление' : 'Редактирование'} роли`,
         []
     );
 

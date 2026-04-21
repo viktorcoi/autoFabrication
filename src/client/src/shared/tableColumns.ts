@@ -6,7 +6,6 @@ export const tableColumns = {
         {key: 'middleName', header: 'Отчество', size: 170},
         {key: 'role', header: 'Роль', size: 170, isConst: true},
         {key: 'avatar', header: 'Фото', size: 90, minSize: 80, maxSize: 140, type: 'avatar', isConst: true},
-
-        // {key: 'avatar', header: 'Фото', size: 90, minSize: 80, maxSize: 140, type: 'avatar'},
+        {key: 'birthDate', header: 'Дата рождения', size: 180, minSize: 180, maxSize: 300, type: 'date'},
     ]
 }

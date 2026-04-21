@@ -6,38 +6,13 @@ import Container from "@/components/Container/Container";
 import React, {useEffect, useState} from "react";
 import {useSearch} from "@/shared/hooks";
 import {mergeState} from "@/shared/helpers";
-import {OpenModalsType} from "@/components/modals/types";
+import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import Table from "@/components/Table/Table";
-
-const columnsUser = [
-    {key: 'id', header: 'ID', size: 90, minSize: 80, maxSize: 140, isConst: true},
-    {key: 'name', header: 'Name', size: 170},
-    {key: 'city', header: 'Name', size: 170},
-    {key: 'email', header: 'Email', size: 240, minSize: 180, maxSize: 380},
-    {key: 'phone', header: 'Phone', size: 180},
-    {key: 'files', header: 'Files', size: 90, minSize: 80, maxSize: 140, type: 'download'},
-    {key: 'company', header: 'company', size: 170, type: 'button', isConst: true},
-    {key: 'role', header: 'role', size: 240, minSize: 180, maxSize: 380},
-    {key: 'status', header: 'status', size: 180, type: 'boolean', isConst: true},
-    {key: 'department', header: 'department', size: 240, minSize: 180, maxSize: 380},
-    {key: 'createdAt', header: 'createdAt', size: 180, isConst: true},
-];
-
-const exampleData = Array.from({length: 1000}).map((_, i) => ({
-    id: i,
-    name: `User ${i + 1}`,
-    email: `user${i + 1}@mail.com`,
-    city: `City ${i + 1} ${i%10 === 0 ? 'City City City City City City City City City City City City City City City City City City City City City City' : ''}`,
-    company: `Button ${i + 1}`,
-    role: `Role ${i + 1}`,
-    department: `Department ${i + 1}`,
-    files: `Скачать файлы`,
-    status: i%2 === 0,
-    createdAt: `Created At: ${i + 1}`,
-    phone: `Phone: ${i + 1}`,
-    isConst: i === 0 ? ['id', 'name', 'email', 'phone', 'files', 'company', 'role', 'status', 'department', 'createdAt'] : ['files', 'company', 'status'],
-    isRequired: ['name', 'email']
-}));
+import {ApiService} from "@/apiService/apiService";
+import {UserTableRow} from "@/apiService/apiUsers/types";
+import {GetTableResponse} from "@/apiService/types";
+import {tableColumns} from "@/shared/tableColumns";
+import ModalManageUser from "@/components/modals/ModalManageUser/ModalManageUser";
 
 const UsersPage = () => {
 
@@ -52,81 +27,111 @@ const UsersPage = () => {
         delaySearch,
         inputRef
     } = useSearch(loading.page);
+
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-manage-user' | 'modal-remove-user'
+        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user'
     >>({id: null, show: false, data: null});
-    const [table, setTable] = useState<{
-        page: number;
-        rows: number;
-        data: typeof exampleData;
-        total: number;
-    }>({
+    const [table, setTable] = useState<GetTableResponse<UserTableRow[]>>({
         page: 0,
         rows: 20,
         data: [],
         total: 0,
     });
 
+    const getData = async () => {
+        await ApiService.users.table.get({
+
+        }).then(({status, data}) => {
+            if (status === 'success') {
+                console.log(data);
+                setTable(data);
+            }
+        })
+    };
+
     useEffect(() => {
-        setTimeout(() => {
-            setTable({
-                page: 0,
-                rows: 20,
-                data: exampleData,
-                total: 1000,
-            });
-            mergeState({page: false}, setLoading)
-        }, 500);
+        getData().finally(() => mergeState({page: false}, setLoading));
+        // setTimeout(() => {
+        //     setTable({
+        //         page: 0,
+        //         rows: 20,
+        //         data: exampleData,
+        //         total: 1000,
+        //     });
+        //     mergeState({page: false}, setLoading)
+        // }, 500);
     }, []);
 
+    const closeModal = (r: ModalPageCloseReasonType) => {
+        mergeState({show: false}, setModals);
+        if (r === 'updated-data') {
+            getData().finally(() => mergeState({page: false}, setLoading));
+        }
+    };
+
     return (
-        <Container
-            header={(
-                <>
-                    <Button
-                        size={'m'}
-                        disabled={loading.page}
-                        before={<Icon24Add/>}
-                        onClick={() => mergeState({id: 'modal-manage-user', show: true}, setModals)}
-                    >
-                        Добавить
-                    </Button>
-                    <Search
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        disabled={loading.page}
-                        noPadding={true}
-                        className={'search'}
-                        slotProps={{ input: { getRootRef: inputRef } }}
-                    />
-                </>
+        <>
+            {'modal-manage-user' === modals.id && (
+                <ModalManageUser
+                    idUser={modals.data}
+                    preventClose={loading.modal}
+                    open={modals.show}
+                    onClose={closeModal}
+                    onCreate={(modal, data) => {
+                        mergeState({id: modal, data}, setModals);
+                    }}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    onClosed={() => setModals({id: null,  show: false, data: null})}
+                />
             )}
-        >
-            <Table
-                data={table.data}
-                columns={columnsUser}
-                total={table.total}
-                page={table.page}
-                rows={table.rows}
-                loading={loading.page}
-                onEvent={(event) => {
-                    console.log(event);
-                    if (event.type === 'pageChange') {
-                        mergeState({page: event.page}, setTable);
-                    }
-                    if (event.type === 'rowsChange') {
-                        mergeState({
-                            page: 0,
-                            rows: event.rows,
-                        }, setTable);
-                    }
-                }}
-                emptyState={{
-                    title: 'Пусто',
-                    description: 'Нет данных с сервера',
-                }}
-            />
-        </Container>
+            <Container
+                header={(
+                    <>
+                        <Button
+                            size={'m'}
+                            disabled={loading.page}
+                            before={<Icon24Add/>}
+                            onClick={() => mergeState({id: 'modal-manage-user', show: true}, setModals)}
+                        >
+                            Добавить
+                        </Button>
+                        <Search
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            disabled={loading.page}
+                            noPadding={true}
+                            className={'search'}
+                            slotProps={{ input: { getRootRef: inputRef } }}
+                        />
+                    </>
+                )}
+            >
+                <Table
+                    data={table.data}
+                    columns={tableColumns.user}
+                    total={table.total}
+                    page={table.page}
+                    rows={table.rows}
+                    loading={loading.page}
+                    onEvent={(event) => {
+                        console.log(event);
+                        if (event.type === 'pageChange') {
+                            mergeState({page: event.page}, setTable);
+                        }
+                        if (event.type === 'rowsChange') {
+                            mergeState({
+                                page: 0,
+                                rows: event.rows,
+                            }, setTable);
+                        }
+                    }}
+                    emptyState={{
+                        title: 'Пусто',
+                        description: 'Нет данных с сервера',
+                    }}
+                />
+            </Container>
+        </>
     )
 };
 

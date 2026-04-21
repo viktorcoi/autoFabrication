@@ -42,6 +42,7 @@ import {
     getColumnMaxWidth,
     getColumnMinWidth,
     getDefaultRowId,
+    getMeasuredRowHeight,
     getRange,
     getStorageId,
     getStoredSettings,
@@ -358,7 +359,9 @@ const Table = (props: TableProps) => {
             const rowId = tableRowIds[index];
 
             columns.forEach((column) => {
-                if (getColumnType(column) !== 'text' || !isCellRequired(row, column)) {
+                const columnType = getColumnType(column);
+
+                if ((columnType !== 'text' && columnType !== 'date') || !isCellRequired(row, column)) {
                     return;
                 }
 
@@ -1275,10 +1278,7 @@ const Table = (props: TableProps) => {
                 return;
             }
 
-            nextRowHeights[rowId] = Math.max(
-                DEFAULT_ROW_HEIGHT,
-                Math.ceil(rowElement.getBoundingClientRect().height),
-            );
+            nextRowHeights[rowId] = getMeasuredRowHeight(rowElement);
         });
 
         return nextRowHeights;

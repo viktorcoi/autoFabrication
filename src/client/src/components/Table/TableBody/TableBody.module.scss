@@ -40,6 +40,8 @@
 
     &--invalid {
         background: var(--vkui--color_background_negative_tint);
+        border: 1px dashed var(--vkui--color_background_negative);
+        padding: 5px 7px;
     }
 }
 
@@ -66,12 +68,6 @@
     }
 }
 
-.cellText {
-    min-width: 0;
-    color: var(--vkui--color_text_primary);
-    line-height: 20px;
-}
-
 .cellInput {
     width: 100%;
     min-height: 28px;
@@ -80,16 +76,26 @@
         height: 28px !important;
         padding: 0 8px 1px 8px;
     }
+
+    button {
+        width: 28px !important;
+        height: 28px !important;
+    }
 }
 
 .cellControl {
     display: flex;
     align-items: center;
     min-height: 20px;
+    overflow: hidden;
 
     &Boolean {
         justify-content: center;
     }
+}
+
+.text {
+    overflow: hidden;
 }
 
 .button {

@@ -9,6 +9,7 @@ const authUserSelect = {
 	firstName: true,
 	lastName: true,
 	middleName: true,
+	birthDate: true,
 	login: true,
 	avatarUrl: true,
 	roleId: true,

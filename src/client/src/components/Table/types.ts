@@ -9,7 +9,7 @@ export type TableRow = Record<string, unknown> & {
     isRequired?: string[];
 };
 
-export type ColumnType = 'text' | 'button' | 'download' | 'boolean';
+export type ColumnType = 'text' | 'button' | 'download' | 'boolean' | 'avatar' | 'date';
 
 export type Column = {
     key: string;

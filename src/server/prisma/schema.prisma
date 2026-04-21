@@ -23,6 +23,7 @@ model User {
 	firstName    String
 	lastName     String
 	middleName   String?
+	birthDate    DateTime
 	login        String @unique
 	passwordHash String @map("password")
 	avatarUrl    String? @map("avatar")

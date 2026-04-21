@@ -2,15 +2,19 @@ import React from 'react';
 import {flexRender} from '@tanstack/react-table';
 import {useVirtualizer} from '@tanstack/react-virtual';
 import {Icon16DownloadOutline} from '@vkontakte/icons';
-import {Button, Checkbox, Input, Text, Tooltip, classNames} from '@vkontakte/vkui';
+import {Avatar, Button, Checkbox, DateInput, Input, Text, Tooltip, classNames} from '@vkontakte/vkui';
 import {
+    formatDateCellValue,
+    getAvatarCellSrc,
     DEFAULT_ROW_HEIGHT,
     ROW_VIRTUAL_OVERSCAN,
     getBooleanCellValue,
     getCellTextValue,
     getColumnType,
+    getDateCellValue,
     getColumnWidthCssVarName,
     getDraftValue,
+    getMeasuredRowHeight,
     isCellConst,
     isInteractiveTarget,
     renderContent,
@@ -108,10 +112,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
 
                                     if (element) {
                                         if (!editing) {
-                                            measuredRowHeightsRef.current[row.id] = Math.max(
-                                                DEFAULT_ROW_HEIGHT,
-                                                Math.ceil(element.getBoundingClientRect().height),
-                                            );
+                                            measuredRowHeightsRef.current[row.id] = getMeasuredRowHeight(element);
                                         }
 
                                         element.classList.toggle(
@@ -174,7 +175,9 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                     const renderedCell = flexRender(cell.column.columnDef.cell, cell.getContext());
                                     const draftValue = getDraftValue(draftChanges, row.id, columnId, cellValue);
                                     const cellTextValue = getCellTextValue(draftValue);
+                                    const avatarSrc = getAvatarCellSrc(cellValue);
                                     const checkboxValue = getBooleanCellValue(cellValue);
+                                    const dateValue = getDateCellValue(draftValue);
                                     const isDragging = draggingColumnId === columnId;
                                     const isResizing = resizingColumnId === columnId;
                                     const isConstCell = isCellConst(row.original, columnConfig);
@@ -311,6 +314,39 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 />
                                             </span>
                                         );
+                                    } else if (columnType === 'avatar') {
+                                        cellContent = avatarSrc ? (
+                                            <Avatar
+                                                size={32}
+                                                src={avatarSrc}
+                                            />
+                                        ) : null;
+                                    } else if (columnType === 'date' && editing) {
+                                        cellContent = (
+                                            <DateInput
+                                                mode={'plain'}
+                                                value={dateValue ?? undefined}
+                                                className={styles.cellInput}
+                                                disabled={isConstCell || loading || Boolean(disabled)}
+                                                closeOnChange={true}
+                                                onChange={(nextValue) => {
+                                                    onDraftTextChange(
+                                                        row.id,
+                                                        columnId,
+                                                        nextValue ? nextValue.toISOString() : '',
+                                                    );
+                                                }}
+                                                onMouseDown={(event) => event.stopPropagation()}
+                                                onClick={(event) => event.stopPropagation()}
+                                                onDoubleClick={(event) => event.stopPropagation()}
+                                            />
+                                        );
+                                    } else if (columnType === 'date') {
+                                        cellContent = (
+                                            <Text className={styles.text}>
+                                                {formatDateCellValue(cellValue)}
+                                            </Text>
+                                        );
                                     } else if (editing) {
                                         cellContent = (
                                             <Input
@@ -328,7 +364,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                         );
                                     } else {
                                         cellContent = (
-                                            <Text>
+                                            <Text className={styles.text}>
                                                 {renderContent(renderedCell, styles.cellText)}
                                             </Text>
                                         );
@@ -343,7 +379,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 styles.bodyCell,
                                                 isDragging && styles.bodyCellActiveDrag,
                                                 isResizing && styles.bodyCellResizing,
-                                                editing && columnType === 'text' && styles['bodyCell--editing'],
+                                                editing && (columnType === 'text' || columnType === 'date') && styles['bodyCell--editing'],
                                                 isInvalidRequiredCell && styles['bodyCell--invalid'],
                                             )}
                                             style={{
@@ -413,7 +449,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 });
                                             }}
                                         >
-                                            {columnType === 'text' ? (
+                                            {(columnType === 'text' || columnType === 'date') ? (
                                                 cellContent
                                             ) : (
                                                 <div

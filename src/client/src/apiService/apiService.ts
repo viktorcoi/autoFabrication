@@ -2,6 +2,7 @@ import axios, {AxiosError} from "axios";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {ApiAuth} from "@/apiService/apiAuth/apiAuth";
 import {ApiRoles} from "@/apiService/apiRoles/apiRoles";
+import {ApiUsers} from "@/apiService/apiUsers/apiUsers";
 import {ApiServiceErrorOptions, ApiServiceResponse} from "@/apiService/types";
 
 export const api = axios.create({
@@ -12,6 +13,7 @@ export const api = axios.create({
 export const ApiService = {
     auth: ApiAuth,
     roles: ApiRoles,
+    users: ApiUsers,
 };
 
 export const handleApiError = <T>(

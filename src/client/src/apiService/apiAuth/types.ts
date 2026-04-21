@@ -2,6 +2,7 @@ export type GetAuthMeResponse = {
     id: number;
     firstName: string;
     lastName: string;
+    birthDate: Date;
     middleName: string | null;
     login: string;
     avatarUrl: string | null;

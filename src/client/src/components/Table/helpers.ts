@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import type {ColumnSizingState, SortingState} from '@tanstack/react-table';
 import {Text, classNames} from '@vkontakte/vkui';
 import type {
@@ -24,7 +25,21 @@ export const DEFAULT_ROW_HEIGHT = 41;
 export const ROW_VIRTUAL_OVERSCAN = 8;
 export const TABLE_TOTAL_WIDTH_CSS_VAR = '--table-total-width';
 
-export const renderContent = (content: React.ReactNode, className: string) => {
+export const getMeasuredRowHeight = (element: Element | null | undefined) => {
+    if (!element) {
+        return DEFAULT_ROW_HEIGHT;
+    }
+
+    const height = element.getBoundingClientRect().height;
+
+    if (!Number.isFinite(height) || height <= 0) {
+        return DEFAULT_ROW_HEIGHT;
+    }
+
+    return Number(height.toFixed(2));
+};
+
+export const renderContent = (content: React.ReactNode, className?: string) => {
     if (content === null || content === undefined) {
         return React.createElement(Text, {className});
     }
@@ -52,6 +67,8 @@ export const getColumnType = (column?: Column): ColumnType => {
         column?.type === 'button'
         || column?.type === 'download'
         || column?.type === 'boolean'
+        || column?.type === 'avatar'
+        || column?.type === 'date'
         || column?.type === 'text'
     ) {
         return column.type;
@@ -160,6 +177,44 @@ export const getBooleanCellValue = (value: unknown) => {
     }
 
     return Boolean(value);
+};
+
+export const getAvatarCellSrc = (value: unknown) => {
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const normalizedValue = value.trim();
+    return normalizedValue.length > 0 ? normalizedValue : null;
+};
+
+export const getDateCellValue = (value: unknown) => {
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value === 'string' || typeof value === 'number') {
+        const normalizedValue = typeof value === 'string' ? value.trim() : value;
+
+        if (normalizedValue === '') {
+            return null;
+        }
+
+        const parsedDate = new Date(normalizedValue);
+        return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+    }
+
+    return null;
+};
+
+export const formatDateCellValue = (value: unknown) => {
+    const parsedDate = getDateCellValue(value);
+
+    if (!parsedDate) {
+        return '';
+    }
+
+    return moment(parsedDate).format('DD.MM.YYYY');
 };
 
 const safeJsonParse = <T, >(value: string | null, fallback: T): T => {

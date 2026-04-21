@@ -15,3 +15,11 @@ export type ApiServiceOptions<T extends object = {}> = T & {
     controller?: AbortController;
     errorOptions?: ApiServiceErrorOptions;
 };
+
+export interface GetTableResponse <T> {
+    data: T;
+    page: number;
+    total: number;
+    rows: number;
+}
+
