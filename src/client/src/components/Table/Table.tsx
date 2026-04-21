@@ -69,6 +69,9 @@ import type {
     TableSettings,
 } from './types';
 
+const COLUMN_AUTO_SCROLL_EDGE = 72;
+const COLUMN_AUTO_SCROLL_MAX_STEP = 18;
+
 const Table = (props: TableProps) => {
 
     const {
@@ -126,6 +129,7 @@ const Table = (props: TableProps) => {
     const dragInteractionRef = useRef<ColumnDragInteraction>(null);
     const resizeInteractionRef = useRef<ColumnResizeInteraction>(null);
     const dragGhostRef = useRef<HTMLDivElement>(null);
+    const dragAutoScrollFrameRef = useRef<number | null>(null);
     const bodyStyleSnapshotRef = useRef<{userSelect: string; cursor: string} | null>(null);
     const headerContextToggleRef = useRef<HTMLDivElement>(null);
     const rowRefsRef = useRef<Record<string, HTMLTableRowElement | null>>({});
@@ -603,6 +607,15 @@ const Table = (props: TableProps) => {
         return () => window.removeEventListener('mouseup', onMouseUp);
     }, []);
 
+    const stopColumnAutoScroll = () => {
+        if (dragAutoScrollFrameRef.current === null) {
+            return;
+        }
+
+        window.cancelAnimationFrame(dragAutoScrollFrameRef.current);
+        dragAutoScrollFrameRef.current = null;
+    };
+
     const stopColumnDragging = useEffectEvent((shouldCommit: boolean) => {
         const interaction = dragInteractionRef.current;
         const committedOrder = resolvedColumnOrderRef.current;
@@ -612,6 +625,7 @@ const Table = (props: TableProps) => {
             window.cancelAnimationFrame(interaction.ghostFrameId);
         }
 
+        stopColumnAutoScroll();
         dragInteractionRef.current = null;
         setDraggingColumnId(null);
         setDragGhost(null);
@@ -660,6 +674,36 @@ const Table = (props: TableProps) => {
             }
         });
     });
+
+    const getColumnAutoScrollDelta = (clientX: number) => {
+        const scrollElement = scrollRef.current;
+
+        if (!scrollElement) {
+            return 0;
+        }
+
+        const maxScrollLeft = scrollElement.scrollWidth - scrollElement.clientWidth;
+
+        if (maxScrollLeft <= 0) {
+            return 0;
+        }
+
+        const rect = scrollElement.getBoundingClientRect();
+        const leftThreshold = rect.left + COLUMN_AUTO_SCROLL_EDGE;
+        const rightThreshold = rect.right - COLUMN_AUTO_SCROLL_EDGE;
+
+        if (clientX < leftThreshold && scrollElement.scrollLeft > 0) {
+            const ratio = Math.min(1, (leftThreshold - clientX) / COLUMN_AUTO_SCROLL_EDGE);
+            return -Math.max(1, Math.round(COLUMN_AUTO_SCROLL_MAX_STEP * ratio));
+        }
+
+        if (clientX > rightThreshold && scrollElement.scrollLeft < maxScrollLeft) {
+            const ratio = Math.min(1, (clientX - rightThreshold) / COLUMN_AUTO_SCROLL_EDGE);
+            return Math.max(1, Math.round(COLUMN_AUTO_SCROLL_MAX_STEP * ratio));
+        }
+
+        return 0;
+    };
 
     const scheduleResizePreview = useEffectEvent((nextWidth: number) => {
         const interaction = resizeInteractionRef.current;
@@ -750,6 +794,59 @@ const Table = (props: TableProps) => {
         }
     });
 
+    const stepColumnAutoScroll = useEffectEvent(() => {
+        const interaction = dragInteractionRef.current;
+        const scrollElement = scrollRef.current;
+
+        if (!interaction || !interaction.started || !scrollElement) {
+            dragAutoScrollFrameRef.current = null;
+            return;
+        }
+
+        const delta = getColumnAutoScrollDelta(interaction.currentX);
+
+        if (delta === 0) {
+            dragAutoScrollFrameRef.current = null;
+            return;
+        }
+
+        const maxScrollLeft = scrollElement.scrollWidth - scrollElement.clientWidth;
+        const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, scrollElement.scrollLeft + delta));
+
+        if (nextScrollLeft !== scrollElement.scrollLeft) {
+            scrollElement.scrollLeft = nextScrollLeft;
+            reorderDraggedColumn(interaction.currentX);
+        }
+
+        dragAutoScrollFrameRef.current = window.requestAnimationFrame(() => {
+            stepColumnAutoScroll();
+        });
+    });
+
+    const updateColumnAutoScroll = useEffectEvent((clientX: number) => {
+        const interaction = dragInteractionRef.current;
+
+        if (!interaction || !interaction.started) {
+            stopColumnAutoScroll();
+            return;
+        }
+
+        const delta = getColumnAutoScrollDelta(clientX);
+
+        if (delta === 0) {
+            stopColumnAutoScroll();
+            return;
+        }
+
+        if (dragAutoScrollFrameRef.current !== null) {
+            return;
+        }
+
+        dragAutoScrollFrameRef.current = window.requestAnimationFrame(() => {
+            stepColumnAutoScroll();
+        });
+    });
+
     const handleResizeMouseMove = useEffectEvent((event: MouseEvent) => {
         const interaction = resizeInteractionRef.current;
 
@@ -802,6 +899,7 @@ const Table = (props: TableProps) => {
         event.preventDefault();
         scheduleGhostPosition(event.clientX);
         reorderDraggedColumn(event.clientX);
+        updateColumnAutoScroll(event.clientX);
     });
 
     const handleColumnMouseUp = useEffectEvent((event: MouseEvent) => {

@@ -1,4 +1,5 @@
 import {
+    Icon20WarningTriangleOutline,
     Icon24Cancel,
     Icon24ChevronCompactLeft,
     Icon24ChevronCompactRight,
@@ -29,27 +30,41 @@ const TableFooter = (props: TableFooterProps) => {
 
     return (
         <div className={classNames('island', styles.footer)}>
-            <Select
-                className={classNames(
-                    (loading || disabled) && 'disabled',
-                    styles.footer__select,
-                )}
-                value={String(safeRows)}
-                disabled={loading || disabled}
-                options={PAGE_SIZE_OPTIONS.map((size) => ({
-                    label: String(size),
-                    value: String(size),
-                }))}
-                onChange={(event) => {
-                    const nextRows = Number(event.target.value);
+            <div className={styles.edit}>
+                <Select
+                    className={classNames(
+                        (loading || disabled) && 'disabled',
+                        styles.footer__select,
+                    )}
+                    value={String(safeRows)}
+                    disabled={loading || disabled}
+                    options={PAGE_SIZE_OPTIONS.map((size) => ({
+                        label: String(size),
+                        value: String(size),
+                    }))}
+                    onChange={(event) => {
+                        const nextRows = Number(event.target.value);
 
-                    if (nextRows === safeRows) {
-                        return;
-                    }
+                        if (nextRows === safeRows) {
+                            return;
+                        }
 
-                    onRowsChange(nextRows, event.target);
-                }}
-            />
+                        onRowsChange(nextRows, event.target);
+                    }}
+                />
+                <Button
+                    mode={'secondary'}
+                    before={(
+                        <Icon20WarningTriangleOutline
+                            width={16}
+                            height={16}
+                            fill={'var(--vkui--color_icon_warning)'}
+                        />
+                    )}
+                >
+                    Режим редактирования
+                </Button>
+            </div>
             <div className={styles.pagination}>
                 <Button
                     size="m"
