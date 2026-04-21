@@ -118,6 +118,7 @@ export type TableProps = {
     page: number;
     rows: number;
     loading?: boolean;
+    selected?: Array<string | number>;
     onEvent: (event: TableEvent) => void;
     getRowId?: (row: TableRow, index: number) => string;
     emptyState?: TableEmptyState;

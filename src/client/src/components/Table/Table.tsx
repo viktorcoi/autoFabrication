@@ -92,6 +92,7 @@ const Table = (props: TableProps) => {
         page,
         rows,
         loading = false,
+        selected,
         onEvent,
         getRowId,
         emptyState,
@@ -148,6 +149,7 @@ const Table = (props: TableProps) => {
     const rowRefsRef = useRef<Record<string, HTMLTableRowElement | null>>({});
     const measuredRowHeightsRef = useRef<Record<string, number>>({});
     const previewSelectedRowIdsRef = useRef<string[]>([]);
+    const editingRef = useRef(editing);
 
     const emitCellClick = (params: {
         row: TableRow;
@@ -326,6 +328,21 @@ const Table = (props: TableProps) => {
         () => tableData.map((row, index) => (getRowId ? getRowId(row, index) : getDefaultRowId(row, index))),
         [getRowId, tableData],
     );
+    const externalSelectedRowIds = useMemo(() => {
+        if (selected === undefined) {
+            return null;
+        }
+
+        return Array.from(new Set(selected.map((value) => String(value))));
+    }, [selected]);
+    const availableExternalSelectedRowIds = useMemo(() => {
+        if (!externalSelectedRowIds) {
+            return null;
+        }
+
+        const tableRowIdSet = new Set(tableRowIds);
+        return externalSelectedRowIds.filter((rowId) => tableRowIdSet.has(rowId));
+    }, [externalSelectedRowIds, tableRowIds]);
     const tableRowMap = useMemo(
         () => new Map(tableData.map((row, index) => [tableRowIds[index], row])),
         [tableData, tableRowIds],
@@ -410,6 +427,10 @@ const Table = (props: TableProps) => {
     }, [onEvent]);
 
     useEffect(() => {
+        editingRef.current = editing;
+    }, [editing]);
+
+    useEffect(() => {
         if (editing || externalDataRef.current === data) {
             return;
         }
@@ -424,8 +445,8 @@ const Table = (props: TableProps) => {
 
     useEffect(() => {
         selectedRowIdsRef.current = selectedRowIds;
-        previewSelectedRowIdsRef.current = selectedRowIds;
-    }, [selectedRowIds]);
+        previewSelectedRowIdsRef.current = editing ? [] : selectedRowIds;
+    }, [editing, selectedRowIds]);
 
     useEffect(() => {
         sortingRef.current = sorting;
@@ -538,6 +559,37 @@ const Table = (props: TableProps) => {
     }, [visibleRowIds]);
 
     useEffect(() => {
+        if (!availableExternalSelectedRowIds) {
+            if (selected === undefined) {
+                return;
+            }
+
+            if (selectedRowIdsRef.current.length === 0) {
+                syncSelectedRowsPreview([]);
+                return;
+            }
+
+            selectionAnchorRowIdRef.current = null;
+            selectionStateRef.current.active = false;
+            selectionStateRef.current.dirty = false;
+            selectionStateRef.current.target = null;
+            commitSelectedRows([]);
+            return;
+        }
+
+        if (areArraysEqual(selectedRowIdsRef.current, availableExternalSelectedRowIds)) {
+            syncSelectedRowsPreview(availableExternalSelectedRowIds);
+            return;
+        }
+
+        selectionAnchorRowIdRef.current = availableExternalSelectedRowIds.at(-1) ?? null;
+        selectionStateRef.current.active = false;
+        selectionStateRef.current.dirty = false;
+        selectionStateRef.current.target = null;
+        commitSelectedRows(availableExternalSelectedRowIds);
+    }, [availableExternalSelectedRowIds, selected, selectedRowIds]);
+
+    useEffect(() => {
         setJumpValue(String(currentPage));
     }, [currentPage]);
 
@@ -565,7 +617,8 @@ const Table = (props: TableProps) => {
 
     const syncSelectedRowsPreview = (nextRowIds: string[]) => {
         const previousRowIdSet = new Set(previewSelectedRowIdsRef.current);
-        const nextRowIdSet = new Set(nextRowIds);
+        const appliedRowIds = editingRef.current ? [] : nextRowIds;
+        const nextRowIdSet = new Set(appliedRowIds);
 
         previousRowIdSet.forEach((rowId) => {
             if (nextRowIdSet.has(rowId)) {
@@ -583,7 +636,7 @@ const Table = (props: TableProps) => {
             rowRefsRef.current[rowId]?.classList.add(bodyStyles['bodyRow--selected']);
         });
 
-        previewSelectedRowIdsRef.current = nextRowIds;
+        previewSelectedRowIdsRef.current = appliedRowIds;
     };
 
     const previewSelectedRows = (nextRowIds: string[]) => {
