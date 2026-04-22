@@ -1,6 +1,6 @@
 import {
     Button,
-    ButtonGroup, DateInput,
+    ButtonGroup, CustomSelectOptionInterface, DateInput,
     FormItem,
     Input,
     ModalPage,
@@ -14,19 +14,23 @@ import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {PostUserOptions} from "@/apiService/apiUsers/types";
 import {ModalManageUserProps} from "@/components/modals/ModalManageUser/types";
+import {useSelectFilter} from "@/shared/hooks";
 
-const initialData: PostUserOptions = {
-    role: 0,
+const initialData: Omit<PostUserOptions, 'birthDate'> & {birthDate: Date | null} = {
+    roleId: 0,
     firstName: '',
     lastName: '',
     middleName: '',
     birthDate: null,
 };
 
+const getOnlyLettersValue = (value: string) => value.replace(/[^\p{L}]/gu, '');
+
 const ModalManageUser = (props: ModalManageUserProps) => {
 
     const {
         idUser,
+        user,
         preventClose,
         onLoading,
         onCreate,
@@ -36,9 +40,11 @@ const ModalManageUser = (props: ModalManageUserProps) => {
 
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
 
+    const selectFilter = useSelectFilter();
+
     const [savedData, setSavedData] = useState({...initialData});
     const [data, setData] = useState({...initialData});
-    const [roles, setRoles] = useState<{value: number, label: string}[]>([]);
+    const [roles, setRoles] = useState<CustomSelectOptionInterface[]>([]);
     const [loading, setLoading] = useState({
         get: true,
         send: false
@@ -60,7 +66,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                     label: name,
                 })))
 
-                if (idUser !== null) {
+                if (typeof idUser === 'number') {
                     // TODO - получаем инфу о юзере
                 }
             } else onClose('error')
@@ -69,15 +75,21 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         return () => {
             if (controllerRef.current) controllerRef.current.abort();
         }
-    }, [])
+    }, []);
 
-    const saveRole = async (e: SubmitEvent<HTMLFormElement>) => {
+    useEffect(() => {
+        if (typeof user === "object" && user !== null) {
+            setData(user);
+        }
+    }, []);
+
+    const saveUser = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (idUser !== null) {
-            onCreate('modal-create-user', data);
-        } else {
+        if (typeof idUser === 'number') {
 
+        } else {
+            onCreate('modal-create-user', data as PostUserOptions);
         }
     //     if (disabledSave) return;
     //
@@ -112,7 +124,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
     }
 
     const title = useMemo(
-        () =>  `${idUser === null ? 'Добавление' : 'Редактирование'} пользователя`,
+        () =>  `${typeof idUser === 'number' ? 'Редактирование' : 'Добавление'} пользователя`,
         []
     );
 
@@ -161,7 +173,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                             loading={loading.send}
                             size={'m'}
                         >
-                            {idUser ? 'Сохранить' : 'Далее'}
+                            {typeof idUser === 'number' ? 'Сохранить' : 'Далее'}
                         </Button>
                     </ButtonGroup>
                 </div>
@@ -172,23 +184,24 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                 <form
                     id={'save-user'}
                     className={'modalForm'}
-                    onSubmit={saveRole}
+                    onSubmit={saveUser}
                 >
                     <FormItem
                         top={'Роль пользователя'}
                         noPadding={true}
                     >
                         <Select
-                            filterFn={false}
+                            filterFn={selectFilter.filterFn}
                             options={roles}
                             searchable={true}
                             disabled={loading.send}
-                            value={data.role}
-                            onChange={(e) => mergeState({role: Number(e.target.value)}, setData)}
+                            value={data.roleId}
+                            onChange={(e) => mergeState({roleId: Number(e.target.value)}, setData)}
                             placeholder={'Выберите роль пользователя'}
-                            status={!data.role ? 'error' : 'default'}
-                            onInputChange={e => console.log(e)}
-
+                            status={!data.roleId ? 'error' : 'default'}
+                            onInputChange={selectFilter.onInputChange}
+                            onOpen={selectFilter.onOpen}
+                            onClose={selectFilter.onClose}
                         />
                     </FormItem>
                     <FormItem
@@ -198,7 +211,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                         <Input
                             disabled={loading.send}
                             value={data.lastName}
-                            onChange={(e) => mergeState({lastName: e.target.value}, setData)}
+                            onChange={(e) => mergeState({lastName: getOnlyLettersValue(e.target.value)}, setData)}
                             placeholder={'Введите фамилию'}
                             status={!data.lastName.trim() ? 'error' : 'default'}
                         />
@@ -210,7 +223,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                         <Input
                             disabled={loading.send}
                             value={data.firstName}
-                            onChange={(e) => mergeState({firstName: e.target.value}, setData)}
+                            onChange={(e) => mergeState({firstName: getOnlyLettersValue(e.target.value)}, setData)}
                             placeholder={'Введите имя'}
                             status={!data.firstName.trim() ? 'error' : 'default'}
                         />
@@ -222,7 +235,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                         <Input
                             disabled={loading.send}
                             value={data.middleName}
-                            onChange={(e) => mergeState({middleName: e.target.value}, setData)}
+                            onChange={(e) => mergeState({middleName: getOnlyLettersValue(e.target.value)}, setData)}
                             placeholder={'Введите отчество'}
                         />
                     </FormItem>
@@ -231,6 +244,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                         noPadding={true}
                     >
                         <DateInput
+                            disableFuture={true}
                             value={data.birthDate}
                             onChange={value => mergeState({birthDate: value}, setData)}
                             status={data.birthDate === null ? 'error' : 'default'}

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import {ChangeEvent, useCallback, useEffect, useRef, useState} from "react";
+import {CustomSelectOptionInterface, filterFnForSelect} from "@vkontakte/vkui";
 import {useAppStore} from "@/store/app/app";
 
 export const useSearch = (loading: boolean) => {
@@ -42,5 +43,52 @@ export const useSearch = (loading: boolean) => {
         setSearch,
         delaySearch,
         inputRef,
+    };
+};
+
+type UseSelectFilterType<Option extends CustomSelectOptionInterface> = {
+    filterFn?: (inputValue: string, option: Option) => boolean;
+    onInputChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+    onOpen?: VoidFunction;
+    onClose?: VoidFunction;
+};
+
+export const useSelectFilter = ({
+    filterFn = filterFnForSelect as (inputValue: string, option: CustomSelectOptionInterface) => boolean,
+    onInputChange,
+    onOpen,
+    onClose,
+}: UseSelectFilterType<CustomSelectOptionInterface> = {}) => {
+    const [shouldFilter, setShouldFilter] = useState(false);
+
+    const handleOpen = useCallback(() => {
+        setShouldFilter(false);
+        onOpen?.();
+    }, [onOpen]);
+
+    const handleClose = useCallback(() => {
+        setShouldFilter(false);
+        onClose?.();
+    }, [onClose]);
+
+    const handleInputChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+        setShouldFilter(true);
+        onInputChange?.(event);
+    }, [onInputChange]);
+
+    const handleFilter = useCallback((inputValue: string, option: CustomSelectOptionInterface) => {
+        if (!shouldFilter) {
+            return true;
+        }
+
+        return filterFn(inputValue, option);
+    }, [filterFn, shouldFilter]);
+
+    return {
+        filterFn: handleFilter,
+        onInputChange: handleInputChange,
+        onOpen: handleOpen,
+        onClose: handleClose,
+        shouldFilter,
     };
 };

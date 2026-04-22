@@ -23,10 +23,39 @@ export interface UserTableRow extends TableRow {
 	birthDate: string;
 }
 
+export interface GetByIdUserResponse {
+	id: number;
+	firstName: string;
+	lastName: string;
+	middleName?: string;
+	birthDate: string;
+	login: string;
+	avatarUrl?: string;
+	roleId: number;
+	createdAt: string;
+	updatedAt: string;
+	role: {
+		id: number;
+		name: string;
+		description?: string;
+	};
+}
+
 export interface PostUserOptions {
-	role: number;
+	roleId: number;
 	firstName: string;
 	lastName: string;
 	middleName: string;
-	birthDate: null | Date;
+	birthDate: Date;
+}
+
+export interface CreateUserOptions {
+	firstName: string;
+	lastName: string;
+	middleName?: string;
+	birthDate: Date;
+	login: string;
+	password: string;
+	avatarUrl?: string;
+	roleId: number;
 }

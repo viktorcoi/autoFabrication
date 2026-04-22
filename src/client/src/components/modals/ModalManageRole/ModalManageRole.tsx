@@ -73,7 +73,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
 
     const saveRole = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (disabledSave) return;
+        if (disabledSave || loading.send) return;
 
         mergeState({send: true}, setLoading);
         onLoading(true);

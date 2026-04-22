@@ -13,6 +13,7 @@ import {UserTableRow} from "@/apiService/apiUsers/types";
 import {GetTableResponse} from "@/apiService/types";
 import {tableColumns} from "@/shared/tableColumns";
 import ModalManageUser from "@/components/modals/ModalManageUser/ModalManageUser";
+import ModalCreateUser from "@/components/modals/ModalCreateUser/ModalCreateUser";
 
 const UsersPage = () => {
 
@@ -38,9 +39,18 @@ const UsersPage = () => {
         total: 0,
     });
 
-    const getData = async () => {
-        await ApiService.users.table.get({
+    const [sort, setSort] = useState(null);
 
+    const getData = async () => {
+        mergeState({page: true}, setLoading);
+
+        await ApiService.users.table.get({
+            options: {
+                page: table.page,
+                rows: table.rows,
+                search: delaySearch.trim() ? delaySearch : undefined,
+                sorting: {id: 'login', sort: 'asc'},
+            }
         }).then(({status, data}) => {
             if (status === 'success') {
                 console.log(data);
@@ -62,6 +72,10 @@ const UsersPage = () => {
         // }, 500);
     }, []);
 
+    useEffect(() => {
+        getData().finally(() => mergeState({page: false}, setLoading));
+    }, [table.page, table.rows, delaySearch, sort]);
+
     const closeModal = (r: ModalPageCloseReasonType) => {
         mergeState({show: false}, setModals);
         if (r === 'updated-data') {
@@ -71,14 +85,25 @@ const UsersPage = () => {
 
     return (
         <>
-            {'modal-manage-user' === modals.id && (
+            {'modal-create-user' === modals.id ? (
+                <ModalCreateUser
+                    user={modals.data}
+                    open={modals.show}
+                    onBack={id => mergeState({id}, setModals)}
+                    onClose={closeModal}
+                    preventClose={loading.modal}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    onClosed={() => setModals({id: null,  show: false, data: null})}
+                />
+            ) : 'modal-manage-user' === modals.id && (
                 <ModalManageUser
+                    user={modals.data}
                     idUser={modals.data}
                     preventClose={loading.modal}
                     open={modals.show}
                     onClose={closeModal}
-                    onCreate={(modal, data) => {
-                        mergeState({id: modal, data}, setModals);
+                    onCreate={(id, data) => {
+                        mergeState({id, data}, setModals);
                     }}
                     onLoading={v => mergeState({modal: v}, setLoading)}
                     onClosed={() => setModals({id: null,  show: false, data: null})}
@@ -123,6 +148,9 @@ const UsersPage = () => {
                                 page: 0,
                                 rows: event.rows,
                             }, setTable);
+                        }
+                        if (event.type === 'sortChange') {
+                            setSort(event.sorting)
                         }
                     }}
                     emptyState={{
