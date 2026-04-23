@@ -18,6 +18,14 @@ export const createApp = () => {
 	app.use(helmet());
 	app.use(express.json({ limit: "2mb" }));
 	app.use(
+		"/storage",
+		express.static(env.UPLOAD_DIR, {
+			setHeaders: (response) => {
+				response.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+			},
+		}),
+	);
+	app.use(
 		pinoHttp({
 			quietReqLogger: true,
 		}),

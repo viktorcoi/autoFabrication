@@ -13,3 +13,4 @@ coverage
 .env.production.local
 src/server/prisma/dev.db
 src/server/prisma/dev.db-journal
+src/server/storage

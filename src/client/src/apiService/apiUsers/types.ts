@@ -34,7 +34,7 @@ export interface PostUserOptions {
 	firstName: string;
 	lastName: string;
 	middleName: string;
-	avatarUrl?: string;
+	avatarUrl?: string | File;
 	birthDate: Date;
 }
 
@@ -45,6 +45,6 @@ export interface CreateUserOptions {
 	birthDate: Date;
 	login: string;
 	password: string;
-	avatarUrl?: string;
+	avatarUrl?: string | File;
 	roleId: number;
 }

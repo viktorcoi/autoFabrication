@@ -373,7 +373,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                 title={'Выберите аватар'}
                 maxFiles={1}
                 maxSize={5}
-                accept={'image/*'}
+                accept={['image/png', 'image/jpeg', 'image/webp']}
                 showFileList={false}
                 description={'Можно выбрать аватар через проводник или перетащить его в эту область (максимум 5 MB)'}
                 onChange={setAvatarFile}
