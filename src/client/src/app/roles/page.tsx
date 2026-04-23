@@ -28,7 +28,7 @@ import {mergeState} from "@/shared/helpers";
 import ModalManageRole from "@/components/modals/ModalManageRole/ModalManageRole";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
-import {useSearch} from "@/shared/hooks";
+import {useController, useSearch} from "@/shared/hooks";
 import DetailInfoRole from "@/sections/roles/DetailInfoRole";
 
 const RolesPage = () => {
@@ -52,13 +52,12 @@ const RolesPage = () => {
         inputRef
     } = useSearch(loading.page);
 
-    const controllerRef = useRef<AbortController>(null);
+    const { createController } = useController([delaySearch]);
 
     const getRoles = async () => {
         mergeState({page: true}, setLoading);
 
-        const controller = new AbortController();
-        controllerRef.current = controller;
+        const controller = createController();
 
         await ApiService.roles.get({
             controller,
@@ -75,10 +74,6 @@ const RolesPage = () => {
 
     useEffect(() => {
         getRoles().finally(() => mergeState({page: false}, setLoading));
-
-        return () => {
-            if (controllerRef.current) controllerRef.current.abort();
-        }
     }, [delaySearch]);
 
     const openMenu = (role: GetRolesResponse, target: HTMLElement) => {

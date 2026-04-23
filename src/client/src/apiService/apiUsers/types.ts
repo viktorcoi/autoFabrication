@@ -1,17 +1,5 @@
 import {TableRow} from "@/components/Table/types";
 
-export type UserTableSorting = {
-	id: 'id' | 'login' | 'lastName' | 'firstName' | 'middleName' | 'role' | 'avatar' | 'birthDate';
-	sort: 'asc' | 'desc';
-} | null;
-
-export interface GetUsersTableOptions {
-	page?: number;
-	rows?: number;
-	search?: string;
-	sorting?: UserTableSorting;
-}
-
 export interface UserTableRow extends TableRow {
 	id: number;
 	login: string;
@@ -46,6 +34,7 @@ export interface PostUserOptions {
 	firstName: string;
 	lastName: string;
 	middleName: string;
+	avatarUrl?: string;
 	birthDate: Date;
 }
 

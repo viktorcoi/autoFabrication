@@ -97,7 +97,6 @@ const TableFooter = (props: TableFooterProps) => {
                     </Button>
                 )}
             </div>
-
             <div
                 className={classNames(
                     styles.pagination,
@@ -111,7 +110,6 @@ const TableFooter = (props: TableFooterProps) => {
                     disabled={controlsDisabled || pageIndex === 0}
                     onClick={(event) => onPageChange(pageIndex - 1, event.target)}
                 />
-
                 <div className={styles.pagination__pages}>
                     {jumpMode ? (
                         <div className={styles.pagination__jump}>
@@ -170,7 +168,7 @@ const TableFooter = (props: TableFooterProps) => {
                                             isActive && styles['pagination__page--active'],
                                         )}
                                         after={item}
-                                        disabled={controlsDisabled || isActive}
+                                        disabled={controlsDisabled}
                                         onClick={(event) => onPageChange(item - 1, event.target)}
                                     />
                                 );
@@ -189,7 +187,6 @@ const TableFooter = (props: TableFooterProps) => {
                         })
                     )}
                 </div>
-
                 <Button
                     size="m"
                     mode="secondary"

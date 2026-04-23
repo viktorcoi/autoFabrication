@@ -5,3 +5,26 @@
 .textarea {
     min-height: 150px;
 }
+
+.avatarPreview {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.avatarCrop {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cropper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 320px;
+    overflow: hidden;
+    border-radius: var(--app-border-radius);
+    background: var(--vkui--color_background_secondary);
+}

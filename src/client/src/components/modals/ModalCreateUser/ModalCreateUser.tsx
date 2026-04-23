@@ -49,51 +49,25 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
         setLoading(true);
         onLoading(true);
 
-        Array.from({length: 11}).forEach((_, k) => {
-            ApiService.users.post({
-                options: {
-                    roleId: k + 14,
-                    firstName: `${user.firstName} ${k + 1}`,
-                    lastName: `${user.lastName} ${k + 1}`,
-                    birthDate: new Date(),
-                    middleName: user.middleName ? `${user.middleName} ${k + 1}` : '',
-                    login: `${data.login} ${k + 1}`,
-                    password: `admin1`
-                }
-            }).then(({status, data}) => {
-                if (status === 'success') {
-                    addSnackbar({
-                        type: 'success',
-                        text: `Успешно добавлено ${data.login}`
-                    });
-                    // onClose('updated-data');
-                }
-            }).finally(() => {
-                setLoading(false);
-                onLoading(false);
-            })
+        await ApiService.users.post({
+            options: {
+                ...user,
+                middleName: user.middleName ?? undefined,
+                login: data.login,
+                password: data.password
+            }
+        }).then(({status, data}) => {
+            if (status === 'success') {
+                addSnackbar({
+                    type: 'success',
+                    text: `Успешно добавлено ${data.login}`
+                });
+                onClose('updated-data');
+            }
+        }).finally(() => {
+            setLoading(false);
+            onLoading(false);
         })
-
-
-        // await ApiService.users.post({
-        //     options: {
-        //         ...user,
-        //         middleName: user.middleName ?? undefined,
-        //         login: data.login,
-        //         password: data.password
-        //     }
-        // }).then(({status, data}) => {
-        //     if (status === 'success') {
-        //         addSnackbar({
-        //             type: 'success',
-        //             text: `Успешно добавлено ${data.login}`
-        //         });
-        //         onClose('updated-data');
-        //     }
-        // }).finally(() => {
-        //     setLoading(false);
-        //     onLoading(false);
-        // })
     };
 
     return (

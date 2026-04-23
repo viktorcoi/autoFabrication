@@ -3,7 +3,7 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {ApiAuth} from "@/apiService/apiAuth/apiAuth";
 import {ApiRoles} from "@/apiService/apiRoles/apiRoles";
 import {ApiUsers} from "@/apiService/apiUsers/apiUsers";
-import {ApiServiceErrorOptions, ApiServiceResponse} from "@/apiService/types";
+import {ApiServiceErrorOptions, ApiServiceResponse, GetTableOptions} from "@/apiService/types";
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/",
@@ -14,6 +14,22 @@ export const ApiService = {
     auth: ApiAuth,
     roles: ApiRoles,
     users: ApiUsers,
+};
+
+export const buildTableOptions = (options?: GetTableOptions) => {
+    if (!options) {
+        return undefined;
+    }
+
+    const {page, rows, search, sorting, ...restOptions} = options;
+
+    return {
+        ...restOptions,
+        ...(typeof page === 'number' ? { page } : undefined),
+        ...(typeof rows === 'number' ? { rows } : undefined),
+        ...(!!search?.trim() ? { search } : undefined),
+        ...(sorting ? { sorting: JSON.stringify(sorting) } : undefined),
+    };
 };
 
 export const handleApiError = <T>(

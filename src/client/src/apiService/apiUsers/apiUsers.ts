@@ -1,6 +1,6 @@
-import {ApiServiceOptions, ApiServiceResponse, GetTableResponse} from "@/apiService/types";
-import { api, handleApiError, handleApiSuccess } from "@/apiService/apiService";
-import {CreateUserOptions, GetByIdUserResponse, GetUsersTableOptions, UserTableRow} from "@/apiService/apiUsers/types";
+import {ApiServiceOptions, ApiServiceResponse, GetTableOptions, GetTableResponse} from "@/apiService/types";
+import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
+import {CreateUserOptions, GetByIdUserResponse, UserTableRow} from "@/apiService/apiUsers/types";
 
 export const ApiUsers = {
 	post: async (options: ApiServiceOptions<{
@@ -20,11 +20,11 @@ export const ApiUsers = {
 
 	table: {
 		get: async (options: ApiServiceOptions<{
-			options?: GetUsersTableOptions;
+			options?: GetTableOptions;
 		}>): Promise<ApiServiceResponse<GetTableResponse<UserTableRow[]>>> => {
 			return await api.get("/users/table", {
 				signal: options.controller?.signal,
-				params: {...options.options},
+				params: buildTableOptions(options.options),
 			}).then((response) => {
 				return handleApiSuccess(
 					response.data,

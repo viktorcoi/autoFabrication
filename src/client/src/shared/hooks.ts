@@ -92,3 +92,29 @@ export const useSelectFilter = ({
         shouldFilter,
     };
 };
+
+export const useController = (
+    abort: (object | string | number | null)[]
+) => {
+
+    const controllerRef = useRef<AbortController>(null);
+    const cancelRef = useRef(false);
+
+    const createController = () => {
+        const controller = new AbortController();
+        controllerRef.current = controller;
+        return controller;
+    };
+
+    useEffect(() => {
+        return () => {
+            controllerRef.current?.abort();
+        }
+    }, [...abort]);
+
+    return {
+        controllerRef,
+        cancelRef,
+        createController,
+    };
+};

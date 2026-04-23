@@ -15,6 +15,7 @@ import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {PostRolesOptions} from "@/apiService/apiRoles/types";
+import {useController} from "@/shared/hooks";
 
 const initialData: PostRolesOptions = {
     name: "",
@@ -40,7 +41,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
         send: false
     });
 
-    const controllerRef = useRef<AbortController>(null);
+    const { createController } = useController([]);
 
     useEffect(() => {
         if (idRole === null) {
@@ -48,8 +49,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
             return;
         }
 
-        const controller = new AbortController();
-        controllerRef.current = controller;
+        const controller = createController();
 
         ApiService.roles.getById({
             id: idRole,
@@ -65,10 +65,6 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
                 setData(init);
             } else onClose('error')
         }).finally(() => mergeState({get: false}, setLoading));
-
-        return () => {
-            if (controllerRef.current) controllerRef.current.abort();
-        }
     }, [])
 
     const saveRole = async (e: SubmitEvent<HTMLFormElement>) => {

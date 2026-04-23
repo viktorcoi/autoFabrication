@@ -1,3 +1,5 @@
+import {TableSorting} from "@/components/Table/types";
+
 export type ApiServiceErrorOptions = {
     show: boolean;
     placeholder?: string;
@@ -18,8 +20,12 @@ export type ApiServiceOptions<T extends object = {}> = T & {
 
 export interface GetTableResponse <T> {
     data: T;
-    page: number;
     total: number;
-    rows: number;
 }
 
+export type GetTableOptions <T extends object = {}> = T & {
+    page?: number;
+    rows?: number;
+    search?: string;
+    sorting?: TableSorting;
+}

@@ -23,6 +23,7 @@ import {
     RolePermissionSection,
 } from "@/apiService/apiRoles/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
+import {useController} from "@/shared/hooks";
 
 const SECTION_TITLES: Record<RolePermissionSection["url"], string> = {
     "/roles": "Роли пользователей",
@@ -56,13 +57,15 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
         send: false,
     });
 
-    const controllerRef = useRef<AbortController>(null);
+    const {
+        cancelRef,
+        createController
+    } = useController([id]);
 
     useEffect(() => {
         mergeState({get: true}, setLoading);
 
-        const controller = new AbortController();
-        controllerRef.current = controller;
+        const controller = createController();
 
         ApiService.roles.getById({
             id,
@@ -71,11 +74,13 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
             if (status === 'success') {
                 setSavedData(data);
                 setData(data);
+                cancelRef.current = false;
+            } else if (data === 'canceled') {
+                cancelRef.current = true;
             }
-        }).finally(() => mergeState({get: false}, setLoading));
+        }).finally(() => mergeState({get: cancelRef.current}, setLoading));
 
         return () => {
-            if (controllerRef.current) controllerRef.current.abort();
             setSavedData(null);
             setData(null);
             setOpenedSections([]);

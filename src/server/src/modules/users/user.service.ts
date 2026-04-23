@@ -252,8 +252,6 @@ export const getUsersTable = async (query: GetUsersTableQuery) => {
 
 	return {
 		total,
-		page: query.page,
-		rows: query.rows,
 		data: users.map((user) => ({
 			id: user.id,
 			login: user.login,
