@@ -107,7 +107,7 @@ const Table = (props: TableProps) => {
     const [sorting, setSorting] = useState<TableSorting>(null);
     const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => availableColumnIds);
     const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
-    const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+    const [selectedRowIds, setSelectedRowIds] = useState<number[]>([]);
     const [draggingColumnId, setDraggingColumnId] = useState<string | null>(null);
     const [dragGhost, setDragGhost] = useState<DragGhostState>(null);
     const [resizingColumnId, setResizingColumnId] = useState<string | null>(null);
@@ -119,13 +119,13 @@ const Table = (props: TableProps) => {
     const [tableData, setTableData] = useState<TableRow[]>(() => data.map((row) => cloneTableRow(row)));
     const [editing, setEditing] = useState(false);
     const [draftChanges, setDraftChanges] = useState<TableDraftChanges>({});
-    const [editingRowHeights, setEditingRowHeights] = useState<Record<string, number>>({});
+    const [editingRowHeights, setEditingRowHeights] = useState<Record<number, number>>({});
 
     const onEventRef = useRef(onEvent);
     const externalDataRef = useRef(data);
     const visibleRowsRef = useRef<Array<{id: string; original: TableRow}>>([]);
-    const selectedRowIdsRef = useRef<string[]>([]);
-    const selectionAnchorRowIdRef = useRef<string | null>(null);
+    const selectedRowIdsRef = useRef<number[]>([]);
+    const selectionAnchorRowIdRef = useRef<number | null>(null);
     const selectionStateRef = useRef<SelectionState>({
         active: false,
         dirty: false,
@@ -147,9 +147,9 @@ const Table = (props: TableProps) => {
     const dragAutoScrollFrameRef = useRef<number | null>(null);
     const bodyStyleSnapshotRef = useRef<{userSelect: string; cursor: string} | null>(null);
     const headerContextToggleRef = useRef<HTMLDivElement>(null);
-    const rowRefsRef = useRef<Record<string, HTMLTableRowElement | null>>({});
-    const measuredRowHeightsRef = useRef<Record<string, number>>({});
-    const previewSelectedRowIdsRef = useRef<string[]>([]);
+    const rowRefsRef = useRef<Record<number, HTMLTableRowElement | null>>({});
+    const measuredRowHeightsRef = useRef<Record<number, number>>({});
+    const previewSelectedRowIdsRef = useRef<number[]>([]);
     const editingRef = useRef(editing);
 
     const emitCellClick = (params: {
@@ -334,7 +334,7 @@ const Table = (props: TableProps) => {
             return null;
         }
 
-        return Array.from(new Set(selected.map((value) => String(value))));
+        return Array.from(new Set(selected));
     }, [selected]);
     const availableExternalSelectedRowIds = useMemo(() => {
         if (!externalSelectedRowIds) {
@@ -406,10 +406,10 @@ const Table = (props: TableProps) => {
         },
         getRowId: (row, index) => {
             if (getRowId) {
-                return getRowId(row, index);
+                return String(getRowId(row, index));
             }
 
-            return getDefaultRowId(row, index);
+            return String(getDefaultRowId(row, index));
         },
     });
 
@@ -418,7 +418,7 @@ const Table = (props: TableProps) => {
     const pageIndex = Math.min(Math.max(page, 0), pageCount - 1);
     const currentPage = pageIndex + 1;
     const visibleRows = table.getRowModel().rows;
-    const visibleRowIds = useMemo(() => visibleRows.map((row) => row.id), [visibleRows]);
+    const visibleRowIds = useMemo(() => visibleRows.map((row) => row.original.id), [visibleRows]);
     const selectedRowIdsSet = useMemo(() => new Set(selectedRowIds), [selectedRowIds]);
     const paginationItems = useMemo(() => buildPagination(currentPage, pageCount), [currentPage, pageCount]);
     const dragGhostHeader = draggingColumnId
@@ -618,7 +618,7 @@ const Table = (props: TableProps) => {
         document.body.style.cursor = cursor;
     };
 
-    const syncSelectedRowsPreview = (nextRowIds: string[]) => {
+    const syncSelectedRowsPreview = (nextRowIds: number[]) => {
         const previousRowIdSet = new Set(previewSelectedRowIdsRef.current);
         const appliedRowIds = editingRef.current ? [] : nextRowIds;
         const nextRowIdSet = new Set(appliedRowIds);
@@ -642,7 +642,7 @@ const Table = (props: TableProps) => {
         previewSelectedRowIdsRef.current = appliedRowIds;
     };
 
-    const previewSelectedRows = (nextRowIds: string[]) => {
+    const previewSelectedRows = (nextRowIds: number[]) => {
         const normalizedRowIds = Array.from(new Set(nextRowIds));
 
         if (areArraysEqual(selectedRowIdsRef.current, normalizedRowIds)) {
@@ -655,7 +655,7 @@ const Table = (props: TableProps) => {
         return true;
     };
 
-    const commitSelectedRows = (nextRowIds: string[]) => {
+    const commitSelectedRows = (nextRowIds: number[]) => {
         const normalizedRowIds = Array.from(new Set(nextRowIds));
         selectedRowIdsRef.current = normalizedRowIds;
         syncSelectedRowsPreview(normalizedRowIds);
@@ -707,7 +707,7 @@ const Table = (props: TableProps) => {
             selectionStateRef.current.dirty = false;
             commitSelectedRows(selectedRowIdsRef.current);
             const nextSelectedRows = visibleRowsRef.current
-                .filter((row) => selectedRowIdsRef.current.includes(row.id))
+                .filter((row) => selectedRowIdsRef.current.includes(row.original.id))
                 .map((row) => row.original);
 
             onEventRef.current({
@@ -1064,19 +1064,19 @@ const Table = (props: TableProps) => {
         };
     }, []);
 
-    const setSelectedRows = (nextRowIds: string[]) => {
+    const setSelectedRows = (nextRowIds: number[]) => {
         return previewSelectedRows(nextRowIds);
     };
 
     const getNextRowSelection = (
-        rowId: string,
+        rowId: number,
         event: {
             shiftKey?: boolean;
             ctrlKey?: boolean;
             metaKey?: boolean;
         } | null,
     ) => {
-        if (event?.shiftKey && selectionAnchorRowIdRef.current) {
+        if (event?.shiftKey && selectionAnchorRowIdRef.current !== null) {
             return getRange(visibleRowIds, selectionAnchorRowIdRef.current, rowId);
         }
 
@@ -1094,7 +1094,7 @@ const Table = (props: TableProps) => {
         return [rowId];
     };
 
-    const beginSelection = (rowId: string, event: React.MouseEvent<HTMLTableRowElement>) => {
+    const beginSelection = (rowId: number, event: React.MouseEvent<HTMLTableRowElement>) => {
         if (editing || disabled || event.button !== 0 || isInteractiveTarget(event.target)) {
             return;
         }
@@ -1107,8 +1107,8 @@ const Table = (props: TableProps) => {
         selectionStateRef.current.dirty = selectionChanged;
     };
 
-    const extendSelection = (rowId: string, target: EventTarget | null) => {
-        if (editing || disabled || !selectionStateRef.current.active || !selectionAnchorRowIdRef.current) {
+    const extendSelection = (rowId: number, target: EventTarget | null) => {
+        if (editing || disabled || !selectionStateRef.current.active || selectionAnchorRowIdRef.current === null) {
             return;
         }
 
@@ -1122,7 +1122,7 @@ const Table = (props: TableProps) => {
 
     const emitSelectedRows = (target: EventTarget | null) => {
         const nextSelectedRows = visibleRows
-            .filter((row) => selectedRowIdsRef.current.includes(row.id))
+            .filter((row) => selectedRowIdsRef.current.includes(row.original.id))
             .map((row) => row.original);
 
         onEventRef.current({
@@ -1278,13 +1278,13 @@ const Table = (props: TableProps) => {
                 return;
             }
 
-            nextRowHeights[rowId] = getMeasuredRowHeight(rowElement);
+            nextRowHeights[Number(rowId)] = getMeasuredRowHeight(rowElement);
         });
 
         return nextRowHeights;
     };
 
-    const updateDraftTextCell = (rowId: string, columnId: string, nextValue: string) => {
+    const updateDraftTextCell = (rowId: number, columnId: string, nextValue: string) => {
         if (!editing) {
             return;
         }

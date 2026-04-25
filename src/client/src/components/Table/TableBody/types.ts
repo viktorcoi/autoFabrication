@@ -21,24 +21,24 @@ export type TableBodyProps = {
     invalidRequiredCellKeys: Set<string>;
     draggingColumnId: string | null;
     resizingColumnId: string | null;
-    selectedRowIdsSet: Set<string>;
-    rowRefsRef: RefObject<Record<string, HTMLTableRowElement | null>>;
-    measuredRowHeightsRef: RefObject<Record<string, number>>;
-    rowHeights: Record<string, number>;
-    previewSelectedRowIdsRef: RefObject<string[]>;
+    selectedRowIdsSet: Set<number>;
+    rowRefsRef: RefObject<Record<number, HTMLTableRowElement | null>>;
+    measuredRowHeightsRef: RefObject<Record<number, number>>;
+    rowHeights: Record<number, number>;
+    previewSelectedRowIdsRef: RefObject<number[]>;
     selectionStateRef: RefObject<SelectionState>;
     onEventRef: RefObject<TableProps['onEvent']>;
-    beginSelection: (rowId: string, event: MouseEvent<HTMLTableRowElement>) => void;
-    extendSelection: (rowId: string, target: EventTarget | null) => void;
+    beginSelection: (rowId: number, event: MouseEvent<HTMLTableRowElement>) => void;
+    extendSelection: (rowId: number, target: EventTarget | null) => void;
     getNextRowSelection: (
-        rowId: string,
+        rowId: number,
         event: {
             shiftKey?: boolean;
             ctrlKey?: boolean;
             metaKey?: boolean;
         } | null,
-    ) => string[];
-    setSelectedRows: (nextRowIds: string[]) => boolean;
+    ) => number[];
+    setSelectedRows: (nextRowIds: number[]) => boolean;
     emitSelectedRows: (target: EventTarget | null) => void;
     emitCellClick: (params: CellMouseEventParams) => void;
     emitCellDoubleClick: (params: CellMouseEventParams) => void;
@@ -47,5 +47,5 @@ export type TableBodyProps = {
         params: CellMouseEventParams,
     ) => void;
     emitBooleanChange: (params: BooleanChangeEventParams) => void;
-    onDraftTextChange: (rowId: string, columnId: string, value: string) => void;
+    onDraftTextChange: (rowId: number, columnId: string, value: string) => void;
 };

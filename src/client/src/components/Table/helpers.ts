@@ -137,7 +137,7 @@ export const cloneTableRow = (row: TableRow): TableRow => {
 
 export const getDraftValue = (
     draftChanges: TableDraftChanges,
-    rowId: string,
+    rowId: number,
     columnId: string,
     fallbackValue: unknown,
 ) => {
@@ -305,7 +305,7 @@ export const removeStoredSettings = (settingsKey: string) => {
     }
 };
 
-export const getRange = (items: string[], from: string, to: string) => {
+export const getRange = <T, >(items: T[], from: T, to: T) => {
     const fromIndex = items.indexOf(from);
     const toIndex = items.indexOf(to);
 
@@ -333,7 +333,7 @@ export const buildPagination = (currentPage: number, pageCount: number): Paginat
     return [1, 'ellipsis-left', currentPage - 1, currentPage, currentPage + 1, 'ellipsis-right', pageCount];
 };
 
-export const areArraysEqual = (left: string[], right: string[]) => {
+export const areArraysEqual = <T, >(left: T[], right: T[]) => {
     if (left.length !== right.length) {
         return false;
     }
@@ -453,7 +453,7 @@ export const sortingStateToTableSorting = (sortingState: SortingState): TableSor
 
 export const getDefaultRowId = (row: TableRow, index: number) => {
     const value = row.id;
-    return typeof value === 'string' || typeof value === 'number' ? String(value) : String(index);
+    return typeof value === 'number' && Number.isFinite(value) ? value : index;
 };
 
 export const isInteractiveTarget = (target: EventTarget | null) => {

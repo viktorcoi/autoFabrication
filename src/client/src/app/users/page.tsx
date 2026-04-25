@@ -85,18 +85,15 @@ const UsersPage = () => {
 
     const onEventTable = (e: TableEvent) => {
         if (e.type === 'pageChange') {
-            setSelected([]);
             mergeState({page: e.page}, setTableOptions);
         }
         if (e.type === 'rowsChange') {
-            setSelected([]);
             mergeState({
                 page: 0,
                 rows: e.rows,
             }, setTableOptions);
         }
         if (e.type === 'sortChange') {
-            setSelected([]);
             mergeState({
                 page: 0,
                 sorting: e.sorting,
@@ -106,8 +103,8 @@ const UsersPage = () => {
             setModals({id: 'modal-manage-user', show: true, data: e.row.id});
         }
         if (e.type === 'selected') {
-            console.log(e.rowIds)
             setSelected(e.rowIds);
+            console.log(selected)
         }
     };
 

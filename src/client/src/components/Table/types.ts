@@ -5,6 +5,7 @@ import type {
 } from 'react';
 
 export type TableRow = Record<string, unknown> & {
+    id: number;
     isConst?: string[];
     isRequired?: string[];
 };
@@ -23,7 +24,7 @@ export type Column = {
     render?: (value: unknown, row: TableRow) => ReactNode;
 };
 
-export type TableDraftChanges = Record<string, Record<string, string>>;
+export type TableDraftChanges = Record<number, Record<string, string>>;
 
 type TableEventMeta = {
     target: EventTarget | null;
@@ -120,7 +121,7 @@ export type TableProps = {
     loading?: boolean;
     selected?: number[];
     onEvent: (event: TableEvent) => void;
-    getRowId?: (row: TableRow, index: number) => string;
+    getRowId?: (row: TableRow, index: number) => number;
     emptyState?: TableEmptyState;
 };
 

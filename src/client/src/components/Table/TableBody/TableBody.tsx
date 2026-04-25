@@ -96,28 +96,30 @@ const TableBody = React.memo((props: TableBodyProps) => {
                             return null;
                         }
 
+                        const rowId = row.original.id;
+
                         const isSelectedRow = !editing && (
                             selectionStateRef.current.active
-                            ? previewSelectedRowIdsRef.current.includes(row.id)
-                            : selectedRowIdsSet.has(row.id)
+                            ? previewSelectedRowIdsRef.current.includes(rowId)
+                            : selectedRowIdsSet.has(rowId)
                         );
-                        const rowHeight = editing ? rowHeights[row.id] : undefined;
+                        const rowHeight = editing ? rowHeights[rowId] : undefined;
 
                         return (
                             <tr
-                                key={row.id}
+                                key={rowId}
                                 data-index={virtualRow.index}
                                 ref={(element) => {
-                                    rowRefsRef.current[row.id] = element;
+                                    rowRefsRef.current[rowId] = element;
 
                                     if (element) {
                                         if (!editing) {
-                                            measuredRowHeightsRef.current[row.id] = getMeasuredRowHeight(element);
+                                            measuredRowHeightsRef.current[rowId] = getMeasuredRowHeight(element);
                                         }
 
                                         element.classList.toggle(
                                             styles['bodyRow--selected'],
-                                            !editing && previewSelectedRowIdsRef.current.includes(row.id),
+                                            !editing && previewSelectedRowIdsRef.current.includes(rowId),
                                         );
                                         rowVirtualizer.measureElement(element);
                                     }
@@ -135,14 +137,14 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                         return;
                                     }
 
-                                    beginSelection(row.id, event);
+                                    beginSelection(rowId, event);
                                 }}
                                 onMouseEnter={(event) => {
                                     if (rowActionsDisabled) {
                                         return;
                                     }
 
-                                    extendSelection(row.id, event.target);
+                                    extendSelection(rowId, event.target);
                                 }}
                                 onClick={(event) => {
                                     if (rowActionsDisabled || isInteractiveTarget(event.target)) {
@@ -173,7 +175,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                     const columnType = getColumnType(columnConfig);
                                     const cellValue = cell.getValue();
                                     const renderedCell = flexRender(cell.column.columnDef.cell, cell.getContext());
-                                    const draftValue = getDraftValue(draftChanges, row.id, columnId, cellValue);
+                                    const draftValue = getDraftValue(draftChanges, rowId, columnId, cellValue);
                                     const cellTextValue = getCellTextValue(draftValue);
                                     const avatarSrc = getAvatarCellSrc(cellValue);
                                     const checkboxValue = getBooleanCellValue(cellValue);
@@ -182,7 +184,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                     const isResizing = resizingColumnId === columnId;
                                     const isConstCell = isCellConst(row.original, columnConfig);
                                     const isInvalidRequiredCell = editing
-                                        && invalidRequiredCellKeys.has(`${row.id}:${columnId}`);
+                                        && invalidRequiredCellKeys.has(`${rowId}:${columnId}`);
                                     let cellContent: React.ReactNode;
 
                                     if (columnType === 'button') {
@@ -289,7 +291,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                             >
                                                 <Checkbox
                                                     className={styles.checkbox}
-                                                    key={`${row.id}:${columnId}:${checkboxValue ? '1' : '0'}`}
+                                                    key={`${rowId}:${columnId}:${checkboxValue ? '1' : '0'}`}
                                                     defaultChecked={checkboxValue}
                                                     disabled={controlDisabled}
                                                     onMouseDown={(event) => event.stopPropagation()}
@@ -331,7 +333,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 closeOnChange={true}
                                                 onChange={(nextValue) => {
                                                     onDraftTextChange(
-                                                        row.id,
+                                                        rowId,
                                                         columnId,
                                                         nextValue ? nextValue.toISOString() : '',
                                                     );
@@ -355,7 +357,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 mode={'plain'}
                                                 disabled={isConstCell || loading || Boolean(disabled)}
                                                 onChange={(event) => {
-                                                    onDraftTextChange(row.id, columnId, event.target.value);
+                                                    onDraftTextChange(rowId, columnId, event.target.value);
                                                 }}
                                                 onMouseDown={(event) => event.stopPropagation()}
                                                 onClick={(event) => event.stopPropagation()}
@@ -430,7 +432,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     return;
                                                 }
 
-                                                const nextSelection = getNextRowSelection(row.id, event);
+                                                const nextSelection = getNextRowSelection(rowId, event);
                                                 const selectionChanged = setSelectedRows(nextSelection);
                                                 selectionStateRef.current.active = false;
                                                 selectionStateRef.current.dirty = false;

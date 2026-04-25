@@ -50,7 +50,7 @@ const Wrapper = ({ children }: PropsWithChildren) => {
             platform={'vkcom'}
             colorScheme={theme}
         >
-            <AdaptivityProvider>
+            <AdaptivityProvider density={'compact'}>
                 <AppRoot
                     disableSettingVKUIClassesInRuntime={true}
                 >
