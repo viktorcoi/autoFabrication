@@ -8,6 +8,7 @@ import { validate } from "../../shared/http/validate.js";
 import {
 	AVATAR_FILE_SIZE_LIMIT,
 	getPublicStorageUrl,
+	getStoredAvatarAbsolutePath,
 	removeStoredFile,
 	saveAvatarFile,
 } from "../../shared/storage/avatars.js";
@@ -91,7 +92,7 @@ userRouter.post(
 	requirePermission("/users", "adding"),
 	parseAvatarUpload,
 	asyncHandler(async (request, response) => {
-		const payload = validate(createUserSchema, request.body);
+		const payload = validate(createUserSchema, request.body ?? {});
 		const avatarFile = request.file;
 		let savedAvatar: Awaited<ReturnType<typeof saveAvatarFile>> | null = null;
 
@@ -119,10 +120,41 @@ userRouter.post(
 userRouter.patch(
 	"/:id",
 	requirePermission("/users", "editing"),
+	parseAvatarUpload,
 	asyncHandler(async (request, response) => {
-		const payload = validate(updateUserSchema, request.body);
-		const user = await updateUser(parseId(String(request.params.id)), payload);
+		const userId = parseId(String(request.params.id));
+		const currentUser = await getUserById(userId);
+		const payload = validate(updateUserSchema, request.body ?? {});
+		const avatarFile = request.file;
+		const previousAvatarAbsolutePath = currentUser.avatarUrl
+			? getStoredAvatarAbsolutePath(currentUser.avatarUrl)
+			: null;
+		let savedAvatar: Awaited<ReturnType<typeof saveAvatarFile>> | null = null;
 
-		response.json(user);
+		try {
+			if (avatarFile) {
+				savedAvatar = await saveAvatarFile(avatarFile);
+			}
+
+			const user = await updateUser(userId, {
+				...payload,
+				...(savedAvatar ? { avatarUrl: getPublicStorageUrl(request, savedAvatar.publicPath) } : {}),
+			});
+			const shouldRemovePreviousAvatar = Boolean(savedAvatar)
+				|| payload.avatarUrl === null
+				|| (typeof payload.avatarUrl === "string" && payload.avatarUrl !== currentUser.avatarUrl);
+
+			if (shouldRemovePreviousAvatar && previousAvatarAbsolutePath) {
+				await removeStoredFile(previousAvatarAbsolutePath);
+			}
+
+			response.json(user);
+		} catch (error) {
+			if (savedAvatar) {
+				await removeStoredFile(savedAvatar.absolutePath);
+			}
+
+			throw error;
+		}
 	}),
 );

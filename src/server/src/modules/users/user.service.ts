@@ -81,7 +81,7 @@ type CreateUserData = {
 	birthDate: Date;
 	login: string;
 	password: string;
-	avatarUrl?: string;
+	avatarUrl?: string | null;
 	roleId: number;
 };
 

@@ -116,33 +116,27 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         if (disabledSave || loading.send) return;
 
         if (typeof idUser === 'number') {
-            // mergeState({send: true}, setLoading);
-            // onLoading(true);
+            mergeState({send: true}, setLoading);
+            onLoading(true);
 
-            let options: PathUserOptions = {}
+            let options = {...data};
 
             Object.keys(data).forEach((key) => {
-                const dataValue = data[key as keyof PostUserType];
-                const savedDataValue = savedData[key as keyof PostUserType];
+                const value = options[key as keyof PostUserType];
+                const savedValue = savedData[key as keyof PostUserType];
 
-                if ((typeof dataValue === 'string' && typeof savedDataValue === 'string') && (
-                    dataValue.trim() !== savedDataValue.trim()
+                if ((typeof value === 'string' && typeof savedValue === 'string') && (
+                    value.trim() === savedValue.trim()
                 )) {
-                    options[key as keyof PathUserOptions] = dataValue;
-                } else if (dataValue !== savedDataValue) {
-                    options[key as keyof PathUserOptions] = dataValue;
+                    delete options[key as keyof PostUserType];
+                } else if (value === savedValue) {
+                    delete options[key as keyof PostUserType];
                 }
-
-
-
-
-                // console.log(data[key as keyof PostUserType]);
-            })
-
+            });
 
             await ApiService.users.patch({
                 id: idUser,
-                options
+                options: options as PathUserOptions,
             }).then(({status, data}) => {
                 if (status === 'success') {
                     addSnackbar({
@@ -158,37 +152,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         } else {
             onCreate('modal-create-user', data as PostUserOptions);
         }
-    //     if (disabledSave) return;
-    //
-    //     mergeState({send: true}, setLoading);
-    //     onLoading(true);
-    //
-    //     try {
-    //         const { status } = idRole === null ? await ApiService.roles.post({
-    //             options: {
-    //                 name: data.name.trim(),
-    //                 description: data.description.trim(),
-    //             }
-    //         }) : await ApiService.roles.patch({
-    //             id: idRole,
-    //             options: {
-    //                 name: data.name.trim(),
-    //                 description: data.description.trim(),
-    //             }
-    //         });
-    //
-    //         if (status === 'success') {
-    //             addSnackbar({
-    //                 type: 'success',
-    //                 text: `Успешно ${idRole === null ? 'добавлено' : 'отредактировано'}: "${data.name}"`
-    //             });
-    //             onClose('updated-data');
-    //         }
-    //     } finally {
-    //         mergeState({send: false}, setLoading);
-    //         onLoading(false);
-    //     }
-    }
+    };
 
     const title = useMemo(
         () =>  `${typeof idUser === 'number' ? 'Редактирование' : 'Добавление'} пользователя`,
@@ -298,7 +262,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                                         appearance={'negative'}
                                         size={'m'}
                                         stretched={true}
-                                        onClick={() => mergeState({avatarUrl: undefined}, setData)}
+                                        onClick={() => mergeState({avatarUrl: null}, setData)}
                                     >
                                         Удалить аватар
                                     </Button>

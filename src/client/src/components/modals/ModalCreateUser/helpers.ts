@@ -96,7 +96,7 @@ export const autogenerateLogin = (
         birthDate,
     }: PostUserOptions,
 ) => {
-    const loginBase = `${normalizeLoginSegment(lastName)}${getInitialSegment(firstName)}${getInitialSegment(middleName)}`;
+    const loginBase = `${normalizeLoginSegment(lastName)}${getInitialSegment(firstName)}${getInitialSegment(middleName ?? '')}`;
     const birthYear = getBirthYear(birthDate);
 
     return birthYear ? `${loginBase}_${birthYear}` : loginBase;

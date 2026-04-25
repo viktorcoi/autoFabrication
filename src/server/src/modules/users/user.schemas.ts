@@ -35,7 +35,7 @@ export const createUserSchema = z.object({
 	birthDate: z.coerce.date(),
 	login: z.string().trim().min(1, "Логин обязателен"),
 	password: passwordSchema,
-	avatarUrl: z.string().url("Аватар должен быть корректной ссылкой").optional(),
+	avatarUrl: z.string().url("Аватар должен быть корректной ссылкой").nullable().optional(),
 	roleId: z.coerce.number().int().positive("roleId должен быть положительным числом"),
 });
 

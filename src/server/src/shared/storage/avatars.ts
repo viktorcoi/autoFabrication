@@ -89,5 +89,25 @@ export const removeStoredFile = async (absolutePath: string) => {
 	}
 };
 
+export const getStoredAvatarAbsolutePath = (avatarUrl: string) => {
+	try {
+		const avatarPathname = new URL(avatarUrl, "http://localhost").pathname;
+
+		if (!avatarPathname.startsWith(`${AVATAR_PUBLIC_DIR}/`)) {
+			return null;
+		}
+
+		const fileName = path.posix.basename(avatarPathname);
+
+		if (!fileName || fileName === "." || fileName === "..") {
+			return null;
+		}
+
+		return path.join(env.UPLOAD_DIR, AVATAR_STORAGE_DIR_NAME, fileName);
+	} catch {
+		return null;
+	}
+};
+
 export const getPublicStorageUrl = (request: Request, publicPath: string) =>
 	`${request.protocol}://${request.get("host") ?? "localhost"}${publicPath}`;
