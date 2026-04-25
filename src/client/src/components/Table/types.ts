@@ -100,7 +100,7 @@ export type TableEvent =
     | ({type: 'pageChange'; page: number} & TableEventMeta)
     | ({type: 'rowsChange'; rows: number} & TableEventMeta)
     | ({type: 'sortChange'; sorting: TableSorting} & TableEventMeta)
-    | ({type: 'selected'; rowIds: string[]; rows: TableRow[]} & TableEventMeta)
+    | ({type: 'selected'; rowIds: number[]; rows: TableRow[]} & TableEventMeta)
     | ({type: 'editSave'; changes: TableDraftChanges} & TableEventMeta);
 
 export type TableEmptyState = {
@@ -118,7 +118,7 @@ export type TableProps = {
     page: number;
     rows: number;
     loading?: boolean;
-    selected?: Array<string | number>;
+    selected?: number[];
     onEvent: (event: TableEvent) => void;
     getRowId?: (row: TableRow, index: number) => string;
     emptyState?: TableEmptyState;

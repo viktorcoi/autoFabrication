@@ -71,8 +71,9 @@ userRouter.get(
 	"/table",
 	requirePermission("/users", "view"),
 	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
 		const query = validate(getUsersTableSchema, request.query);
-		const table = await getUsersTable(query);
+		const table = await getUsersTable(query, auth.userId);
 
 		response.json(table);
 	}),
@@ -135,6 +136,7 @@ userRouter.patch(
 	requirePermission("/users", "editing"),
 	parseAvatarUpload,
 	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
 		const userId = parseId(String(request.params.id));
 		const currentUser = await getUserById(userId);
 		const payload = validate(updateUserSchema, request.body ?? {});
@@ -152,7 +154,7 @@ userRouter.patch(
 			const user = await updateUser(userId, {
 				...payload,
 				...(savedAvatar ? { avatarUrl: getPublicStorageUrl(request, savedAvatar.publicPath) } : {}),
-			});
+			}, auth.userId);
 			const shouldRemovePreviousAvatar = Boolean(savedAvatar)
 				|| payload.avatarUrl === null
 				|| (typeof payload.avatarUrl === "string" && payload.avatarUrl !== currentUser.avatarUrl);

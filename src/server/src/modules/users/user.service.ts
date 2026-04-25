@@ -56,6 +56,8 @@ const USER_TABLE_FIELD_TO_MODEL_FIELD = {
 const USER_OPTIONAL_MODEL_FIELDS = new Set<string>(["middleName", "avatarUrl"]);
 const USER_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "passwordHash", "createdAt", "updatedAt"]);
 const USER_READONLY_TABLE_FIELDS = new Set<string>(["role"]);
+const GOD_USER_ID = 1;
+const USER_TABLE_ALL_FIELDS = Object.freeze(Object.keys(USER_TABLE_FIELD_TO_MODEL_FIELD));
 
 const userTableMeta = Object.freeze({
 	isConst: Object.freeze(
@@ -99,6 +101,8 @@ export type DeleteUsersResult = {
 	error: DeleteUsersResultItem[];
 };
 
+const UPDATE_GOD_USER_ERROR = "Первого пользователя может изменять только он сам";
+
 const DELETE_USER_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
 const DELETE_USER_GOD_ERROR = "Первого пользователя нельзя удалить";
 const DELETE_USER_IN_USE_ERROR = "Этот пользователь используется и не может быть удален";
@@ -138,6 +142,17 @@ const isPrismaRecordNotFoundError = (error: unknown) =>
 		&& "code" in error
 		&& error.code === "P2025",
 	);
+
+const getUserTableConstFields = (userId: number, actorId: number) => {
+	if (userId !== GOD_USER_ID || actorId === GOD_USER_ID) {
+		return [...userTableMeta.isConst];
+	}
+
+	return Array.from(new Set([
+		...userTableMeta.isConst,
+		...USER_TABLE_ALL_FIELDS,
+	]));
+};
 
 const parseDateSearch = (value: string) => {
 	const normalizedValue = value.trim();
@@ -287,7 +302,7 @@ export const listUsers = async () =>
 		},
 	});
 
-export const getUsersTable = async (query: GetUsersTableQuery) => {
+export const getUsersTable = async (query: GetUsersTableQuery, actorId: number) => {
 	const where = buildUsersTableWhere(query.search);
 	const orderBy = buildUsersTableOrderBy(query.sorting);
 	const skip = query.page * query.rows;
@@ -313,7 +328,7 @@ export const getUsersTable = async (query: GetUsersTableQuery) => {
 			role: user.role.name,
 			...(user.avatarUrl ? { avatar: user.avatarUrl } : {}),
 			birthDate: user.birthDate,
-			isConst: [...userTableMeta.isConst],
+			isConst: getUserTableConstFields(user.id, actorId),
 			isRequired: [...userTableMeta.isRequired],
 		})),
 	};
@@ -369,7 +384,11 @@ export const createUser = async (data: CreateUserData) => {
 	});
 };
 
-export const updateUser = async (id: number, data: UpdateUserData) => {
+export const updateUser = async (id: number, data: UpdateUserData, actorId: number) => {
+	if (id === GOD_USER_ID && actorId !== GOD_USER_ID) {
+		throw new AppError(403, UPDATE_GOD_USER_ERROR);
+	}
+
 	await getUserById(id);
 
 	if (data.login) {
@@ -466,7 +485,7 @@ export const deleteUsers = async (ids: number[], actorId: number): Promise<Delet
 	};
 
 	for (const id of uniqueIds) {
-		if (id === 1) {
+		if (id === GOD_USER_ID) {
 			result.error.push({
 				id,
 				description: DELETE_USER_GOD_ERROR,
