@@ -104,7 +104,7 @@ const UsersPage = () => {
         }
         if (e.type === 'selected') {
             setSelected(e.rowIds);
-            console.log(selected)
+            console.log(e)
         }
     };
 

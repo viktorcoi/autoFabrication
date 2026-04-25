@@ -551,6 +551,10 @@ const Table = (props: TableProps) => {
 
         if (!areArraysEqual(nextSelectedRowIds, selectedRowIdsRef.current)) {
             commitSelectedRows(nextSelectedRowIds);
+
+            if (selected === undefined) {
+                emitSelectedRowsByIds(nextSelectedRowIds, null);
+            }
         }
 
         if (
@@ -559,7 +563,7 @@ const Table = (props: TableProps) => {
         ) {
             selectionAnchorRowIdRef.current = null;
         }
-    }, [visibleRowIds]);
+    }, [selected, visibleRowIds]);
 
     useEffect(() => {
         if (!availableExternalSelectedRowIds) {
@@ -580,8 +584,16 @@ const Table = (props: TableProps) => {
             return;
         }
 
+        const isExternalSelectionTrimmed = externalSelectedRowIds !== null
+            && !areArraysEqual(externalSelectedRowIds, availableExternalSelectedRowIds);
+
         if (areArraysEqual(selectedRowIdsRef.current, availableExternalSelectedRowIds)) {
             syncSelectedRowsPreview(availableExternalSelectedRowIds);
+
+            if (isExternalSelectionTrimmed) {
+                emitSelectedRowsByIds(availableExternalSelectedRowIds, null);
+            }
+
             return;
         }
 
@@ -590,7 +602,11 @@ const Table = (props: TableProps) => {
         selectionStateRef.current.dirty = false;
         selectionStateRef.current.target = null;
         commitSelectedRows(availableExternalSelectedRowIds);
-    }, [availableExternalSelectedRowIds, selected, selectedRowIds]);
+
+        if (isExternalSelectionTrimmed) {
+            emitSelectedRowsByIds(availableExternalSelectedRowIds, null);
+        }
+    }, [availableExternalSelectedRowIds, externalSelectedRowIds, selected, selectedRowIds]);
 
     useEffect(() => {
         setJumpValue(String(currentPage));
@@ -616,6 +632,19 @@ const Table = (props: TableProps) => {
 
         document.body.style.userSelect = 'none';
         document.body.style.cursor = cursor;
+    };
+
+    const emitSelectedRowsByIds = (rowIds: number[], target: EventTarget | null) => {
+        const nextSelectedRows = visibleRowsRef.current
+            .filter((row) => rowIds.includes(row.original.id))
+            .map((row) => row.original);
+
+        onEventRef.current({
+            type: 'selected',
+            rowIds,
+            rows: nextSelectedRows,
+            target,
+        });
     };
 
     const syncSelectedRowsPreview = (nextRowIds: number[]) => {
@@ -1121,16 +1150,7 @@ const Table = (props: TableProps) => {
     };
 
     const emitSelectedRows = (target: EventTarget | null) => {
-        const nextSelectedRows = visibleRows
-            .filter((row) => selectedRowIdsRef.current.includes(row.original.id))
-            .map((row) => row.original);
-
-        onEventRef.current({
-            type: 'selected',
-            rowIds: selectedRowIdsRef.current,
-            rows: nextSelectedRows,
-            target,
-        });
+        emitSelectedRowsByIds(selectedRowIdsRef.current, target);
     };
 
     const resetCurrentColumnSettings = (columnId: string) => {
