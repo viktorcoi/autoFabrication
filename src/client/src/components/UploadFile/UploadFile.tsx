@@ -15,9 +15,9 @@ import {
     Icon24DocumentOutline,
     Icon24UploadOutline
 } from "@vkontakte/icons";
-import styles from "./DragAndDropFile.module.scss";
-import {DragAndDropFileError, DragAndDropFileProps} from "@/components/DragAndDropFile/types";
-import {formatBytes, getAcceptItems, isFileAccepted} from "@/components/DragAndDropFile/helpers";
+import styles from "./UploadFile.module.scss";
+import {DragAndDropFileError, DragAndDropFileProps} from "@/components/UploadFile/types";
+import {formatBytes, getAcceptItems, isFileAccepted} from "@/components/UploadFile/helpers";
 
 const isSameFile = (file: File, compareFile: File) => (
     file.name === compareFile.name &&
@@ -26,7 +26,7 @@ const isSameFile = (file: File, compareFile: File) => (
     file.type === compareFile.type
 );
 
-export const DragAndDropFile = (props: DragAndDropFileProps) => {
+export const UploadFile = (props: DragAndDropFileProps) => {
 
     const {
         value,
@@ -44,6 +44,8 @@ export const DragAndDropFile = (props: DragAndDropFileProps) => {
         showFileList = true,
         removable = true,
         className,
+        classDropzone,
+        icon = <Icon24UploadOutline width={32} height={32}/>,
         ...restProps
     } = props;
 
@@ -219,7 +221,10 @@ export const DragAndDropFile = (props: DragAndDropFileProps) => {
             />
 
             <div
-                className={styles.dropzone}
+                className={classNames(
+                    styles.dropzone,
+                    classDropzone
+                )}
                 role={'button'}
                 tabIndex={disabled ? -1 : 0}
                 aria-disabled={disabled}
@@ -230,9 +235,7 @@ export const DragAndDropFile = (props: DragAndDropFileProps) => {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
             >
-                <div className={styles.icon}>
-                    <Icon24UploadOutline width={32} height={32}/>
-                </div>
+                <div className={styles.icon}>{icon}</div>
 
                 <div className={styles.content}>
                     <Text weight={'2'}>{title}</Text>
@@ -288,4 +291,4 @@ export const DragAndDropFile = (props: DragAndDropFileProps) => {
     )
 };
 
-export default DragAndDropFile;
+export default UploadFile;

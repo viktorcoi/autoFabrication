@@ -8,22 +8,20 @@ import {
     ModalPageHeader,
     PlatformProvider, Select, Spinner,
 } from "@vkontakte/vkui";
-import {SubmitEvent, useEffect, useState} from "react";
+import {SubmitEvent, useEffect, useMemo, useState} from "react";
 import styles from './ModalManageUser.module.scss'
 import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
-import {PostUserOptions} from "@/apiService/apiUsers/types";
+import {PathUserOptions, PostUserOptions} from "@/apiService/apiUsers/types";
 import {ModalManageUserProps} from "@/components/modals/ModalManageUser/types";
 import {useController, useSelectFilter} from "@/shared/hooks";
-import ModalAddAvatar from "@/components/modals/ModalManageUser/ModalAddAvatar";
+import ModalAddAvatar from "@/components/modals/ModalAddAvatar/ModalAddAvatar";
 import {Icon56UserCircleOutline} from "@vkontakte/icons";
 import {OpenModalsType} from "@/components/modals/types";
+import {PostUserType} from "@/components/modals/ModalManageRole/types";
+import {useSnackbarStore} from "@/store/snackbar/snackbar";
 
-const initialData: Omit<
-    PostUserOptions, 'birthDate' | 'avatarUrl'> & {
-    birthDate: Date | null;
-    avatarUrl?: string | File;
-} = {
+const initialData: PostUserType = {
     roleId: 0,
     firstName: '',
     lastName: '',
@@ -39,18 +37,18 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         idUser,
         user,
         preventClose,
-        onLoading: _onLoading,
+        onLoading,
         onCreate,
         onClose = () => {},
         ...restProps
     } = props;
 
+    const selectFilter = useSelectFilter();
+
     const [modals, setModals] = useState<OpenModalsType<
         'modal-avatar'
     >>({id: null, show: false, data: null});
-
-    const selectFilter = useSelectFilter();
-
+    const [savedData, setSavedData] = useState({...initialData});
     const [data, setData] = useState({...initialData});
     const [roles, setRoles] = useState<CustomSelectOptionInterface[]>([]);
     const [avatarFileUrl, setAvatarFileUrl] = useState<string | null>(null);
@@ -59,15 +57,15 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         send: false
     });
 
+    const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const { createController } = useController([]);
-    void _onLoading;
 
     useEffect(() => {
         const controller = createController();
 
         ApiService.roles.get({
             controller
-        }).then(({data, status}) => {
+        }).then(async ({data, status}) => {
             if (status === 'success') {
 
                 setRoles(data.map(({id, name}) => ({
@@ -76,16 +74,29 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                 })))
 
                 if (typeof idUser === 'number') {
-                    // TODO - получаем инфу о юзере
+                    await ApiService.users.getById({
+                        id: idUser,
+                        controller
+                    }).then(({status, data}) => {
+                        if (status === 'success') {
+                            const user = {
+                                roleId: data.roleId,
+                                firstName: data.firstName,
+                                lastName: data.lastName,
+                                middleName: data.middleName ?? '',
+                                birthDate: new Date(data.birthDate),
+                                avatarUrl: data.avatarUrl,
+                            }
+
+                            setSavedData(user);
+                            setData(user);
+                        } else onClose('error')
+                    });
+                } else if (typeof user === "object" && user !== null) {
+                    setData(user);
                 }
             } else onClose('error')
         }).finally(() => mergeState({get: false}, setLoading));
-    }, []);
-
-    useEffect(() => {
-        if (typeof user === "object" && user !== null) {
-            setData(user);
-        }
     }, []);
 
     useEffect(() => {
@@ -102,9 +113,48 @@ const ModalManageUser = (props: ModalManageUserProps) => {
 
     const saveUser = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (disabledSave || loading.send) return;
 
         if (typeof idUser === 'number') {
+            // mergeState({send: true}, setLoading);
+            // onLoading(true);
 
+            let options: PathUserOptions = {}
+
+            Object.keys(data).forEach((key) => {
+                const dataValue = data[key as keyof PostUserType];
+                const savedDataValue = savedData[key as keyof PostUserType];
+
+                if ((typeof dataValue === 'string' && typeof savedDataValue === 'string') && (
+                    dataValue.trim() !== savedDataValue.trim()
+                )) {
+                    options[key as keyof PathUserOptions] = dataValue;
+                } else if (dataValue !== savedDataValue) {
+                    options[key as keyof PathUserOptions] = dataValue;
+                }
+
+
+
+
+                // console.log(data[key as keyof PostUserType]);
+            })
+
+
+            await ApiService.users.patch({
+                id: idUser,
+                options
+            }).then(({status, data}) => {
+                if (status === 'success') {
+                    addSnackbar({
+                        type: 'success',
+                        text: `Успешно сохранено ${data.login}`
+                    });
+                    onClose('updated-data');
+                }
+            }).finally(() => {
+                mergeState({send: false}, setLoading);
+                onLoading(false);
+            })
         } else {
             onCreate('modal-create-user', data as PostUserOptions);
         }
@@ -140,22 +190,37 @@ const ModalManageUser = (props: ModalManageUserProps) => {
     //     }
     }
 
-    const title = `${typeof idUser === 'number' ? 'Редактирование' : 'Добавление'} пользователя`;
-    const disabledSave = false;
+    const title = useMemo(
+        () =>  `${typeof idUser === 'number' ? 'Редактирование' : 'Добавление'} пользователя`,
+        []
+    );
 
-    const resetAvatar = () => {
-        mergeState({avatarUrl: undefined}, setData);
-    };
+    const avatarSrc = useMemo(
+        () => avatarFileUrl ?? (typeof data.avatarUrl === 'string' ? data.avatarUrl : undefined),
+        [avatarFileUrl, data.avatarUrl]
+    );
 
-    const hasAvatar = avatarFileUrl !== null || typeof data.avatarUrl === 'string';
-    const avatarSrc = avatarFileUrl ?? (typeof data.avatarUrl === 'string' ? data.avatarUrl : undefined);
+    const disabledSave = useMemo(() => {
+        const validRequired = !!data.firstName.trim() && !!data.lastName.trim() && data.roleId && data.birthDate;
+
+        const validEdit = validRequired && (
+            data.firstName.trim() !== savedData.firstName.trim() ||
+            data.lastName.trim() !== savedData.lastName.trim() ||
+            data.middleName?.trim() !== savedData.middleName?.trim() ||
+            data.roleId !== savedData.roleId ||
+            data.birthDate !== savedData.birthDate ||
+            data.avatarUrl !== savedData.avatarUrl
+        );
+
+        return typeof idUser === "number" ? !validEdit : !validRequired;
+    }, [idUser, data, savedData]);
 
     return (
         <>
             <ModalPage
                 hideCloseButton={loading.send}
                 onClose={onClose}
-                preventClose={preventClose}
+                preventClose={preventClose || modals.id !== null}
                 header={
                     <PlatformProvider value={'ios'}>
                         <ModalPageHeader>{title}</ModalPageHeader>
@@ -209,7 +274,8 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                         <div className={styles.avatar}>
                             <Avatar
                                 src={avatarSrc}
-                                initials={`${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`} size={82}
+                                initials={`${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`}
+                                size={88}
                                 fallbackIcon={<Icon56UserCircleOutline />}
                             />
                             <ButtonGroup
@@ -223,16 +289,16 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                                     stretched={true}
                                     onClick={() => mergeState({id: 'modal-avatar', show: true}, setModals)}
                                 >
-                                    {`${hasAvatar ? 'Изменить' : 'Добавить' } аватар`}
+                                    {`${avatarSrc ? 'Изменить' : 'Добавить' } аватар`}
                                 </Button>
-                                {hasAvatar && (
+                                {avatarSrc && (
                                     <Button
                                         type={'button'}
                                         mode={'secondary'}
                                         appearance={'negative'}
                                         size={'m'}
                                         stretched={true}
-                                        onClick={resetAvatar}
+                                        onClick={() => mergeState({avatarUrl: undefined}, setData)}
                                     >
                                         Удалить аватар
                                     </Button>

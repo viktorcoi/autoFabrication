@@ -40,19 +40,19 @@ const hasValidSignature = (file: Express.Multer.File) => {
 
 export const assertAvatarFile = (file: Express.Multer.File) => {
 	if (!isAvatarMimeType(file.mimetype)) {
-		throw new AppError(400, "ÐÐ²Ð°Ñ‚Ð°Ñ€ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð±Ñ‹Ñ‚ÑŒ Ð² Ñ„Ð¾Ñ€Ð¼Ð°Ñ‚Ðµ PNG, JPEG Ð¸Ð»Ð¸ WEBP");
+		throw new AppError(400, "Аватар должен быть в формате PNG, JPEG или WEBP");
 	}
 
 	if (file.size <= 0) {
-		throw new AppError(400, "Ð¤Ð°Ð¹Ð» Ð°Ð²Ð°Ñ‚Ð°Ñ€Ð° Ð¿ÑƒÑÑ‚Ð¾Ð¹");
+		throw new AppError(400, "Файл аватара пустой");
 	}
 
 	if (file.size > AVATAR_FILE_SIZE_LIMIT) {
-		throw new AppError(413, "Ð Ð°Ð·Ð¼ÐµÑ€ Ð°Ð²Ð°Ñ‚Ð°Ñ€Ð° Ð½Ðµ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð¿Ñ€ÐµÐ²Ñ‹ÑˆÐ°Ñ‚ÑŒ 5 MB");
+		throw new AppError(413, "Размер аватара не должен превышать 5 MB");
 	}
 
 	if (!hasValidSignature(file)) {
-		throw new AppError(400, "Ð¤Ð°Ð¹Ð» Ð°Ð²Ð°Ñ‚Ð°Ñ€Ð° Ð½Ðµ ÑÐ¾Ð¾Ñ‚Ð²ÐµÑ‚ÑÑ‚Ð²ÑƒÐµÑ‚ Ð·Ð°ÑÐ²Ð»ÐµÐ½Ð½Ð¾Ð¼Ñƒ Ñ„Ð¾Ñ€Ð¼Ð°Ñ‚Ñƒ");
+		throw new AppError(400, "Файл аватара не соответствует заявленному формату");
 	}
 };
 
@@ -63,7 +63,7 @@ export const saveAvatarFile = async (file: Express.Multer.File) => {
 	await mkdir(avatarsDir, { recursive: true });
 
 	if (!isAvatarMimeType(file.mimetype)) {
-		throw new AppError(400, "ÐÐ²Ð°Ñ‚Ð°Ñ€ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð±Ñ‹Ñ‚ÑŒ Ð² Ñ„Ð¾Ñ€Ð¼Ð°Ñ‚Ðµ PNG, JPEG Ð¸Ð»Ð¸ WEBP");
+		throw new AppError(400, "Аватар должен быть в формате PNG, JPEG или WEBP");
 	}
 
 	const extension = AVATAR_MIME_EXTENSIONS[file.mimetype];

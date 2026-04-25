@@ -52,7 +52,6 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
         await ApiService.users.post({
             options: {
                 ...user,
-                middleName: user.middleName ?? undefined,
                 login: data.login,
                 password: data.password
             }

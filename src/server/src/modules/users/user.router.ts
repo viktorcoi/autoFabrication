@@ -43,11 +43,11 @@ const parseAvatarUpload = (request: Request, response: Response, next: NextFunct
 
 		if (error instanceof multer.MulterError) {
 			if (error.code === "LIMIT_FILE_SIZE") {
-				next(new AppError(413, "Ð Ð°Ð·Ð¼ÐµÑ€ Ð°Ð²Ð°Ñ‚Ð°Ñ€Ð° Ð½Ðµ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð¿Ñ€ÐµÐ²Ñ‹ÑˆÐ°Ñ‚ÑŒ 5 MB"));
+				next(new AppError(413, "Размер аватара не должен превышать 5 MB"));
 				return;
 			}
 
-			next(new AppError(400, "ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð·Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ Ð°Ð²Ð°Ñ‚Ð°Ñ€"));
+			next(new AppError(400, "Не удалось загрузить аватар"));
 			return;
 		}
 

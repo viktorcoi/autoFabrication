@@ -1,0 +1,35 @@
+.wrap {
+    padding: var(--app-default-padding);
+    height: 380px;
+    display: flex;
+    flex-direction: column;
+}
+
+.upload {
+    height: 100%;
+    &__dropzone {
+        flex-direction: column;
+        justify-content: center;
+        span {
+            text-align: center;
+        }
+    }
+}
+
+.avatarCrop {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+}
+
+.cropper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--app-border-radius);
+    background: var(--vkui--color_background_secondary);
+}

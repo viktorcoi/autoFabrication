@@ -6,7 +6,7 @@ import {
     Icon16InfoCircle,
     Icon16WarningTriangle
 } from "@vkontakte/icons";
-import {Snackbar} from "@vkontakte/vkui";
+import {Snackbar, Text} from "@vkontakte/vkui";
 import {SnackbarType} from "@/store/snackbar/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import styles from './SnackbarProvider.module.scss';
@@ -77,7 +77,9 @@ const SnackbarProvider = (props: PropsWithChildren) => {
                         width={14}
                         height={14}
                     />
-                    {s.text}
+                    <Text>
+                        {s.text}
+                    </Text>
                 </Snackbar>
             );
         });

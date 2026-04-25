@@ -1,39 +1,28 @@
 import {ApiServiceOptions, ApiServiceResponse, GetTableOptions, GetTableResponse} from "@/apiService/types";
 import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
-import {CreateUserOptions, GetByIdUserResponse, UserTableRow} from "@/apiService/apiUsers/types";
-
-const isFile = (value: unknown): value is File => (
-	typeof File !== 'undefined' && value instanceof File
-);
-
-const buildCreateUserPayload = (options: CreateUserOptions) => {
-	if (!isFile(options.avatarUrl)) {
-		return options;
-	}
-
-	const formData = new FormData();
-
-	formData.append('roleId', String(options.roleId));
-	formData.append('firstName', options.firstName);
-	formData.append('lastName', options.lastName);
-	formData.append('birthDate', options.birthDate.toISOString());
-	formData.append('login', options.login);
-	formData.append('password', options.password);
-	formData.append('avatar', options.avatarUrl);
-
-	if (options.middleName?.trim()) {
-		formData.append('middleName', options.middleName);
-	}
-
-	return formData;
-};
+import {GetByIdUserResponse, PathUserOptions, PostUserOptions, UserTableRow} from "@/apiService/apiUsers/types";
+import {createUserOptions} from "@/apiService/apiUsers/helpers";
 
 export const ApiUsers = {
+	getById: async (options: ApiServiceOptions<{
+		id: number
+	}>): Promise<ApiServiceResponse<GetByIdUserResponse>> => {
+		return await api.get(`/users/${options.id}`, {
+			signal: options.controller?.signal
+		}).then(r => {
+			return handleApiSuccess(
+				r.data,
+				r.status === 200 && r.data,
+				options.errorOptions?.placeholder
+			);
+		}).catch((e) => handleApiError(e, options.errorOptions));
+	},
+
 	post: async (options: ApiServiceOptions<{
-		options: CreateUserOptions;
+		options: PostUserOptions;
 	}>): Promise<ApiServiceResponse<GetByIdUserResponse>> => {
 		return await api.post("/users",
-			buildCreateUserPayload(options.options),
+			createUserOptions(options.options),
 			{ signal: options.controller?.signal }
 		).then((response) => {
 			return handleApiSuccess(
@@ -42,6 +31,22 @@ export const ApiUsers = {
 				options.errorOptions?.placeholder,
 			);
 		}).catch((error) => handleApiError(error, options.errorOptions));
+	},
+
+	patch: async (options: ApiServiceOptions<{
+		id: number,
+		options: PathUserOptions;
+	}>): Promise<ApiServiceResponse<GetByIdUserResponse>> => {
+		return await api.patch(`/users/${options.id}`,
+			createUserOptions(options.options),
+			{ signal: options.controller?.signal }
+		).then(r => {
+			return handleApiSuccess(
+				r.data,
+				r.status === 200 && r.data,
+				options.errorOptions?.placeholder
+			);
+		}).catch((e) => handleApiError(e, options.errorOptions));
 	},
 
 	table: {

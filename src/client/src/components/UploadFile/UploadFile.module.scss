@@ -34,6 +34,7 @@
     background: var(--vkui--color_background_content);
     cursor: pointer;
     transition: border-color .15s ease-out, background .15s ease-out, box-shadow .15s ease-out;
+    height: inherit;
 
     &:hover {
         border-color: var(--vkui--color_accent_azure);
@@ -50,9 +51,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 52px;
-    width: 52px;
-    height: 52px;
+    padding: 11px;
     color: var(--vkui--color_icon_secondary);
     border-radius: 16px;
     background: var(--vkui--color_transparent--hover);
@@ -64,7 +63,6 @@
     flex-direction: column;
     gap: 4px;
     min-width: 0;
-    flex-grow: 1;
 }
 
 .description {

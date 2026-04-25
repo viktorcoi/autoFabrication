@@ -33,18 +33,20 @@ export interface PostUserOptions {
 	roleId: number;
 	firstName: string;
 	lastName: string;
-	middleName: string;
-	avatarUrl?: string | File;
-	birthDate: Date;
-}
-
-export interface CreateUserOptions {
-	firstName: string;
-	lastName: string;
 	middleName?: string;
+	avatarUrl?: string | null;
 	birthDate: Date;
 	login: string;
 	password: string;
-	avatarUrl?: string | File;
-	roleId: number;
+}
+
+export interface PathUserOptions {
+	roleId?: number;
+	firstName?: string;
+	lastName?: string;
+	middleName?: string;
+	avatarUrl?: string | null;
+	birthDate?: Date;
+	login?: string;
+	password?: string;
 }

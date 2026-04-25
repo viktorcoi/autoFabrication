@@ -98,6 +98,9 @@ const UsersPage = () => {
                 sorting: e.sorting,
             }, setTableOptions);
         }
+        if (e.type === 'cellDoubleClick') {
+            setModals({id: 'modal-manage-user', show: true, data: e.row.id});
+        }
     };
 
     return (
