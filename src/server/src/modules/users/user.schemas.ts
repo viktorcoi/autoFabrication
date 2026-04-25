@@ -43,6 +43,10 @@ export const updateUserSchema = createUserSchema.partial().extend({
 	password: passwordSchema.optional(),
 });
 
+export const deleteUserIdsSchema = z.array(
+	z.coerce.number().int().positive("id пользователя должен быть положительным числом"),
+).min(1, "Нужно выбрать хотя бы одного пользователя");
+
 export const getUsersTableSchema = z.object({
 	page: z.coerce.number().int().min(0).default(0),
 	rows: z.coerce.number().int().positive().max(100).default(20),
@@ -54,3 +58,4 @@ export const getUsersTableSchema = z.object({
 });
 
 export type GetUsersTableQuery = z.infer<typeof getUsersTableSchema>;
+export type DeleteUserIdsPayload = z.infer<typeof deleteUserIdsSchema>;

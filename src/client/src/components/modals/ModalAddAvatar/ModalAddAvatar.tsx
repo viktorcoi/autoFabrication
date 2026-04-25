@@ -14,8 +14,8 @@ import {ModalAddAvatarProps} from "@/components/modals/ModalAddAvatar/types";
 import {getCroppedAvatarFile} from "@/components/modals/ModalAddAvatar/helpers";
 import UploadFile from "@/components/UploadFile/UploadFile";
 import {
-    Icon16Delete,
     Icon16Pen,
+    Icon24TrashSimpleOutline,
     Icon56UserAddBadgeOutline
 } from "@vkontakte/icons";
 
@@ -144,7 +144,7 @@ const ModalAddAvatar = (props: ModalAddAvatarProps) => {
                                         mode={'secondary'}
                                         disabled={avatarCropLoading}
                                         onClick={openReplacementDialog}
-                                        after={<Icon16Pen/>}
+                                        after={<Icon16Pen width={16} height={16}/>}
                                     />
                                 </Tooltip>
                                 <Tooltip
@@ -160,7 +160,7 @@ const ModalAddAvatar = (props: ModalAddAvatarProps) => {
                                         mode={'secondary'}
                                         disabled={avatarCropLoading}
                                         onClick={() => setAvatarFile(null)}
-                                        after={<Icon16Delete/>}
+                                        after={<Icon24TrashSimpleOutline width={16} height={16}/>}
                                     />
                                 </Tooltip>
                             </ButtonGroup>

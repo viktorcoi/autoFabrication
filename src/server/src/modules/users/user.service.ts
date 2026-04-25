@@ -2,7 +2,9 @@ import * as bcrypt from "bcrypt";
 import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../shared/errors/app-error.js";
+import { getStoredAvatarAbsolutePath, removeStoredFile } from "../../shared/storage/avatars.js";
 import { getRoleById } from "../roles/role.service.js";
+import type { RolePermissions } from "../roles/role.types.js";
 import type { GetUsersTableQuery } from "./user.schemas.js";
 
 const userSelect = {
@@ -86,6 +88,56 @@ type CreateUserData = {
 };
 
 type UpdateUserData = Partial<CreateUserData>;
+
+type DeleteUsersResultItem = {
+	id: number;
+	description: string;
+};
+
+export type DeleteUsersResult = {
+	success: DeleteUsersResultItem[];
+	error: DeleteUsersResultItem[];
+};
+
+const DELETE_USER_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
+const DELETE_USER_GOD_ERROR = "Первого пользователя нельзя удалить";
+const DELETE_USER_IN_USE_ERROR = "Этот пользователь используется и не может быть удален";
+
+const getUniqueIds = (ids: number[]) => {
+	const uniqueIds = new Set<number>();
+
+	return ids.filter((id) => {
+		if (uniqueIds.has(id)) {
+			return false;
+		}
+
+		uniqueIds.add(id);
+		return true;
+	});
+};
+
+const hasUsersRemovingPermission = (permissions: RolePermissions) =>
+	Object.values(permissions).some((permission) => (
+		permission.url === "/users"
+		&& permission.access.view
+		&& permission.access.removing
+	));
+
+const isPrismaDeleteConstraintError = (error: unknown) =>
+	Boolean(
+		error
+		&& typeof error === "object"
+		&& "code" in error
+		&& (error.code === "P2003" || error.code === "P2014"),
+	);
+
+const isPrismaRecordNotFoundError = (error: unknown) =>
+	Boolean(
+		error
+		&& typeof error === "object"
+		&& "code" in error
+		&& error.code === "P2025",
+	);
 
 const parseDateSearch = (value: string) => {
 	const normalizedValue = value.trim();
@@ -365,4 +417,118 @@ export const updateUser = async (id: number, data: UpdateUserData) => {
 		data: updateData,
 		select: userSelect,
 	});
+};
+
+export const deleteUsers = async (ids: number[], actorId: number): Promise<DeleteUsersResult> => {
+	const uniqueIds = getUniqueIds(ids);
+	const actor = await prisma.user.findUnique({
+		where: { id: actorId },
+		select: {
+			role: {
+				select: {
+					permissions: true,
+				},
+			},
+		},
+	});
+
+	if (!actor) {
+		throw new AppError(404, "Пользователь не найден");
+	}
+
+	const permissions = actor.role.permissions as RolePermissions;
+
+	if (!hasUsersRemovingPermission(permissions)) {
+		return {
+			success: [],
+			error: uniqueIds.map((id) => ({
+				id,
+				description: DELETE_USER_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const users = await prisma.user.findMany({
+		where: {
+			id: {
+				in: uniqueIds,
+			},
+		},
+		select: {
+			id: true,
+			avatarUrl: true,
+		},
+	});
+	const usersById = new Map(users.map((user) => [user.id, user]));
+	const result: DeleteUsersResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const id of uniqueIds) {
+		if (id === 1) {
+			result.error.push({
+				id,
+				description: DELETE_USER_GOD_ERROR,
+			});
+			continue;
+		}
+
+		const user = usersById.get(id);
+
+		if (!user) {
+			result.error.push({
+				id,
+				description: "Пользователь не найден",
+			});
+			continue;
+		}
+
+		try {
+			const deletedUser = await prisma.user.delete({
+				where: { id },
+				select: {
+					id: true,
+					avatarUrl: true,
+				},
+			});
+			const avatarAbsolutePath = deletedUser.avatarUrl
+				? getStoredAvatarAbsolutePath(deletedUser.avatarUrl)
+				: null;
+
+			if (avatarAbsolutePath) {
+				try {
+					// The user record is already removed, so avatar cleanup is best-effort here.
+					await removeStoredFile(avatarAbsolutePath);
+				} catch {
+					// Ignore avatar cleanup failures to avoid reporting the whole user deletion as failed.
+				}
+			}
+
+			result.success.push({
+				id,
+				description: "Удалено",
+			});
+		} catch (error) {
+			if (isPrismaDeleteConstraintError(error)) {
+				result.error.push({
+					id,
+					description: DELETE_USER_IN_USE_ERROR,
+				});
+				continue;
+			}
+
+			if (isPrismaRecordNotFoundError(error)) {
+				result.error.push({
+					id,
+					description: "Пользователь не найден",
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
 };

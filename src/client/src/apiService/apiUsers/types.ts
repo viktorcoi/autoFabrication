@@ -1,5 +1,7 @@
 import {TableRow} from "@/components/Table/types";
 
+export type UserAvatarValue = string | File | null;
+
 export interface UserTableRow extends TableRow {
 	id: number;
 	login: string;
@@ -34,7 +36,7 @@ export interface PostUserOptions {
 	firstName: string;
 	lastName: string;
 	middleName?: string;
-	avatarUrl?: string | null;
+	avatarUrl?: UserAvatarValue;
 	birthDate: Date;
 	login: string;
 	password: string;
@@ -45,8 +47,18 @@ export interface PathUserOptions {
 	firstName?: string;
 	lastName?: string;
 	middleName?: string;
-	avatarUrl?: string | null;
+	avatarUrl?: UserAvatarValue;
 	birthDate?: Date;
 	login?: string;
 	password?: string;
 }
+
+export type DeleteUsersResultItem = {
+	id: number;
+	description: string;
+};
+
+export type DeleteUsersResponse = {
+	success: DeleteUsersResultItem[];
+	error: DeleteUsersResultItem[];
+};

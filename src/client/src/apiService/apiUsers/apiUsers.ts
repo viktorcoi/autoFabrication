@@ -1,6 +1,6 @@
 import {ApiServiceOptions, ApiServiceResponse, GetTableOptions, GetTableResponse} from "@/apiService/types";
 import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
-import {GetByIdUserResponse, PathUserOptions, PostUserOptions, UserTableRow} from "@/apiService/apiUsers/types";
+import {DeleteUsersResponse, GetByIdUserResponse, PathUserOptions, PostUserOptions, UserTableRow} from "@/apiService/apiUsers/types";
 import {createUserOptions} from "@/apiService/apiUsers/helpers";
 
 export const ApiUsers = {
@@ -47,6 +47,21 @@ export const ApiUsers = {
 				options.errorOptions?.placeholder
 			);
 		}).catch((e) => handleApiError(e, options.errorOptions));
+	},
+
+	delete: async (options: ApiServiceOptions<{
+		ids: number[];
+	}>): Promise<ApiServiceResponse<DeleteUsersResponse>> => {
+		return await api.delete("/users", {
+			signal: options.controller?.signal,
+			data: options.ids,
+		}).then((response) => {
+			return handleApiSuccess(
+				response.data,
+				response.status === 200 && response.data,
+				options.errorOptions?.placeholder,
+			);
+		}).catch((error) => handleApiError(error, options.errorOptions));
 	},
 
 	table: {

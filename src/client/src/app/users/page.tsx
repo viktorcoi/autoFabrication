@@ -1,7 +1,7 @@
 'use client'
 
-import {Button, Search} from "@vkontakte/vkui";
-import {Icon24Add} from "@vkontakte/icons";
+import {Button, ButtonGroup, Search, Tooltip} from "@vkontakte/vkui";
+import {Icon24Add, Icon24TrashSimpleOutline} from "@vkontakte/icons";
 import Container from "@/components/Container/Container";
 import React, {useEffect, useState} from "react";
 import {useController, useSearch} from "@/shared/hooks";
@@ -34,6 +34,7 @@ const UsersPage = () => {
         data: [],
         total: 0,
     });
+    const [selected, setSelected] = useState<number[]>([]);
     const [tableOptions, setTableOptions] = useState<Required<GetTableOptions>>({
         page: 0,
         sorting: null,
@@ -41,7 +42,7 @@ const UsersPage = () => {
         search: ''
     });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user'
+        'modal-manage-user' | 'modal-remove-users' | 'modal-create-user'
     >>({id: null, show: false, data: null});
 
     const {
@@ -101,6 +102,9 @@ const UsersPage = () => {
         if (e.type === 'cellDoubleClick') {
             setModals({id: 'modal-manage-user', show: true, data: e.row.id});
         }
+        if (e.type === 'selected') {
+            console.log(e)
+        }
     };
 
     return (
@@ -132,14 +136,30 @@ const UsersPage = () => {
             <Container
                 header={(
                     <>
-                        <Button
-                            size={'m'}
-                            disabled={loading.page}
-                            before={<Icon24Add/>}
-                            onClick={() => mergeState({id: 'modal-manage-user', show: true}, setModals)}
+                        <ButtonGroup
+                            gap={'s'}
                         >
-                            Добавить
-                        </Button>
+                            <Button
+                                size={'m'}
+                                disabled={loading.page}
+                                before={<Icon24Add/>}
+                                onClick={() => mergeState({id: 'modal-manage-user', show: true}, setModals)}
+                            >
+                                Добавить
+                            </Button>
+                            <Tooltip
+                                description={`Удалить`}
+                                usePortal={true}
+                                placement={'top'}
+                            >
+                                <Button
+                                    size={'m'}
+                                    appearance={'negative'}
+                                    disabled={loading.page}
+                                    before={<Icon24TrashSimpleOutline/>}
+                                />
+                            </Tooltip>
+                        </ButtonGroup>
                         <Search
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -158,6 +178,7 @@ const UsersPage = () => {
                     page={tableOptions.page}
                     rows={tableOptions.rows}
                     loading={loading.page}
+                    selected={selected}
                     onEvent={onEventTable}
                     emptyState={{
                         title: 'Пусто',

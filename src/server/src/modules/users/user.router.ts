@@ -3,6 +3,7 @@ import { Router } from "express";
 import multer from "multer";
 import { AppError } from "../../shared/errors/app-error.js";
 import { asyncHandler } from "../../shared/http/async-handler.js";
+import { requireAuth } from "../../shared/http/auth.js";
 import { requirePermission } from "../../shared/http/permissions.js";
 import { validate } from "../../shared/http/validate.js";
 import {
@@ -12,8 +13,8 @@ import {
 	removeStoredFile,
 	saveAvatarFile,
 } from "../../shared/storage/avatars.js";
-import { createUserSchema, getUsersTableSchema, updateUserSchema } from "./user.schemas.js";
-import { createUser, getUserById, getUsersTable, listUsers, updateUser } from "./user.service.js";
+import { createUserSchema, deleteUserIdsSchema, getUsersTableSchema, updateUserSchema } from "./user.schemas.js";
+import { createUser, deleteUsers, getUserById, getUsersTable, listUsers, updateUser } from "./user.service.js";
 
 const parseId = (value: string) => {
 	const id = Number.parseInt(value, 10);
@@ -114,6 +115,18 @@ userRouter.post(
 
 			throw error;
 		}
+	}),
+);
+
+userRouter.delete(
+	"/",
+	requirePermission("/users", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(deleteUserIdsSchema, request.body ?? []);
+		const result = await deleteUsers(payload, auth.userId);
+
+		response.json(result);
 	}),
 );
 

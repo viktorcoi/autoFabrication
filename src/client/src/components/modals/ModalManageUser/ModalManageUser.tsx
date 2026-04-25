@@ -1,7 +1,9 @@
 import {
     Avatar,
     Button,
-    ButtonGroup, CustomSelectOptionInterface, DateInput,
+    ButtonGroup,
+    CustomSelectOptionInterface,
+    DateInput,
     FormItem,
     Input,
     ModalPage,
@@ -180,163 +182,161 @@ const ModalManageUser = (props: ModalManageUserProps) => {
     }, [idUser, data, savedData]);
 
     return (
-        <>
-            <ModalPage
-                hideCloseButton={loading.send}
-                onClose={onClose}
-                preventClose={preventClose || modals.id !== null}
-                header={
-                    <PlatformProvider value={'ios'}>
-                        <ModalPageHeader>{title}</ModalPageHeader>
-                    </PlatformProvider>
-                }
-                footer={(
-                    <div className={'modalFooter'}>
+        <ModalPage
+            hideCloseButton={loading.send}
+            onClose={onClose}
+            preventClose={preventClose || modals.id !== null}
+            header={
+                <PlatformProvider value={'ios'}>
+                    <ModalPageHeader>{title}</ModalPageHeader>
+                </PlatformProvider>
+            }
+            footer={(
+                <div className={'modalFooter'}>
+                    <ButtonGroup
+                        stretched={true}
+                        align={'right'}
+                    >
+                        <Button
+                            disabled={loading.send}
+                            size={'m'}
+                            mode={'secondary'}
+                            onClick={(e) => {
+                                if (preventClose) return;
+                                onClose('cancel', e);
+                            }}
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            form={'save-user'}
+                            type={'submit'}
+                            disabled={disabledSave || loading.get}
+                            loading={loading.send}
+                            size={'m'}
+                        >
+                            {typeof idUser === 'number' ? 'Сохранить' : 'Далее'}
+                        </Button>
+                    </ButtonGroup>
+                </div>
+            )}
+            {...restProps}
+        >
+            {'modal-avatar' === modals.id && (
+                <ModalAddAvatar
+                    open={modals.show}
+                    onClose={() =>  mergeState({show: false}, setModals)}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                    onAddAvatar={(file) => mergeState({avatarUrl: file}, setData)}
+                />
+            )}
+            {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
+                <form
+                    id={'save-user'}
+                    className={'modalForm'}
+                    onSubmit={saveUser}
+                >
+                    <div className={styles.avatar}>
+                        <Avatar
+                            src={avatarSrc}
+                            initials={`${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`}
+                            size={88}
+                            fallbackIcon={<Icon56UserCircleOutline />}
+                        />
                         <ButtonGroup
-                            stretched={true}
-                            align={'right'}
+                            gap={'s'}
+                            mode={'vertical'}
                         >
                             <Button
-                                disabled={loading.send}
-                                size={'m'}
+                                type={'button'}
                                 mode={'secondary'}
-                                onClick={(e) => {
-                                    if (preventClose) return;
-                                    onClose('cancel', e);
-                                }}
-                            >
-                                Отмена
-                            </Button>
-                            <Button
-                                form={'save-user'}
-                                type={'submit'}
-                                disabled={disabledSave || loading.get}
-                                loading={loading.send}
                                 size={'m'}
+                                stretched={true}
+                                onClick={() => mergeState({id: 'modal-avatar', show: true}, setModals)}
                             >
-                                {typeof idUser === 'number' ? 'Сохранить' : 'Далее'}
+                                {`${avatarSrc ? 'Изменить' : 'Добавить' } аватар`}
                             </Button>
-                        </ButtonGroup>
-                    </div>
-                )}
-                {...restProps}
-            >
-                {'modal-avatar' === modals.id && (
-                    <ModalAddAvatar
-                        open={modals.show}
-                        onClose={() =>  mergeState({show: false}, setModals)}
-                        onClosed={() => setModals({id: null, show: false, data: null})}
-                        onAddAvatar={(file) => mergeState({avatarUrl: file}, setData)}
-                    />
-                )}
-                {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
-                    <form
-                        id={'save-user'}
-                        className={'modalForm'}
-                        onSubmit={saveUser}
-                    >
-                        <div className={styles.avatar}>
-                            <Avatar
-                                src={avatarSrc}
-                                initials={`${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`}
-                                size={88}
-                                fallbackIcon={<Icon56UserCircleOutline />}
-                            />
-                            <ButtonGroup
-                                gap={'s'}
-                                mode={'vertical'}
-                            >
+                            {avatarSrc && (
                                 <Button
                                     type={'button'}
                                     mode={'secondary'}
+                                    appearance={'negative'}
                                     size={'m'}
                                     stretched={true}
-                                    onClick={() => mergeState({id: 'modal-avatar', show: true}, setModals)}
+                                    onClick={() => mergeState({avatarUrl: null}, setData)}
                                 >
-                                    {`${avatarSrc ? 'Изменить' : 'Добавить' } аватар`}
+                                    Удалить аватар
                                 </Button>
-                                {avatarSrc && (
-                                    <Button
-                                        type={'button'}
-                                        mode={'secondary'}
-                                        appearance={'negative'}
-                                        size={'m'}
-                                        stretched={true}
-                                        onClick={() => mergeState({avatarUrl: null}, setData)}
-                                    >
-                                        Удалить аватар
-                                    </Button>
-                                )}
-                            </ButtonGroup>
-                        </div>
-                        <FormItem
-                            top={'Роль пользователя'}
-                            noPadding={true}
-                        >
-                            <Select
-                                filterFn={selectFilter.filterFn}
-                                options={roles}
-                                searchable={true}
-                                disabled={loading.send}
-                                value={data.roleId}
-                                onChange={(e) => mergeState({roleId: Number(e.target.value)}, setData)}
-                                placeholder={'Выберите роль пользователя'}
-                                status={!data.roleId ? 'error' : 'default'}
-                                onInputChange={selectFilter.onInputChange}
-                                onOpen={selectFilter.onOpen}
-                                onClose={selectFilter.onClose}
-                            />
-                        </FormItem>
-                        <FormItem
-                            top={'Фамилия'}
-                            noPadding={true}
-                        >
-                            <Input
-                                disabled={loading.send}
-                                value={data.lastName}
-                                onChange={(e) => mergeState({lastName: getOnlyLettersValue(e.target.value)}, setData)}
-                                placeholder={'Введите фамилию'}
-                                status={!data.lastName.trim() ? 'error' : 'default'}
-                            />
-                        </FormItem>
-                        <FormItem
-                            top={'Имя'}
-                            noPadding={true}
-                        >
-                            <Input
-                                disabled={loading.send}
-                                value={data.firstName}
-                                onChange={(e) => mergeState({firstName: getOnlyLettersValue(e.target.value)}, setData)}
-                                placeholder={'Введите имя'}
-                                status={!data.firstName.trim() ? 'error' : 'default'}
-                            />
-                        </FormItem>
-                        <FormItem
-                            top={'Отчество'}
-                            noPadding={true}
-                        >
-                            <Input
-                                disabled={loading.send}
-                                value={data.middleName}
-                                onChange={(e) => mergeState({middleName: getOnlyLettersValue(e.target.value)}, setData)}
-                                placeholder={'Введите отчество'}
-                            />
-                        </FormItem>
-                        <FormItem
-                            top={'Дата рождения'}
-                            noPadding={true}
-                        >
-                            <DateInput
-                                disableFuture={true}
-                                value={data.birthDate}
-                                onChange={value => mergeState({birthDate: value}, setData)}
-                                status={data.birthDate === null ? 'error' : 'default'}
-                            />
-                        </FormItem>
-                    </form>
-                )}
-            </ModalPage>
-        </>
+                            )}
+                        </ButtonGroup>
+                    </div>
+                    <FormItem
+                        top={'Роль пользователя'}
+                        noPadding={true}
+                    >
+                        <Select
+                            filterFn={selectFilter.filterFn}
+                            options={roles}
+                            searchable={true}
+                            disabled={loading.send}
+                            value={data.roleId}
+                            onChange={(e) => mergeState({roleId: Number(e.target.value)}, setData)}
+                            placeholder={'Выберите роль пользователя'}
+                            status={!data.roleId ? 'error' : 'default'}
+                            onInputChange={selectFilter.onInputChange}
+                            onOpen={selectFilter.onOpen}
+                            onClose={selectFilter.onClose}
+                        />
+                    </FormItem>
+                    <FormItem
+                        top={'Фамилия'}
+                        noPadding={true}
+                    >
+                        <Input
+                            disabled={loading.send}
+                            value={data.lastName}
+                            onChange={(e) => mergeState({lastName: getOnlyLettersValue(e.target.value)}, setData)}
+                            placeholder={'Введите фамилию'}
+                            status={!data.lastName.trim() ? 'error' : 'default'}
+                        />
+                    </FormItem>
+                    <FormItem
+                        top={'Имя'}
+                        noPadding={true}
+                    >
+                        <Input
+                            disabled={loading.send}
+                            value={data.firstName}
+                            onChange={(e) => mergeState({firstName: getOnlyLettersValue(e.target.value)}, setData)}
+                            placeholder={'Введите имя'}
+                            status={!data.firstName.trim() ? 'error' : 'default'}
+                        />
+                    </FormItem>
+                    <FormItem
+                        top={'Отчество'}
+                        noPadding={true}
+                    >
+                        <Input
+                            disabled={loading.send}
+                            value={data.middleName}
+                            onChange={(e) => mergeState({middleName: getOnlyLettersValue(e.target.value)}, setData)}
+                            placeholder={'Введите отчество'}
+                        />
+                    </FormItem>
+                    <FormItem
+                        top={'Дата рождения'}
+                        noPadding={true}
+                    >
+                        <DateInput
+                            disableFuture={true}
+                            value={data.birthDate}
+                            onChange={value => mergeState({birthDate: value}, setData)}
+                            status={data.birthDate === null ? 'error' : 'default'}
+                        />
+                    </FormItem>
+                </form>
+            )}
+        </ModalPage>
     )
 };
 
