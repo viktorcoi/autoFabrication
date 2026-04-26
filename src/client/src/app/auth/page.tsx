@@ -100,6 +100,7 @@ const LoginPage = () => {
 						description={`${theme === "dark" ? "Светлая" : "Темная"} тема`}
 						usePortal={true}
 						placement={"top"}
+						disableTriggerOnFocus={true}
 					>
 						<IconButton label={"Сменить тему"} onClick={toggleTheme}>
 							{theme === "dark" ? (

@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {flexRender} from '@tanstack/react-table';
 import {useVirtualizer} from '@tanstack/react-virtual';
-import {Icon16DownloadOutline, Icon24Camera} from '@vkontakte/icons';
+import {Icon16DownloadOutline, Icon24View} from '@vkontakte/icons';
 import {Avatar, Button, Checkbox, DateInput, Input, Text, Tooltip, classNames} from '@vkontakte/vkui';
 import {
     formatDateCellValue,
@@ -240,6 +240,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 description={cellTextValue}
                                                 usePortal={true}
                                                 placement="top"
+                                                disableTriggerOnFocus={true}
                                             >
                                                 <Button
                                                     data-table-ignore-hover={true}
@@ -344,7 +345,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                                 src={avatarSrc}
                                                             >
                                                                 <Avatar.Overlay theme="dark" visibility="on-hover">
-                                                                    <Icon24Camera />
+                                                                    <Icon24View />
                                                                 </Avatar.Overlay>
                                                             </Avatar>
                                                         </PhotoView>

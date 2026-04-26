@@ -4,7 +4,7 @@ import multer from "multer";
 import { AppError } from "../../shared/errors/app-error.js";
 import { asyncHandler } from "../../shared/http/async-handler.js";
 import { requireAuth } from "../../shared/http/auth.js";
-import { requirePermission } from "../../shared/http/permissions.js";
+import { assertPermission, loadRolePermissions, requirePermission } from "../../shared/http/permissions.js";
 import { validate } from "../../shared/http/validate.js";
 import {
 	AVATAR_FILE_SIZE_LIMIT,
@@ -55,6 +55,31 @@ const parseAvatarUpload = (request: Request, response: Response, next: NextFunct
 
 		next(error);
 	});
+};
+
+const requireResetPasswordPermissionIfNeeded = async (
+	request: Request,
+	response: Response,
+	next: NextFunction,
+) => {
+	try {
+		const hasPasswordKey = (
+			typeof request.body === "object"
+			&& request.body !== null
+			&& Object.prototype.hasOwnProperty.call(request.body, "password")
+		);
+
+		if (!hasPasswordKey) {
+			next();
+			return;
+		}
+
+		const permissions = await loadRolePermissions(request, response);
+		assertPermission(permissions, "/users", "resetPassword");
+		next();
+	} catch (error) {
+		next(error);
+	}
 };
 
 userRouter.get(
@@ -135,6 +160,7 @@ userRouter.patch(
 	"/:id",
 	requirePermission("/users", "editing"),
 	parseAvatarUpload,
+	requireResetPasswordPermissionIfNeeded,
 	asyncHandler(async (request, response) => {
 		const auth = requireAuth(request, response);
 		const userId = parseId(String(request.params.id));

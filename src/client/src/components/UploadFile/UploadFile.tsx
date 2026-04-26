@@ -273,6 +273,7 @@ export const UploadFile = (props: DragAndDropFileProps) => {
                                     description={`Удалить`}
                                     usePortal={true}
                                     placement={"top"}
+                                    disableTriggerOnFocus={true}
                                 >
                                     <Button
                                         className={styles.remove}

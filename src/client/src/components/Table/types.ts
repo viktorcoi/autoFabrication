@@ -112,6 +112,7 @@ export type TableEmptyState = {
 };
 
 export type TableProps = {
+    hideFooter?: boolean;
     disabled?: boolean;
     tableId?: string;
     componentName?: string;

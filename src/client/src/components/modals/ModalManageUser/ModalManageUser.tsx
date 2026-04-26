@@ -20,7 +20,7 @@ import {PathUserOptions, PostUserOptions} from "@/apiService/apiUsers/types";
 import {ModalManageUserProps} from "@/components/modals/ModalManageUser/types";
 import {useController, useSelectFilter} from "@/shared/hooks";
 import ModalAddAvatar from "@/components/modals/ModalAddAvatar/ModalAddAvatar";
-import {Icon24Camera, Icon56UserCircleOutline} from "@vkontakte/icons";
+import {Icon24View, Icon56UserCircleOutline} from "@vkontakte/icons";
 import {OpenModalsType} from "@/components/modals/types";
 import {PostUserType} from "@/components/modals/ModalManageRole/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
@@ -258,7 +258,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                                         fallbackIcon={<Icon56UserCircleOutline />}
                                     >
                                         <Avatar.Overlay theme="dark" visibility="on-hover">
-                                            <Icon24Camera />
+                                            <Icon24View />
                                         </Avatar.Overlay>
                                     </Avatar>
                                 </PhotoView>

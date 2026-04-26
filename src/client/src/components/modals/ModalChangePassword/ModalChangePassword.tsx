@@ -16,8 +16,6 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {Icon20RefreshOutline} from "@vkontakte/icons";
 import {ModalChangePasswordProps} from "@/components/modals/ModalChangePassword/types";
 
-const LOGIN_PATTERN = /^[\x21-\x7E]+$/;
-
 const ModalManageUser = (props: ModalChangePasswordProps) => {
 
     const {
@@ -137,6 +135,7 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
                                 description={`Сгенерировать пароль`}
                                 usePortal={true}
                                 placement={"top"}
+                                disableTriggerOnFocus={true}
                             >
                                 <IconButton
                                     label={"Сменить тему"}

@@ -24,6 +24,7 @@ const PasswordInput = (props: PasswordInputProps) => {
                 description={`${show ? 'Скрыть' : 'Показать'} пароль`}
                 usePortal={true}
                 placement={'top'}
+                disableTriggerOnFocus={true}
             >
                 <IconButton
                     onClick={e => {

@@ -182,6 +182,7 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
                                 description={`Сгенерировать пароль`}
                                 usePortal={true}
                                 placement={"top"}
+                                disableTriggerOnFocus={true}
                             >
                                 <IconButton
                                     label={"Сменить тему"}

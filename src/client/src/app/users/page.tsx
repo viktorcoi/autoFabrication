@@ -24,6 +24,7 @@ import {TableEvent} from "@/components/Table/types";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import ModalChangePassword from "@/components/modals/ModalChangePassword/ModalChangePassword";
 import ModalChangeLogin from "@/components/modals/ModalChangeLogin/ModalChangeLogin";
+import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
 
 const UsersPage = () => {
 
@@ -55,7 +56,7 @@ const UsersPage = () => {
         actionSheet: null
     });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user' | 'modal-change-password' | 'modal-change-login'
+        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user' | 'modal-change-password' | 'modal-change-login' | 'modal-multi-remove-user'
     >>({id: null, show: false, data: null});
 
     const {
@@ -96,6 +97,29 @@ const UsersPage = () => {
         }
     };
 
+    const handleRemove = () => {
+        if (selected.length === 1) {
+            const user = table.data.find(({id}) => id === selected[0]);
+            if (user) {
+                setModals({
+                    id: 'modal-remove-user',
+                    show: true,
+                    data: {
+                        id: user.id,
+                        name: `${user.lastName} ${user.firstName}${user.middleName ? ` ${user.middleName}` : ''}`
+                    }
+                });
+            }
+        } else {
+            const users = table.data.filter(({id}) => selected.includes(id));
+            setModals({
+                id: 'modal-multi-remove-user',
+                show: true,
+                data: users.map(user => ({id: user.id, name: `${user.lastName} ${user.firstName}${user.middleName ? ` ${user.middleName}` : ''}`}))
+            })
+        }
+    };
+
     const onEventTable = (e: TableEvent) => {
         if (e.type === 'pageChange') {
             mergeState({page: e.page}, setTableOptions);
@@ -127,8 +151,6 @@ const UsersPage = () => {
                 id: e.row.id,
                 name: `${e.row.lastName} ${e.row.firstName}${e.row.middleName ? ` ${e.row.middleName}` : ''}`
             };
-
-            console.log(e)
 
             mergeState({actionSheet:
                 <ActionSheet
@@ -172,7 +194,17 @@ const UsersPage = () => {
     return (
         <>
             {tableManage.actionSheet}
-            {'modal-change-login' === modals.id ? (
+            {'modal-multi-remove-user' === modals.id ? (
+                <ModalMultiRemove
+                    data={modals.data}
+                    url={'/users'}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    open={modals.show}
+                    preventClose={loading.modal}
+                />
+            ) : 'modal-change-login' === modals.id ? (
                 <ModalChangeLogin
                     userId={modals.data?.id}
                     name={modals.data?.name}
@@ -231,9 +263,7 @@ const UsersPage = () => {
             <Container
                 header={(
                     <>
-                        <ButtonGroup
-                            gap={'s'}
-                        >
+                        <ButtonGroup gap={'s'}>
                             <Button
                                 size={'m'}
                                 disabled={loading.page || tableManage.editMode}
@@ -246,12 +276,14 @@ const UsersPage = () => {
                                 description={`Удалить`}
                                 usePortal={true}
                                 placement={'top'}
+                                disableTriggerOnFocus={true}
                             >
                                 <Button
                                     size={'m'}
                                     appearance={'negative'}
                                     disabled={loading.page || !selected.length || tableManage.editMode}
                                     before={<Icon24TrashSimpleOutline/>}
+                                    onClick={handleRemove}
                                 />
                             </Tooltip>
                         </ButtonGroup>

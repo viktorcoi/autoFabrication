@@ -1,0 +1,8 @@
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: var(--app-distance-empty);
+    color: var(--vkui--color_text_secondary);
+    max-height: 250px;
+}

@@ -13,6 +13,7 @@ import {useAppStore} from "@/store/app/app";
 import {ReactNode, use, useMemo, useRef, useState} from "react";
 import {ApiService} from "@/apiService/apiService";
 import styles from './Navigation.module.scss';
+import ModalShowErrors from "@/components/modals/ModalShowErrors/ModalShowErrors";
 
 const navigations = [
     {
@@ -91,49 +92,55 @@ const Navigation = () => {
     const rootPath = useMemo(() => `/${pathname.split("/")[1] ?? ""}`, [pathname]);
 
     return (
-        <div className={classNames(
-            'island',
-            styles.wrap
-        )}>
-            {actionSheet}
-            <div className={classNames('scroll', styles.nav)}>
-                {navigations.map(({name, url, icon}, key) => {
-                    if (name === 'separator') return key !== 0 ? (
-                        <Separator key={key} />
-                    ) : null;
-                    return (
-                        <Link
-                            key={key}
-                            href={url}
-                            className={classNames(url === rootPath && 'activated')}
-                        >
-                            <SimpleCell
-                                activated={url === rootPath}
-                                onClick={() => {}}
-                                before={icon}
+        <>
+            <ModalShowErrors
+                open={true}
+                onClose={() => {}}
+            />
+            <div className={classNames(
+                'island',
+                styles.wrap
+            )}>
+                {actionSheet}
+                <div className={classNames('scroll', styles.nav)}>
+                    {navigations.map(({name, url, icon}, key) => {
+                        if (name === 'separator') return key !== 0 ? (
+                            <Separator key={key} />
+                        ) : null;
+                        return (
+                            <Link
+                                key={key}
+                                href={url}
+                                className={classNames(url === rootPath && 'activated')}
                             >
-                                {name}
-                            </SimpleCell>
-                        </Link>
-                    )
-                })}
+                                <SimpleCell
+                                    activated={url === rootPath}
+                                    onClick={() => {}}
+                                    before={icon}
+                                >
+                                    {name}
+                                </SimpleCell>
+                            </Link>
+                        )
+                    })}
+                </div>
+                    <SimpleCell
+                        getRootRef={menuRef}
+                        onClick={openMenu}
+                        className={styles.user}
+                        subtitle={role?.name}
+                        before={(
+                            <Avatar
+                                src={user?.avatarUrl ?? ''}
+                                initials={`${user?.lastName?.[0]}${user?.firstName?.[0]}`}
+                                size={36}
+                            />
+                        )}
+                    >
+                        {`${user?.lastName} ${user?.firstName} ${user?.middleName ?? ''}`}
+                    </SimpleCell>
             </div>
-                <SimpleCell
-                    getRootRef={menuRef}
-                    onClick={openMenu}
-                    className={styles.user}
-                    subtitle={role?.name}
-                    before={(
-                        <Avatar
-                            src={user?.avatarUrl ?? ''}
-                            initials={`${user?.lastName?.[0]}${user?.firstName?.[0]}`}
-                            size={36}
-                        />
-                    )}
-                >
-                    {`${user?.lastName} ${user?.firstName} ${user?.middleName ?? ''}`}
-                </SimpleCell>
-        </div>
+        </>
     )
 };
 

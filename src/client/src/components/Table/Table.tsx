@@ -85,6 +85,7 @@ const Table = (props: TableProps) => {
     const {
         disabled,
         tableId,
+        hideFooter,
         componentName,
         data,
         columns,
@@ -1574,40 +1575,42 @@ const Table = (props: TableProps) => {
                 </>
             )}
 
-            <TableFooter
-                disabled={disabled}
-                loading={loading}
-                editing={editing}
-                total={total}
-                saveDisabled={hasInvalidRequiredCells}
-                safeRows={safeRows}
-                pageIndex={pageIndex}
-                pageCount={pageCount}
-                currentPage={currentPage}
-                jumpMode={jumpMode}
-                jumpValue={jumpValue}
-                paginationItems={paginationItems}
-                setJumpMode={setJumpMode}
-                setJumpValue={setJumpValue}
-                submitJump={submitJump}
-                onStartEdit={startEditing}
-                onCancelEdit={cancelEditing}
-                onSaveEdit={saveEditing}
-                onRowsChange={(nextRows, target) => {
-                    onEventRef.current({
-                        type: 'rowsChange',
-                        rows: nextRows,
-                        target,
-                    });
-                }}
-                onPageChange={(nextPage, target) => {
-                    onEventRef.current({
-                        type: 'pageChange',
-                        page: nextPage,
-                        target,
-                    });
-                }}
-            />
+            {!hideFooter && (
+                <TableFooter
+                    disabled={disabled}
+                    loading={loading}
+                    editing={editing}
+                    total={total}
+                    saveDisabled={hasInvalidRequiredCells}
+                    safeRows={safeRows}
+                    pageIndex={pageIndex}
+                    pageCount={pageCount}
+                    currentPage={currentPage}
+                    jumpMode={jumpMode}
+                    jumpValue={jumpValue}
+                    paginationItems={paginationItems}
+                    setJumpMode={setJumpMode}
+                    setJumpValue={setJumpValue}
+                    submitJump={submitJump}
+                    onStartEdit={startEditing}
+                    onCancelEdit={cancelEditing}
+                    onSaveEdit={saveEditing}
+                    onRowsChange={(nextRows, target) => {
+                        onEventRef.current({
+                            type: 'rowsChange',
+                            rows: nextRows,
+                            target,
+                        });
+                    }}
+                    onPageChange={(nextPage, target) => {
+                        onEventRef.current({
+                            type: 'pageChange',
+                            page: nextPage,
+                            target,
+                        });
+                    }}
+                />
+            )}
         </>
     );
 };
