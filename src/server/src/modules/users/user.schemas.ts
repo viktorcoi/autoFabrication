@@ -1,6 +1,15 @@
 import { z } from "zod";
 
-const passwordSchema = z.string().min(6, "Пароль должен содержать минимум 6 символов");
+const LOGIN_PATTERN = /^[\x21-\x7E]+$/;
+
+const loginSchema = z
+	.string()
+	.trim()
+	.min(5, "Логин должен содержать не менее 5 латинских символов.")
+	.regex(LOGIN_PATTERN, "Логин может содержать только латинские буквы, цифры и специальные символы.");
+
+const passwordSchema = z.string().min(6, "Пароль должен содержать не менее 6 символов.");
+
 const userTableSortingSchema = z.object({
 	id: z.enum(["id", "login", "lastName", "firstName", "middleName", "role", "avatar", "birthDate"]),
 	sort: z.enum(["asc", "desc"]),
@@ -33,7 +42,7 @@ export const createUserSchema = z.object({
 	lastName: z.string().trim().min(1, "Фамилия обязательна"),
 	middleName: z.string().trim().max(255, "Отчество слишком длинное").optional(),
 	birthDate: z.coerce.date(),
-	login: z.string().trim().min(1, "Логин обязателен"),
+	login: loginSchema,
 	password: passwordSchema,
 	avatarUrl: z.string().url("Аватар должен быть корректной ссылкой").nullable().optional(),
 	roleId: z.coerce.number().int().positive("roleId должен быть положительным числом"),

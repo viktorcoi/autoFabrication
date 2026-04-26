@@ -3,21 +3,21 @@ import {
     Button,
     ButtonGroup,
     FormItem,
-    IconButton, Input,
+    Input,
     ModalPage,
     ModalPageHeader,
-    PlatformProvider, Tooltip,
+    PlatformProvider,
 } from "@vkontakte/vkui";
-import {autogeneratePassword, mergeState} from "@/shared/helpers";
+import {mergeState} from "@/shared/helpers";
 import {SubmitEvent, useEffect, useState} from "react";
-import PasswordInput from "@/components/PasswordInput/PasswordInput";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
-import {Icon20RefreshOutline} from "@vkontakte/icons"
 import {useController} from "@/shared/hooks";
 import {ModalChangeLoginProps} from "@/components/modals/ModalChangeLogin/types";
 import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
 import {useAppStore} from "@/store/app/app";
+
+const LOGIN_PATTERN = /^[\x21-\x7E]+$/;
 
 const ModalManageUser = (props: ModalChangeLoginProps) => {
 
@@ -59,6 +59,22 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
         e.preventDefault();
 
         if (!login.trim() || loading.send) return;
+
+        if (login.length < 5) {
+            addSnackbar({
+                type: "error",
+                text: "Логин должен содержать не менее 5 латинских символов.",
+            });
+            return;
+        }
+
+        if (!LOGIN_PATTERN.test(login)) {
+            addSnackbar({
+                type: "error",
+                text: "Логин может содержать только латинские буквы, цифры и специальные символы.",
+            });
+            return;
+        }
 
         mergeState({send: true}, setLoading);
         onLoading(true);

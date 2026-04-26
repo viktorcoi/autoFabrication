@@ -16,6 +16,8 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {Icon20RefreshOutline} from "@vkontakte/icons";
 import {ModalChangePasswordProps} from "@/components/modals/ModalChangePassword/types";
 
+const LOGIN_PATTERN = /^[\x21-\x7E]+$/;
+
 const ModalManageUser = (props: ModalChangePasswordProps) => {
 
     const {
@@ -40,6 +42,14 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
         e.preventDefault();
 
         if (!password.trim() || loading) return;
+
+        if (password.length < 6) {
+            addSnackbar({
+                type: "error",
+                text: "Пароль должен содержать не менее 6 символов.",
+            });
+            return;
+        }
 
         setLoading(true);
         onLoading(true);

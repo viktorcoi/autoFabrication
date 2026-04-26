@@ -15,6 +15,8 @@ import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {Icon20RefreshOutline, Icon24Back} from "@vkontakte/icons";
 
+const LOGIN_PATTERN = /^[\x21-\x7E]+$/;
+
 const ModalManageUser = (props: ModalCreateUserProps) => {
 
     const {
@@ -45,6 +47,30 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
         e.preventDefault();
 
         if (!data.login.trim() || !data.password.trim() || loading) return;
+
+        if (data.login.length < 5) {
+            addSnackbar({
+                type: "error",
+                text: "Логин должен содержать не менее 5 латинских символов.",
+            });
+            return;
+        }
+
+        if (!LOGIN_PATTERN.test(data.login)) {
+            addSnackbar({
+                type: "error",
+                text: "Логин может содержать только латинские буквы, цифры и специальные символы.",
+            });
+            return;
+        }
+
+        if (data.password.length < 6) {
+            addSnackbar({
+                type: "error",
+                text: "Пароль должен содержать не менее 6 символов.",
+            });
+            return;
+        }
 
         setLoading(true);
         onLoading(true);
