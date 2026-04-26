@@ -131,7 +131,6 @@ const UsersPage = () => {
             }, setTableOptions);
         }
         if (e.type === 'sortChange') {
-            console.log(e);
             mergeState({
                 page: 0,
                 sorting: e.sorting,
@@ -145,6 +144,9 @@ const UsersPage = () => {
         }
         if (e.type === 'editMode') {
             mergeState({editMode: e.editing}, setTableManage);
+        }
+        if (e.type === 'editSave') {
+            console.log(e)
         }
         if (e.type === 'contextMenu') {
             const data = {

@@ -5,6 +5,8 @@ import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {ModalMultiRemoveProps} from "@/components/modals/ModalMultiRemove/types";
 import styles from './ModalMultiRemove.module.scss';
+import {useShowErrors} from "@/store/showErrors/showErrors";
+import {SnackbarItem} from "@/store/snackbar/types";
 
 const urlList = {
     '/users': ApiService.users.delete,
@@ -21,7 +23,8 @@ const ModalMultiRemove = (props: ModalMultiRemoveProps) => {
         ...restProps
     } = props;
 
-    const addSnackbar = useSnackbarStore(state => state.addSnackbar)
+    const addSnackbar = useSnackbarStore(state => state.addSnackbar);
+    const showErrors = useShowErrors(s => s);
 
     const [loading, setLoading] = useState(false);
 
@@ -31,20 +34,28 @@ const ModalMultiRemove = (props: ModalMultiRemoveProps) => {
 
         await urlList[url]({
             ids: data.map(({id}) => id)
-        }).then(({status, data}) => {
+        }).then(({status, data: result}) => {
             if (status === 'success') {
-                if (typeof data === 'object' && data.error.length) {
-                    addSnackbar({
-                        type: 'error',
-                        text: data.error[0].description,
-                    });
-                    return;
+                let snackbar: Omit<SnackbarItem, "id"> = {
+                    type: 'success',
+                    text: `Удалено ${result.success.length} из ${data.length}`
                 }
 
-                addSnackbar({
-                    type: 'success',
-                    text: `Успешно удалено: "${name}"`
-                });
+                if (result.error.length === data.length) {
+                    snackbar.type = 'error';
+                } else if (result.error.length !== 0) {
+                    snackbar.type = 'warning';
+                }
+
+                if (result.error.length) {
+                    snackbar.onActionClick = () => {
+                        showErrors.open(data, result);
+                        onClose('cancel');
+                    }
+                    snackbar.action = 'Подробнее';
+                }
+
+                addSnackbar(snackbar);
                 onClose('updated-data');
             }
         }).finally(() => {

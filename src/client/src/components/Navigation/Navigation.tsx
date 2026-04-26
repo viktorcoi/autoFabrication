@@ -14,6 +14,7 @@ import {ReactNode, use, useMemo, useRef, useState} from "react";
 import {ApiService} from "@/apiService/apiService";
 import styles from './Navigation.module.scss';
 import ModalShowErrors from "@/components/modals/ModalShowErrors/ModalShowErrors";
+import {useShowErrors} from "@/store/showErrors/showErrors";
 
 const navigations = [
     {
@@ -46,6 +47,7 @@ const Navigation = () => {
         theme,
         toggleTheme
     } = useAppStore(state => state);
+    const showErrors = useShowErrors(state => state);
 
     const pathname = usePathname();
 
@@ -93,10 +95,9 @@ const Navigation = () => {
 
     return (
         <>
-            <ModalShowErrors
-                open={true}
-                onClose={() => {}}
-            />
+            {showErrors.render && (
+                <ModalShowErrors open={showErrors.show}/>
+            )}
             <div className={classNames(
                 'island',
                 styles.wrap

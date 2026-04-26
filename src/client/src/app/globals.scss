@@ -39,6 +39,9 @@ body {
 	.vkuiBasic__body {
 		position: relative;
 	}
+	.vkuiButton__content {
+		color: var(--vkui--color_text_accent);
+	}
 }
 
 .search { width: 250px }

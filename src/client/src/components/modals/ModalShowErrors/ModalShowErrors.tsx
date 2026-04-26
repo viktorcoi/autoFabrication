@@ -1,76 +1,78 @@
-import {ModalPage, Select} from "@vkontakte/vkui";
-import {ModalShowErrorsProps} from "@/components/modals/ModalShowErrors/types";
-import Table from "@/components/Table/Table";
-import styles from "./ModalShowErrors.module.scss";
-import {TableEvent, TableSorting} from "@/components/Table/types";
 import {useMemo, useState} from "react";
+import {ModalPage, ModalPageProps, Select} from "@vkontakte/vkui";
+import Table from "@/components/Table/Table";
+import type {TableEvent, TableSorting} from "@/components/Table/types";
+import styles from "./ModalShowErrors.module.scss";
+import {useShowErrors} from "@/store/showErrors/showErrors";
+import {compareValues} from "@/components/modals/ModalShowErrors/helpers";
+import {ShowErrorType} from "@/store/showErrors/types";
+import {tableColumns} from "@/shared/tableColumns";
 
-const ModalShowErrors = (props: ModalShowErrorsProps) => {
-
-    const {
-        onClose,
-        ...restProps
-    } = props;
+const ModalShowErrors = (props: ModalPageProps) => {
 
     const [filter, setFilter] = useState('all');
     const [sort, setSort] = useState<TableSorting>(null);
+    const {
+        data,
+        onClose,
+        onClosed
+    } = useShowErrors(s => s);
 
-    const data = [
-        {id: 1, status: 'success', name: 'A', description: 'z'},
-        {id: 2, status: 'error', name: 'b', description: 'x'},
-        {id: 3, status: 'success', name: 'c', description: 'c'},
-        {id: 4, status: 'error', name: 'd', description: 'v'},
-        {id: 5, status: 'success', name: 'e', description: 'b'},
-        {id: 6, status: 'error', name: 'f', description: 'n'},
-        {id: 7, status: 'success', name: 'g', description: 'm'},
-        {id: 8, status: 'error', name: 'h', description: 'q'},
-    ];
-
-    const eventTable = (e: TableEvent) => {
+    const handleTableEvent = (e: TableEvent) => {
         if (e.type === 'sortChange') {
-            setSort(e.sorting)
+            setSort(e.sorting);
         }
     };
 
-    const filterData = useMemo(() => {
-        return data.filter(({status}) => filter === 'all' ||  status === filter);
-    }, [sort, data])
+    const filteredAndSortedData = useMemo(() => {
+        const nextData = data.filter(({status}) => filter === 'all' || status === filter);
+
+        if (!sort) {
+            return nextData;
+        }
+
+        return [...nextData].sort((leftRow, rightRow) => {
+            const leftValue = leftRow[sort.id as keyof ShowErrorType];
+            const rightValue = rightRow[sort.id as keyof ShowErrorType];
+            const result = compareValues(leftValue, rightValue);
+
+            return sort.sort === 'asc' ? result : -result;
+        });
+    }, [data, filter, sort]);
 
     return (
         <ModalPage
             className={styles.modal}
             onClose={onClose}
+            onClosed={onClosed}
+            tabIndex={0}
+            height={500}
             header={(
                 <div className={'modalFooter'}>
                     <Select
                         value={filter}
-                        onChange={e => setFilter(e.target.value)}
+                        onChange={(event) => setFilter(event.target.value)}
                         options={[
                             {value: 'all', label: 'Показать все'},
                             {value: 'success', label: 'Показать только успешные'},
-                            {value: 'error', label: 'Показать только с ошибками'}
+                            {value: 'error', label: 'Показать только с ошибками'},
                         ]}
-
                     />
-
                 </div>
             )}
-            {...restProps}
+            {...props}
         >
             <div className={styles.wrap}>
                 <Table
+                    componentName={'showErrors'}
                     className={styles.table}
                     page={0}
                     rows={1000}
-                    total={0}
+                    total={filteredAndSortedData.length}
                     hideFooter={true}
-                    columns={[
-                        {key: 'status', header: 'Статус', type: 'status', size: 95, minSize: 95, maxSize: 95, resize: false, dragging: false},
-                        {key: 'name', header: 'Название', size: 200, minSize: 200, maxSize: 200, resize: false, dragging: false},
-                        {key: 'description', header: 'Описание', size: 405, minSize: 405, maxSize: 405, resize: false, dragging: false},
-                    ]}
-                    data={filterData}
-                    onEvent={eventTable}
+                    columns={tableColumns.showErrors}
+                    data={filteredAndSortedData}
+                    onEvent={handleTableEvent}
                 />
             </div>
         </ModalPage>

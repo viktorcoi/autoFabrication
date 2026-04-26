@@ -5,11 +5,19 @@
         border-top: unset;
         border-bottom: 1px solid var(--vkui--color_separator_primary);
     }
+    :global(.vkuiModalPageContent__host) {
+        overflow: hidden;
+        display: flex;
+    }
+    :global(.vkuiCustomScrollView__host) {
+        scrollbar-color: auto;
+        scrollbar-width: auto;
+    }
 }
 
 .wrap {
     display: flex;
-    min-height: 300px;
+    width: 100%;
 }
 
 .table {
