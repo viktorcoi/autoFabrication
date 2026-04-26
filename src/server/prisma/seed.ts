@@ -14,13 +14,13 @@ const seed = async () => {
 		},
 		update: {
 			description: ADMIN_ROLE_DESCRIPTION,
-			isConst: true,
+			isAdmin: true,
 			permissions: adminPermissions,
 		},
 		create: {
 			name: ADMIN_ROLE_NAME,
 			description: ADMIN_ROLE_DESCRIPTION,
-			isConst: true,
+			isAdmin: true,
 			permissions: adminPermissions,
 		},
 	});
@@ -30,6 +30,14 @@ const seed = async () => {
 	}
 
 	const passwordHash = await bcrypt.hash(env.ADMIN_PASSWORD, 12);
+	const firstUser = await prisma.user.findFirst({
+		select: {
+			id: true,
+		},
+		orderBy: {
+			id: "asc",
+		},
+	});
 
 	await prisma.user.upsert({
 		where: {
@@ -50,6 +58,7 @@ const seed = async () => {
 			birthDate: new Date(),
 			login: env.ADMIN_LOGIN,
 			passwordHash,
+			isAdmin: !firstUser,
 			roleId: adminRole.id,
 		},
 	});

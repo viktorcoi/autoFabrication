@@ -6,7 +6,7 @@ import { defaultRolePermissions, type RolePermissions } from "./role.types.js";
 const byList = {
 	id: true,
 	name: true,
-	isConst: true,
+	isAdmin: true,
 	_count: {
 		select: { users: true },
 	},
@@ -16,7 +16,7 @@ const byFull = {
 	id: true,
 	name: true,
 	description: true,
-	isConst: true,
+	isAdmin: true,
 	permissions: true,
 	createdAt: true,
 	updatedAt: true,
@@ -38,8 +38,8 @@ type UpdateRoleDetailsData = {
 
 const CONST_ROLE_MUTATION_ERROR = "Системную роль нельзя изменять или удалять";
 
-const ensureRoleIsMutable = (isConst: boolean) => {
-	if (isConst) {
+const ensureRoleIsMutable = (isAdmin: boolean) => {
+	if (isAdmin) {
 		throw new AppError(403, CONST_ROLE_MUTATION_ERROR);
 	}
 };
@@ -100,7 +100,7 @@ export const createRole = async (data: CreateRoleData) => {
 export const updateRoleDetails = async (id: number, data: UpdateRoleDetailsData) => {
 	const role = await getRoleById(id);
 
-	ensureRoleIsMutable(role.isConst);
+	ensureRoleIsMutable(role.isAdmin);
 
 	if (typeof data.name === "string") {
 		const existingRole = await prisma.role.findUnique({
@@ -123,7 +123,7 @@ export const updateRoleDetails = async (id: number, data: UpdateRoleDetailsData)
 export const updateRolePermissions = async (id: number, permissions: RolePermissions) => {
 	const role = await getRoleById(id);
 
-	ensureRoleIsMutable(role.isConst);
+	ensureRoleIsMutable(role.isAdmin);
 
 	return prisma.role.update({
 		where: { id },
@@ -139,7 +139,7 @@ export const deleteRole = async (id: number) => {
 		where: { id },
 		select: {
 			id: true,
-			isConst: true,
+			isAdmin: true,
 			_count: {
 				select: { users: true },
 			},
@@ -150,7 +150,7 @@ export const deleteRole = async (id: number) => {
 		throw new AppError(404, "Роль не найдена");
 	}
 
-	ensureRoleIsMutable(role.isConst);
+	ensureRoleIsMutable(role.isAdmin);
 
 	if (role._count.users > 0) {
 		throw new AppError(409, "Нельзя удалить роль, пока она назначена пользователям");

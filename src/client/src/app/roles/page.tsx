@@ -180,7 +180,7 @@ const RolesPage = () => {
                                             <Counter size={'s'}>{r._count.users}</Counter>
                                         )}
                                         <IconButton
-                                            disabled={r.isConst}
+                                            disabled={r.isAdmin}
                                             className={classNames(
                                                 styles.menu,
                                                 loading.permissions && 'disabled'

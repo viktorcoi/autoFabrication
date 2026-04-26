@@ -35,6 +35,7 @@ const userTableSelect = {
 	birthDate: true,
 	login: true,
 	avatarUrl: true,
+	isAdmin: true,
 	role: {
 		select: {
 			name: true,
@@ -56,7 +57,6 @@ const USER_TABLE_FIELD_TO_MODEL_FIELD = {
 const USER_OPTIONAL_MODEL_FIELDS = new Set<string>(["middleName", "avatarUrl"]);
 const USER_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "passwordHash", "createdAt", "updatedAt"]);
 const USER_READONLY_TABLE_FIELDS = new Set<string>(["role"]);
-const GOD_USER_ID = 1;
 const USER_TABLE_ALL_FIELDS = Object.freeze(Object.keys(USER_TABLE_FIELD_TO_MODEL_FIELD));
 
 const userTableMeta = Object.freeze({
@@ -143,8 +143,8 @@ const isPrismaRecordNotFoundError = (error: unknown) =>
 		&& error.code === "P2025",
 	);
 
-const getUserTableConstFields = (userId: number, actorId: number) => {
-	if (userId !== GOD_USER_ID || actorId === GOD_USER_ID) {
+const getUserTableConstFields = (user: { id: number; isAdmin: boolean }, actorId: number) => {
+	if (!user.isAdmin || actorId === user.id) {
 		return [...userTableMeta.isConst];
 	}
 
@@ -328,7 +328,7 @@ export const getUsersTable = async (query: GetUsersTableQuery, actorId: number) 
 			role: user.role.name,
 			...(user.avatarUrl ? { avatar: user.avatarUrl } : {}),
 			birthDate: user.birthDate,
-			isConst: getUserTableConstFields(user.id, actorId),
+			isConst: getUserTableConstFields(user, actorId),
 			isRequired: [...userTableMeta.isRequired],
 		})),
 	};
@@ -364,6 +364,7 @@ export const createUser = async (data: CreateUserData) => {
 	await getRoleById(data.roleId);
 
 	const passwordHash = await bcrypt.hash(data.password, 12);
+	const isFirstUser = await prisma.user.count() === 0;
 
 	return prisma.user.create({
 		data: {
@@ -374,6 +375,7 @@ export const createUser = async (data: CreateUserData) => {
 			login: data.login,
 			passwordHash,
 			avatarUrl: data.avatarUrl,
+			isAdmin: isFirstUser,
 			role: {
 				connect: {
 					id: data.roleId,
@@ -385,11 +387,23 @@ export const createUser = async (data: CreateUserData) => {
 };
 
 export const updateUser = async (id: number, data: UpdateUserData, actorId: number) => {
-	if (id === GOD_USER_ID && actorId !== GOD_USER_ID) {
-		throw new AppError(403, UPDATE_GOD_USER_ERROR);
+	await getUserById(id);
+
+	const user = await prisma.user.findUnique({
+		where: { id },
+		select: {
+			id: true,
+			isAdmin: true,
+		},
+	});
+
+	if (!user) {
+		throw new AppError(404, "ÐŸÐ¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½");
 	}
 
-	await getUserById(id);
+	if (user?.isAdmin && actorId !== user.id) {
+		throw new AppError(403, UPDATE_GOD_USER_ERROR);
+	}
 
 	if (data.login) {
 		const existingUser = await prisma.user.findUnique({
@@ -476,6 +490,7 @@ export const deleteUsers = async (ids: number[], actorId: number): Promise<Delet
 		select: {
 			id: true,
 			avatarUrl: true,
+			isAdmin: true,
 		},
 	});
 	const usersById = new Map(users.map((user) => [user.id, user]));
@@ -485,15 +500,15 @@ export const deleteUsers = async (ids: number[], actorId: number): Promise<Delet
 	};
 
 	for (const id of uniqueIds) {
-		if (id === GOD_USER_ID) {
+		const user = usersById.get(id);
+
+		if (user?.isAdmin) {
 			result.error.push({
 				id,
 				description: DELETE_USER_GOD_ERROR,
 			});
 			continue;
 		}
-
-		const user = usersById.get(id);
 
 		if (!user) {
 			result.error.push({

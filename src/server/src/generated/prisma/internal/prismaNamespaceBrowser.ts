@@ -75,7 +75,7 @@ export const RoleScalarFieldEnum = {
   id: 'id',
   name: 'name',
   description: 'description',
-  isConst: 'isConst',
+  isAdmin: 'isAdmin',
   permissions: 'permissions',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -93,6 +93,7 @@ export const UserScalarFieldEnum = {
   login: 'login',
   passwordHash: 'passwordHash',
   avatarUrl: 'avatarUrl',
+  isAdmin: 'isAdmin',
   roleId: 'roleId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

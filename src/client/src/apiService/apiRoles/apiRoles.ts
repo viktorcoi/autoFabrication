@@ -88,7 +88,7 @@ export const ApiRoles = {
     },
 
     delete: async (options: ApiServiceOptions<{
-            id: number,
+        id: number,
     }>): Promise<ApiServiceResponse<void>> => {
         return await api.delete(`/roles/${options.id}`,
             { signal: options.controller?.signal }

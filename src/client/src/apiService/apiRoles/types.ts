@@ -48,7 +48,7 @@ export interface GetByIdRoleResponse {
     id: number,
     name: string,
     description: string,
-    isConst: boolean,
+    isAdmin: boolean,
     permissions: RolePermissions;
     createdAt: string,
     updatedAt: string,
@@ -60,7 +60,7 @@ export interface GetByIdRoleResponse {
 export interface GetRolesResponse {
     id: number,
     name: string,
-    isConst: boolean,
+    isAdmin: boolean,
     _count: {
         users: number
     }
@@ -68,6 +68,7 @@ export interface GetRolesResponse {
 
 export interface GetRolesOptions {
     search?: string;
+    forSelect?: boolean;
 }
 
 export interface PostRolesOptions {

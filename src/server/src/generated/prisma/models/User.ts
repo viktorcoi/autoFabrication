@@ -45,6 +45,7 @@ export type UserMinAggregateOutputType = {
   login: string | null
   passwordHash: string | null
   avatarUrl: string | null
+  isAdmin: boolean | null
   roleId: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -59,6 +60,7 @@ export type UserMaxAggregateOutputType = {
   login: string | null
   passwordHash: string | null
   avatarUrl: string | null
+  isAdmin: boolean | null
   roleId: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -73,6 +75,7 @@ export type UserCountAggregateOutputType = {
   login: number
   passwordHash: number
   avatarUrl: number
+  isAdmin: number
   roleId: number
   createdAt: number
   updatedAt: number
@@ -99,6 +102,7 @@ export type UserMinAggregateInputType = {
   login?: true
   passwordHash?: true
   avatarUrl?: true
+  isAdmin?: true
   roleId?: true
   createdAt?: true
   updatedAt?: true
@@ -113,6 +117,7 @@ export type UserMaxAggregateInputType = {
   login?: true
   passwordHash?: true
   avatarUrl?: true
+  isAdmin?: true
   roleId?: true
   createdAt?: true
   updatedAt?: true
@@ -127,6 +132,7 @@ export type UserCountAggregateInputType = {
   login?: true
   passwordHash?: true
   avatarUrl?: true
+  isAdmin?: true
   roleId?: true
   createdAt?: true
   updatedAt?: true
@@ -228,6 +234,7 @@ export type UserGroupByOutputType = {
   login: string
   passwordHash: string
   avatarUrl: string | null
+  isAdmin: boolean
   roleId: number
   createdAt: Date
   updatedAt: Date
@@ -265,6 +272,7 @@ export type UserWhereInput = {
   login?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  isAdmin?: Prisma.BoolFilter<"User"> | boolean
   roleId?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -280,6 +288,7 @@ export type UserOrderByWithRelationInput = {
   login?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  isAdmin?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -298,6 +307,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   birthDate?: Prisma.DateTimeFilter<"User"> | Date | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  isAdmin?: Prisma.BoolFilter<"User"> | boolean
   roleId?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -313,6 +323,7 @@ export type UserOrderByWithAggregationInput = {
   login?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  isAdmin?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -335,6 +346,7 @@ export type UserScalarWhereWithAggregatesInput = {
   login?: Prisma.StringWithAggregatesFilter<"User"> | string
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  isAdmin?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   roleId?: Prisma.IntWithAggregatesFilter<"User"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -348,6 +360,7 @@ export type UserCreateInput = {
   login: string
   passwordHash: string
   avatarUrl?: string | null
+  isAdmin?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   role: Prisma.RoleCreateNestedOneWithoutUsersInput
@@ -362,6 +375,7 @@ export type UserUncheckedCreateInput = {
   login: string
   passwordHash: string
   avatarUrl?: string | null
+  isAdmin?: boolean
   roleId: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -375,6 +389,7 @@ export type UserUpdateInput = {
   login?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput
@@ -389,6 +404,7 @@ export type UserUncheckedUpdateInput = {
   login?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   roleId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -403,6 +419,7 @@ export type UserCreateManyInput = {
   login: string
   passwordHash: string
   avatarUrl?: string | null
+  isAdmin?: boolean
   roleId: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -416,6 +433,7 @@ export type UserUpdateManyMutationInput = {
   login?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -429,6 +447,7 @@ export type UserUncheckedUpdateManyInput = {
   login?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   roleId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -453,6 +472,7 @@ export type UserCountOrderByAggregateInput = {
   login?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
+  isAdmin?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -472,6 +492,7 @@ export type UserMaxOrderByAggregateInput = {
   login?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
+  isAdmin?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -486,6 +507,7 @@ export type UserMinOrderByAggregateInput = {
   login?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
+  isAdmin?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -546,6 +568,7 @@ export type UserCreateWithoutRoleInput = {
   login: string
   passwordHash: string
   avatarUrl?: string | null
+  isAdmin?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -559,6 +582,7 @@ export type UserUncheckedCreateWithoutRoleInput = {
   login: string
   passwordHash: string
   avatarUrl?: string | null
+  isAdmin?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -601,6 +625,7 @@ export type UserScalarWhereInput = {
   login?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  isAdmin?: Prisma.BoolFilter<"User"> | boolean
   roleId?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -615,6 +640,7 @@ export type UserCreateManyRoleInput = {
   login: string
   passwordHash: string
   avatarUrl?: string | null
+  isAdmin?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -627,6 +653,7 @@ export type UserUpdateWithoutRoleInput = {
   login?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -640,6 +667,7 @@ export type UserUncheckedUpdateWithoutRoleInput = {
   login?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -653,6 +681,7 @@ export type UserUncheckedUpdateManyWithoutRoleInput = {
   login?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -668,6 +697,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   login?: boolean
   passwordHash?: boolean
   avatarUrl?: boolean
+  isAdmin?: boolean
   roleId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -683,6 +713,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   login?: boolean
   passwordHash?: boolean
   avatarUrl?: boolean
+  isAdmin?: boolean
   roleId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -698,6 +729,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   login?: boolean
   passwordHash?: boolean
   avatarUrl?: boolean
+  isAdmin?: boolean
   roleId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -713,12 +745,13 @@ export type UserSelectScalar = {
   login?: boolean
   passwordHash?: boolean
   avatarUrl?: boolean
+  isAdmin?: boolean
   roleId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "middleName" | "birthDate" | "login" | "passwordHash" | "avatarUrl" | "roleId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "middleName" | "birthDate" | "login" | "passwordHash" | "avatarUrl" | "isAdmin" | "roleId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   role?: boolean | Prisma.RoleDefaultArgs<ExtArgs>
 }
@@ -743,6 +776,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     login: string
     passwordHash: string
     avatarUrl: string | null
+    isAdmin: boolean
     roleId: number
     createdAt: Date
     updatedAt: Date
@@ -1178,6 +1212,7 @@ export interface UserFieldRefs {
   readonly login: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
+  readonly isAdmin: Prisma.FieldRef<"User", 'Boolean'>
   readonly roleId: Prisma.FieldRef<"User", 'Int'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>

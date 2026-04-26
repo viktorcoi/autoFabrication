@@ -255,7 +255,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                                                 Component={'label'}
                                                 className={classNames(
                                                     styles.section__root,
-                                                    data?.isConst && 'activated',
+                                                    data?.isAdmin && 'activated',
                                                     loading.send && 'disabled',
                                                 )}
                                             >
@@ -265,7 +265,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                                                 <Checkbox
                                                     checked={allChecked}
                                                     indeterminate={indeterminate}
-                                                    disabled={loading.send || !!data?.isConst}
+                                                    disabled={loading.send || !!data?.isAdmin}
                                                     onChange={(event) => updateSectionPermissions(sectionKey, event.target.checked)}
                                                 />
                                             </Tappable>
@@ -283,7 +283,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                                                             Component={'label'}
                                                             className={classNames(
                                                                 styles.section__root,
-                                                                data?.isConst && 'activated',
+                                                                data?.isAdmin && 'activated',
                                                                 loading.send && 'disabled',
                                                             )}
                                                         >
@@ -292,7 +292,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                                                             </Text>
                                                             <Checkbox
                                                                 checked={enabled}
-                                                                disabled={loading.send || !!data?.isConst}
+                                                                disabled={loading.send || !!data?.isAdmin}
                                                                 onChange={(event) => updatePermission(sectionKey, accessKey, event.target.checked)}
                                                             />
                                                         </Tappable>
@@ -307,7 +307,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                     </>
                 )}
             </div>
-            {!(loading.get || data?.isConst) && (
+            {!(loading.get || data?.isAdmin) && (
                 <div className={styles.foot}>
                     <ButtonGroup
                         stretched={true}

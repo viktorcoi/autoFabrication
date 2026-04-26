@@ -31,7 +31,7 @@ export const roleRouter = Router();
 
 roleRouter.get(
 	"/",
-	requirePermission("/roles", "view"),
+	requirePermission("/roles", 'view'),
 	asyncHandler(async (request, response) => {
 		const searchValue = typeof request.query.search === "string"
 			? request.query.search.trim()
