@@ -6,6 +6,7 @@ export type GetAuthMeResponse = {
     middleName: string | null;
     login: string;
     avatarUrl: string | null;
+    isAdmin: boolean;
     roleId: number;
     createdAt: string;
     updatedAt: string;

@@ -23,6 +23,7 @@ import ModalCreateUser from "@/components/modals/ModalCreateUser/ModalCreateUser
 import {TableEvent} from "@/components/Table/types";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import ModalChangePassword from "@/components/modals/ModalChangePassword/ModalChangePassword";
+import ModalChangeLogin from "@/components/modals/ModalChangeLogin/ModalChangeLogin";
 
 const UsersPage = () => {
 
@@ -54,7 +55,7 @@ const UsersPage = () => {
         actionSheet: null
     });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user' | 'modal-change-password'
+        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user' | 'modal-change-password' | 'modal-change-login'
     >>({id: null, show: false, data: null});
 
     const {
@@ -143,13 +144,13 @@ const UsersPage = () => {
                         Редактировать
                     </ActionSheetItem>
                     <ActionSheetItem
-                        // onClick={() => setModals({id: 'modal-manage-role', show: true, data: role.id})}
+                        onClick={() => setModals({id: 'modal-change-login', show: true, data})}
                         before={<Icon20MentionOutline width={20} height={20}/>}
                     >
                         Изменить логин
                     </ActionSheetItem>
                     <ActionSheetItem
-                        // onClick={() => setModals({id: 'modal-manage-role', show: true, data: role.id})}
+                        onClick={() => setModals({id: 'modal-change-password', show: true, data})}
                         before={<Icon20KeyOutline width={20} height={20}/>}
                     >
                         Сбросить пароль
@@ -171,7 +172,17 @@ const UsersPage = () => {
     return (
         <>
             {tableManage.actionSheet}
-            {'modal-change-password' === modals.id ? (
+            {'modal-change-login' === modals.id ? (
+                <ModalChangeLogin
+                    userId={modals.data?.id}
+                    name={modals.data?.name}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                    open={modals.show}
+                    preventClose={loading.modal}
+                />
+            ) : 'modal-change-password' === modals.id ? (
                 <ModalChangePassword
                     userId={modals.data?.id}
                     name={modals.data?.name}

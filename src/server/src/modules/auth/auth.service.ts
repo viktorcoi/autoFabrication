@@ -12,6 +12,7 @@ const authUserSelect = {
 	birthDate: true,
 	login: true,
 	avatarUrl: true,
+	isAdmin: true,
 	roleId: true,
 	createdAt: true,
 	updatedAt: true,

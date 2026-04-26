@@ -51,9 +51,6 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         ...restProps
     } = props;
 
-    const selectFilter = useSelectFilter();
-    const { user: currentUser, setUser } = useAppStore(state => state);
-
     const [modals, setModals] = useState<OpenModalsType<
         'modal-avatar'
     >>({id: null, show: false, data: null});
@@ -67,6 +64,8 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         send: false
     });
 
+    const selectFilter = useSelectFilter();
+    const { user: currentUser, setUser } = useAppStore(state => state);
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const { createController } = useController([]);
 

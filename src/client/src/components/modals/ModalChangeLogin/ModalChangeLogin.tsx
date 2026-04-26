@@ -3,20 +3,23 @@ import {
     Button,
     ButtonGroup,
     FormItem,
-    IconButton,
+    IconButton, Input,
     ModalPage,
     ModalPageHeader,
     PlatformProvider, Tooltip,
 } from "@vkontakte/vkui";
-import {autogeneratePassword} from "@/shared/helpers";
+import {autogeneratePassword, mergeState} from "@/shared/helpers";
 import {SubmitEvent, useEffect, useState} from "react";
 import PasswordInput from "@/components/PasswordInput/PasswordInput";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
-import {Icon20RefreshOutline} from "@vkontakte/icons";
-import {ModalChangePasswordProps} from "@/components/modals/ModalChangePassword/types";
+import {Icon20RefreshOutline} from "@vkontakte/icons"
+import {useController} from "@/shared/hooks";
+import {ModalChangeLoginProps} from "@/components/modals/ModalChangeLogin/types";
+import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
+import {useAppStore} from "@/store/app/app";
 
-const ModalManageUser = (props: ModalChangePasswordProps) => {
+const ModalManageUser = (props: ModalChangeLoginProps) => {
 
     const {
         userId,
@@ -27,43 +30,62 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
         ...restProps
     } = props;
 
+    const { user: currentUser, setUser } = useAppStore(state => state);
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
+    const { createController } = useController([]);
 
-    const [loading, setLoading] = useState(false);
-    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState({
+        get: true,
+        send: false
+    });
+    const [login, setLogin] = useState('');
 
     useEffect(() => {
-        setPassword(autogeneratePassword());
+        const controller = createController();
+
+        if (userId) {
+            ApiService.users.getById({
+                id: userId,
+                controller
+            }).then(({status, data}) => {
+                if (status === 'success') {
+                    setLogin(data.login);
+                } else onClose('error')
+            }).finally(() => mergeState({get: false}, setLoading));
+        }
     }, []);
 
-    const savePassword = async (e: SubmitEvent<HTMLFormElement>) => {
+    const saveLogin = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (!password.trim() || loading) return;
+        if (!login.trim() || loading.send) return;
 
-        setLoading(true);
+        mergeState({send: true}, setLoading);
         onLoading(true);
 
         await ApiService.users.patch({
             id: userId,
-            options: { password: password }
-        }).then(({status}) => {
+            options: { login }
+        }).then(({status, data}) => {
             if (status === 'success') {
                 addSnackbar({
                     type: 'success',
-                    text: `Пароль для пользователя "${name}" успешно изменен`
+                    text: `Логин для пользователя "${name}" успешно изменен`
                 });
+                if (currentUser?.id === data.id) {
+                    setUser({...currentUser, ...data} as GetAuthMeResponse);
+                }
                 onClose('updated-data');
             }
         }).finally(() => {
-            setLoading(false);
+            mergeState({send: false}, setLoading);
             onLoading(false);
         })
     };
 
     return (
         <ModalPage
-            hideCloseButton={loading}
+            hideCloseButton={loading.send}
             onClose={onClose}
             preventClose={preventClose}
             header={
@@ -71,7 +93,7 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
                     value={'ios'}
                 >
                     <ModalPageHeader>
-                        Сбросить пароль
+                        Изменить логин
                     </ModalPageHeader>
                 </PlatformProvider>
             }
@@ -82,7 +104,7 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
                         align={'right'}
                     >
                         <Button
-                            disabled={loading}
+                            disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
                             onClick={(e) => {
@@ -95,8 +117,8 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
                         <Button
                             form={'save-user'}
                             type={'submit'}
-                            disabled={!password.trim()}
-                            loading={loading}
+                            disabled={!login.trim() || loading.get}
+                            loading={loading.send}
                             size={'m'}
                         >
                             {'Сохранить'}
@@ -109,33 +131,18 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
             <form
                 id={'save-user'}
                 className={'modalForm'}
-                onSubmit={savePassword}
+                onSubmit={saveLogin}
             >
                 <FormItem
-                    top={'Новый пароль'}
+                    top={'Новый логин'}
                     noPadding={true}
                 >
-                    <PasswordInput
-                        defaultShow={true}
-                        disabled={loading}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder={'Введите новый пароль'}
-                        status={!password.trim() ? 'error' : 'default'}
-                        after={(
-                            <Tooltip
-                                description={`Сгенерировать пароль`}
-                                usePortal={true}
-                                placement={"top"}
-                            >
-                                <IconButton
-                                    label={"Сменить тему"}
-                                    onClick={() => setPassword(autogeneratePassword())}
-                                >
-                                    <Icon20RefreshOutline/>
-                                </IconButton>
-                            </Tooltip>
-                        )}
+                    <Input
+                        disabled={loading.send}
+                        value={login}
+                        onChange={(e) => setLogin(e.target.value)}
+                        placeholder={'Введите новый логин'}
+                        status={!login ? 'error' : 'default'}
                     />
                 </FormItem>
             </form>
