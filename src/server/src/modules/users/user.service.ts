@@ -398,7 +398,7 @@ export const updateUser = async (id: number, data: UpdateUserData, actorId: numb
 	});
 
 	if (!user) {
-		throw new AppError(404, "ÐŸÐ¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½");
+		throw new AppError(404, "Пользователь не найден");
 	}
 
 	if (user?.isAdmin && actorId !== user.id) {

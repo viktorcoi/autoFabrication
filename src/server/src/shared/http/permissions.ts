@@ -33,7 +33,7 @@ const getPermissionByUrl = <TUrl extends PermissionUrl>(
 	);
 };
 
-const assertPermission = <TUrl extends PermissionUrl>(
+export const hasPermission = <TUrl extends PermissionUrl>(
 	permissions: RolePermissions,
 	url: TUrl,
 	action: PermissionAction<TUrl>,
@@ -41,17 +41,29 @@ const assertPermission = <TUrl extends PermissionUrl>(
 	const permission = getPermissionByUrl(permissions, url);
 
 	if (!permission?.access.view) {
-		throw new AppError(403, ACCESS_DENIED_MESSAGE);
+		return false;
 	}
 
 	const access = permission.access as Record<string, boolean>;
 
 	if (action !== "view" && !access[action as string]) {
+		return false;
+	}
+
+	return true;
+};
+
+export const assertPermission = <TUrl extends PermissionUrl>(
+	permissions: RolePermissions,
+	url: TUrl,
+	action: PermissionAction<TUrl>,
+) => {
+	if (!hasPermission(permissions, url, action)) {
 		throw new AppError(403, ACCESS_DENIED_MESSAGE);
 	}
 };
 
-const loadRolePermissions = async (request: Request, response: Response) => {
+export const loadRolePermissions = async (request: Request, response: Response) => {
 	const auth = requireAuth(request, response);
 	const requestWithPermissions = request as RequestWithPermissions;
 

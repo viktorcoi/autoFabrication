@@ -1,7 +1,12 @@
 import { Router } from "express";
 import { AppError } from "../../shared/errors/app-error.js";
 import { asyncHandler } from "../../shared/http/async-handler.js";
-import { requirePermission } from "../../shared/http/permissions.js";
+import {
+	assertPermission,
+	hasPermission,
+	loadRolePermissions,
+	requirePermission,
+} from "../../shared/http/permissions.js";
 import { validate } from "../../shared/http/validate.js";
 import {
 	createRoleSchema,
@@ -31,8 +36,24 @@ export const roleRouter = Router();
 
 roleRouter.get(
 	"/",
-	requirePermission("/roles", 'view'),
 	asyncHandler(async (request, response) => {
+		const permissions = await loadRolePermissions(request, response);
+		const forSelect = request.query.forSelect === "true";
+
+		if (forSelect) {
+			const canReadRolesForSelect = (
+				hasPermission(permissions, "/roles", "view")
+				|| hasPermission(permissions, "/users", "adding")
+				|| hasPermission(permissions, "/users", "editing")
+			);
+
+			if (!canReadRolesForSelect) {
+				throw new AppError(403, "У вас отсутствует доступ для данного действия");
+			}
+		} else {
+			assertPermission(permissions, "/roles", "view");
+		}
+
 		const searchValue = typeof request.query.search === "string"
 			? request.query.search.trim()
 			: "";

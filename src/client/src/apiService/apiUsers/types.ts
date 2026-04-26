@@ -8,6 +8,7 @@ export interface UserTableRow extends TableRow {
 	lastName: string;
 	firstName: string;
 	middleName?: string;
+	isAdmin?: boolean;
 	role: string;
 	avatar?: string;
 	birthDate: string;
@@ -20,6 +21,7 @@ export interface GetByIdUserResponse {
 	middleName?: string;
 	birthDate: Date;
 	login: string;
+	isAdmin?: boolean;
 	avatarUrl?: string;
 	roleId: number;
 	createdAt: string;

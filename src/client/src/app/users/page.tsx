@@ -22,6 +22,7 @@ import ModalManageUser from "@/components/modals/ModalManageUser/ModalManageUser
 import ModalCreateUser from "@/components/modals/ModalCreateUser/ModalCreateUser";
 import {TableEvent} from "@/components/Table/types";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
+import ModalChangePassword from "@/components/modals/ModalChangePassword/ModalChangePassword";
 
 const UsersPage = () => {
 
@@ -53,7 +54,7 @@ const UsersPage = () => {
         actionSheet: null
     });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user'
+        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user' | 'modal-change-password'
     >>({id: null, show: false, data: null});
 
     const {
@@ -121,6 +122,13 @@ const UsersPage = () => {
             mergeState({editMode: e.editing}, setTableManage);
         }
         if (e.type === 'contextMenu') {
+            const data = {
+                id: e.row.id,
+                name: `${e.row.lastName} ${e.row.firstName}${e.row.middleName ? ` ${e.row.middleName}` : ''}`
+            };
+
+            console.log(e)
+
             mergeState({actionSheet:
                 <ActionSheet
                     placement={'bottom-end'}
@@ -146,16 +154,9 @@ const UsersPage = () => {
                     >
                         Сбросить пароль
                     </ActionSheetItem>
-                    {e.row.id !== 1 && (
+                    {!e.row.isAdmin && (
                         <ActionSheetItem
-                            onClick={() => setModals({
-                                id: 'modal-remove-user',
-                                show: true,
-                                data: {
-                                    id: e.row.id,
-                                    name: `${e.row.lastName} ${e.row.firstName}${e.row.middleName ? ` ${e.row.middleName}` : ''}`
-                                }
-                            })}
+                            onClick={() => setModals({id: 'modal-remove-user', show: true, data})}
                             mode={'destructive'}
                             before={<Icon24TrashSimpleOutline width={20} height={20}/>}
                         >
@@ -170,7 +171,17 @@ const UsersPage = () => {
     return (
         <>
             {tableManage.actionSheet}
-            {'modal-remove-user' === modals.id ? (
+            {'modal-change-password' === modals.id ? (
+                <ModalChangePassword
+                    userId={modals.data?.id}
+                    name={modals.data?.name}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                    open={modals.show}
+                    preventClose={loading.modal}
+                />
+            ) : 'modal-remove-user' === modals.id ? (
                 <ModalRemove
                     removeId={modals.data?.id}
                     mode={'table'}
