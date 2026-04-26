@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {flexRender} from '@tanstack/react-table';
 import {useVirtualizer} from '@tanstack/react-virtual';
-import {Icon16DownloadOutline} from '@vkontakte/icons';
+import {Icon16DownloadOutline, Icon24Camera} from '@vkontakte/icons';
 import {Avatar, Button, Checkbox, DateInput, Input, Text, Tooltip, classNames} from '@vkontakte/vkui';
 import {
     formatDateCellValue,
@@ -21,6 +21,8 @@ import {
 } from '../helpers';
 import styles from './TableBody.module.scss';
 import type {TableBodyProps} from './types';
+import ImagesProvider from "@/components/ImagesProvider/ImagesProvider";
+import {PhotoView} from "react-photo-view";
 
 const TableBody = React.memo((props: TableBodyProps) => {
     const {
@@ -66,14 +68,16 @@ const TableBody = React.memo((props: TableBodyProps) => {
         useFlushSync: false,
     });
 
+    const [openAvatar, setOpenAvatar] = useState(false);
+
     const virtualRows = rowVirtualizer.getVirtualItems();
     const paddingTop = virtualRows[0]?.start ?? 0;
     const paddingBottom = virtualRows.length > 0
         ? rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end
         : 0;
     const visibleColumnCount = visibleRows[0]?.getVisibleCells().length ?? columnMap.size;
-    const rowActionsDisabled = loading || Boolean(disabled) || editing;
-    const controlDisabled = loading || Boolean(disabled) || editing;
+    const rowActionsDisabled = loading || Boolean(disabled) || editing || openAvatar;
+    const controlDisabled = loading || Boolean(disabled) || editing || openAvatar;
 
     return (
         <tbody>
@@ -318,10 +322,35 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                         );
                                     } else if (columnType === 'avatar') {
                                         cellContent = avatarSrc ? (
-                                            <Avatar
-                                                size={32}
-                                                src={avatarSrc}
-                                            />
+                                            <span
+                                                className={styles.avatar}
+                                                data-table-ignore-row={true}
+                                                data-table-ignore-hover={true}
+                                                onMouseDown={(event) => event.stopPropagation()}
+                                                onClick={(event) => event.stopPropagation()}
+                                                onDoubleClick={(event) => event.stopPropagation()}
+                                            >
+                                                {editing ? (
+                                                    <Avatar
+                                                        size={44}
+                                                        src={avatarSrc}
+                                                        className={'disabled'}
+                                                    />
+                                                ) : (
+                                                    <ImagesProvider onVisibleChange={setOpenAvatar}>
+                                                        <PhotoView src={avatarSrc}>
+                                                            <Avatar
+                                                                size={44}
+                                                                src={avatarSrc}
+                                                            >
+                                                                <Avatar.Overlay theme="dark" visibility="on-hover">
+                                                                    <Icon24Camera />
+                                                                </Avatar.Overlay>
+                                                            </Avatar>
+                                                        </PhotoView>
+                                                    </ImagesProvider>
+                                                )}
+                                            </span>
                                         ) : null;
                                     } else if (columnType === 'date' && editing) {
                                         cellContent = (

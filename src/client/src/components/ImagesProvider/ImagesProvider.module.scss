@@ -1,0 +1,49 @@
+.mask {
+    background-color: var(--vkui--color_overlay_primary) !important;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    user-select: none;
+
+}
+
+.banner {
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: var(--app-default-padding);
+    z-index: 12;
+    pointer-events: none;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+
+    &--show {
+        pointer-events: all;
+    }
+}
+
+.button {
+    pointer-events: all;
+    &--left, &--right {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        height: 80px;
+        margin: auto 0;
+    }
+    &--right {
+        right: var(--app-default-padding);
+    }
+    &--left {
+        left: var(--app-default-padding);
+    }
+}

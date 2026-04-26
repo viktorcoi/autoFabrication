@@ -102,11 +102,13 @@ export type TableEvent =
     | ({type: 'rowsChange'; rows: number} & TableEventMeta)
     | ({type: 'sortChange'; sorting: TableSorting} & TableEventMeta)
     | ({type: 'selected'; rowIds: number[]; rows: TableRow[]} & TableEventMeta)
+    | ({type: 'editMode'; editing: boolean} & TableEventMeta)
     | ({type: 'editSave'; changes: TableDraftChanges} & TableEventMeta);
 
 export type TableEmptyState = {
     title?: string;
     description?: string;
+    icon?: ReactNode;
 };
 
 export type TableProps = {

@@ -18,7 +18,7 @@ export interface GetByIdUserResponse {
 	firstName: string;
 	lastName: string;
 	middleName?: string;
-	birthDate: string;
+	birthDate: Date;
 	login: string;
 	avatarUrl?: string;
 	roleId: number;

@@ -113,6 +113,7 @@ const RolesPage = () => {
             {'modal-remove-role' === modals.id ? (
                 <ModalRemove
                     removeId={modals.data?.id}
+                    mode={'list'}
                     name={modals.data?.name}
                     url={'/roles'}
                     onLoading={v => mergeState({modal: v}, setLoading)}

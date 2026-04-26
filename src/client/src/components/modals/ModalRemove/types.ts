@@ -5,7 +5,8 @@ import {ModalPageCloseReasonType} from "@/components/modals/types";
 export interface ModalManageRoleProps extends Omit<ModalCardProps, 'onClose'> {
     removeId: number;
     name: string;
-    url: '/roles';
+    url: '/roles' | '/users';
+    mode: 'list' | 'table';
     onClose(reason: ModalPageCloseReasonType, event?:  React.UIEvent<HTMLElement>): void;
     onLoading(v: boolean): void;
 }

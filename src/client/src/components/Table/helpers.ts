@@ -13,10 +13,6 @@ import type {
 } from './types';
 
 export const PAGE_SIZE_OPTIONS = [20, 50, 100];
-export const EMPTY_STATE = {
-    title: 'Нет данных',
-    description: '',
-};
 export const DRAG_START_THRESHOLD = 4;
 export const DEFAULT_COLUMN_SIZE = 180;
 export const DEFAULT_COLUMN_MIN_SIZE = 120;

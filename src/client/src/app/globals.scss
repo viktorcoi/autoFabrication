@@ -94,3 +94,9 @@ body {
 	opacity: var(--vkui--opacity_disable) !important;
 	pointer-events: none !important;
 }
+
+.PhotoView-Slider__Overlay {
+	position: relative;
+	z-index: 11;
+	transition: opacity .3s;
+}

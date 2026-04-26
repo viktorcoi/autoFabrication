@@ -16,9 +16,10 @@ export type TableFooterProps = {
     setJumpMode: Dispatch<SetStateAction<null | 'left' | 'right'>>;
     setJumpValue: Dispatch<SetStateAction<string>>;
     submitJump: () => void;
-    onStartEdit: () => void;
-    onCancelEdit: () => void;
-    onSaveEdit: () => void;
+    onStartEdit: (target: EventTarget | null) => void;
+    onCancelEdit: (target: EventTarget | null) => void;
+    onSaveEdit: (target: EventTarget | null) => void;
     onRowsChange: (rows: number, target: EventTarget | null) => void;
     onPageChange: (page: number, target: EventTarget | null) => void;
+    total: number;
 };

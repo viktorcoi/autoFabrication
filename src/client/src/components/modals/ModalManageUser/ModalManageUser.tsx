@@ -8,7 +8,9 @@ import {
     Input,
     ModalPage,
     ModalPageHeader,
-    PlatformProvider, Select, Spinner,
+    PlatformProvider,
+    Select,
+    Spinner
 } from "@vkontakte/vkui";
 import {SubmitEvent, useEffect, useMemo, useState} from "react";
 import styles from './ModalManageUser.module.scss'
@@ -18,10 +20,14 @@ import {PathUserOptions, PostUserOptions} from "@/apiService/apiUsers/types";
 import {ModalManageUserProps} from "@/components/modals/ModalManageUser/types";
 import {useController, useSelectFilter} from "@/shared/hooks";
 import ModalAddAvatar from "@/components/modals/ModalAddAvatar/ModalAddAvatar";
-import {Icon56UserCircleOutline} from "@vkontakte/icons";
+import {Icon24Camera, Icon56UserCircleOutline} from "@vkontakte/icons";
 import {OpenModalsType} from "@/components/modals/types";
 import {PostUserType} from "@/components/modals/ModalManageRole/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
+import {PhotoView} from "react-photo-view";
+import ImagesProvider from "@/components/ImagesProvider/ImagesProvider";
+import {useAppStore} from "@/store/app/app";
+import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
 
 const initialData: PostUserType = {
     roleId: 0,
@@ -46,6 +52,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
     } = props;
 
     const selectFilter = useSelectFilter();
+    const { user: currentUser, setUser } = useAppStore(state => state);
 
     const [modals, setModals] = useState<OpenModalsType<
         'modal-avatar'
@@ -54,6 +61,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
     const [data, setData] = useState({...initialData});
     const [roles, setRoles] = useState<CustomSelectOptionInterface[]>([]);
     const [avatarFileUrl, setAvatarFileUrl] = useState<string | null>(null);
+    const [openAvatar, setOpenAvatar] = useState(false);
     const [loading, setLoading] = useState({
         get: true,
         send: false
@@ -145,6 +153,9 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                         type: 'success',
                         text: `Успешно сохранено ${data.login}`
                     });
+                    if (currentUser?.id === data.id) {
+                        setUser({...currentUser, ...data} as GetAuthMeResponse);
+                    }
                     onClose('updated-data');
                 }
             }).finally(() => {
@@ -185,7 +196,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         <ModalPage
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose || modals.id !== null}
+            preventClose={preventClose || openAvatar || modals.id !== null}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -237,12 +248,29 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                     onSubmit={saveUser}
                 >
                     <div className={styles.avatar}>
-                        <Avatar
-                            src={avatarSrc}
-                            initials={`${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`}
-                            size={88}
-                            fallbackIcon={<Icon56UserCircleOutline />}
-                        />
+                        {avatarSrc ? (
+                            <ImagesProvider onVisibleChange={setOpenAvatar}>
+                                <PhotoView src={avatarSrc}>
+                                    <Avatar
+                                        src={avatarSrc}
+                                        initials={`${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`}
+                                        size={88}
+                                        fallbackIcon={<Icon56UserCircleOutline />}
+                                    >
+                                        <Avatar.Overlay theme="dark" visibility="on-hover">
+                                            <Icon24Camera />
+                                        </Avatar.Overlay>
+                                    </Avatar>
+                                </PhotoView>
+                            </ImagesProvider>
+                        ) : (
+                            <Avatar
+                                src={avatarSrc}
+                                initials={`${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`}
+                                size={88}
+                                fallbackIcon={<Icon56UserCircleOutline />}
+                            />
+                        )}
                         <ButtonGroup
                             gap={'s'}
                             mode={'vertical'}

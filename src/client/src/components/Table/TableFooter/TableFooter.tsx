@@ -22,6 +22,7 @@ const TableFooter = (props: TableFooterProps) => {
         currentPage,
         jumpMode,
         jumpValue,
+        total,
         paginationItems,
         setJumpMode,
         setJumpValue,
@@ -33,7 +34,7 @@ const TableFooter = (props: TableFooterProps) => {
         onPageChange,
     } = props;
 
-    const controlsDisabled = loading || disabled || editing;
+    const controlsDisabled = loading || disabled || editing || total === 0;
 
     return (
         <div className={classNames('island', styles.footer)}>
@@ -66,7 +67,7 @@ const TableFooter = (props: TableFooterProps) => {
                             size="m"
                             mode="secondary"
                             disabled={loading || disabled}
-                            onClick={onCancelEdit}
+                            onClick={(event) => onCancelEdit(event.target)}
                         >
                             Отмена
                         </Button>
@@ -74,7 +75,7 @@ const TableFooter = (props: TableFooterProps) => {
                             size="m"
                             mode="primary"
                             disabled={loading || disabled || saveDisabled}
-                            onClick={onSaveEdit}
+                            onClick={(event) => onSaveEdit(event.target)}
                         >
                             Сохранить
                         </Button>
@@ -83,7 +84,7 @@ const TableFooter = (props: TableFooterProps) => {
                     <Button
                         size="m"
                         mode="secondary"
-                        disabled={loading || disabled}
+                        disabled={loading || disabled || total === 0}
                         before={(
                             <Icon20WarningTriangleOutline
                                 width={16}
@@ -91,7 +92,7 @@ const TableFooter = (props: TableFooterProps) => {
                                 fill="var(--vkui--color_icon_warning)"
                             />
                         )}
-                        onClick={onStartEdit}
+                        onClick={(event) => onStartEdit(event.target)}
                     >
                         Режим редактирования
                     </Button>

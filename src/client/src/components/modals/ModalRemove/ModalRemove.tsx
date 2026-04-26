@@ -4,9 +4,11 @@ import {ModalManageRoleProps} from "@/components/modals/ModalRemove/types";
 import {useState} from "react";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
+import {SnackbarItem} from "@/store/snackbar/types";
 
 const urlList = {
-    '/roles': ApiService.roles.delete
+    '/roles': (id: number) => ApiService.roles.delete({ id }),
+    '/users': (id: number) => ApiService.users.delete({ ids: [id] }),
 };
 
 const ModalRemove = (props: ModalManageRoleProps) => {
@@ -16,6 +18,7 @@ const ModalRemove = (props: ModalManageRoleProps) => {
         url,
         preventClose,
         removeId,
+        mode,
         onLoading,
         onClose = () => {},
         ...restProps
@@ -29,10 +32,16 @@ const ModalRemove = (props: ModalManageRoleProps) => {
         setLoading(true);
         onLoading(true);
 
-        await urlList[url]({
-            id: removeId
-        }).then(({status}) => {
+        await urlList[url](removeId).then(({status, data}) => {
             if (status === 'success') {
+                if (typeof data === 'object' && data.error.length) {
+                    addSnackbar({
+                        type: 'error',
+                        text: data.error[0].description,
+                    });
+                    return;
+                }
+
                 addSnackbar({
                     type: 'success',
                     text: `Успешно удалено: "${name}"`

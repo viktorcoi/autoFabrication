@@ -21,6 +21,7 @@ import {
     Icon16SortArrowDown,
     Icon16SortArrowUp,
     Icon16SortOutline,
+    Icon20ListDeleteOutline
 } from '@vkontakte/icons';
 import {
     applyColumnSizingPreview,
@@ -33,9 +34,7 @@ import {
     DEFAULT_COLUMN_MAX_SIZE,
     DEFAULT_COLUMN_MIN_SIZE,
     DEFAULT_COLUMN_SIZE,
-    DEFAULT_ROW_HEIGHT,
     DRAG_START_THRESHOLD,
-    EMPTY_STATE,
     getCellTextValue,
     getColumnType,
     getColumnDefaultWidth,
@@ -96,7 +95,11 @@ const Table = (props: TableProps) => {
         selected,
         onEvent,
         getRowId,
-        emptyState,
+        emptyState = {
+            title: 'Данные отсутсвуют',
+            description: 'Нет данных для отображения',
+            icon: <Icon20ListDeleteOutline width={62} height={62} />
+        },
     } = props;
 
     const storageId = useMemo(() => getStorageId(tableId, componentName), [componentName, tableId]);
@@ -151,6 +154,8 @@ const Table = (props: TableProps) => {
     const measuredRowHeightsRef = useRef<Record<number, number>>({});
     const previewSelectedRowIdsRef = useRef<number[]>([]);
     const editingRef = useRef(editing);
+    const editModeTargetRef = useRef<EventTarget | null>(null);
+    const editModeInitializedRef = useRef(false);
 
     const emitCellClick = (params: {
         row: TableRow;
@@ -389,6 +394,7 @@ const Table = (props: TableProps) => {
             columnSizing,
         },
         manualSorting: true,
+        sortDescFirst: false,
         onSortingChange: (updater) => {
             const nextSorting = sortingStateToTableSorting(
                 functionalUpdate(updater, tableSortingToSortingState(sortingRef.current)),
@@ -431,6 +437,18 @@ const Table = (props: TableProps) => {
 
     useEffect(() => {
         editingRef.current = editing;
+
+        if (!editModeInitializedRef.current) {
+            editModeInitializedRef.current = true;
+            return;
+        }
+
+        onEventRef.current({
+            type: 'editMode',
+            editing,
+            target: editModeTargetRef.current,
+        });
+        editModeTargetRef.current = null;
     }, [editing]);
 
     useEffect(() => {
@@ -448,7 +466,7 @@ const Table = (props: TableProps) => {
 
     useEffect(() => {
         selectedRowIdsRef.current = selectedRowIds;
-        previewSelectedRowIdsRef.current = editing ? [] : selectedRowIds;
+        syncSelectedRowsPreview(selectedRowIds);
     }, [editing, selectedRowIds]);
 
     useEffect(() => {
@@ -1333,7 +1351,7 @@ const Table = (props: TableProps) => {
         });
     };
 
-    const startEditing = () => {
+    const startEditing = (target: EventTarget | null) => {
         if (editing || loading || disabled || tableData.length === 0) {
             return;
         }
@@ -1346,20 +1364,21 @@ const Table = (props: TableProps) => {
         syncSelectedRowsPreview([]);
         setEditingRowHeights(getSnapshotRowHeights());
         setDraftChanges({});
+        editModeTargetRef.current = target;
         setEditing(true);
     };
 
-    const cancelEditing = () => {
+    const cancelEditing = (target: EventTarget | null) => {
         selectionStateRef.current.active = false;
         selectionStateRef.current.dirty = false;
         selectionStateRef.current.target = null;
-        syncSelectedRowsPreview(selectedRowIdsRef.current);
         setEditingRowHeights({});
         setDraftChanges({});
+        editModeTargetRef.current = target;
         setEditing(false);
     };
 
-    const saveEditing = () => {
+    const saveEditing = (target: EventTarget | null) => {
         if (!editing || hasInvalidRequiredCells) {
             return;
         }
@@ -1370,15 +1389,15 @@ const Table = (props: TableProps) => {
         selectionStateRef.current.active = false;
         selectionStateRef.current.dirty = false;
         selectionStateRef.current.target = null;
-        syncSelectedRowsPreview(selectedRowIdsRef.current);
         setTableData(nextRows);
         setEditingRowHeights({});
         setDraftChanges({});
+        editModeTargetRef.current = target;
         setEditing(false);
         onEventRef.current({
             type: 'editSave',
             changes: currentDraftChanges,
-            target: null,
+            target,
         });
     };
 
@@ -1461,13 +1480,12 @@ const Table = (props: TableProps) => {
                     {(visibleRows.length === 0 && !loading) && (
                         <Placeholder
                             className={styles.empty}
-                            title={emptyState?.title || EMPTY_STATE.title}
+                            title={emptyState.title}
+                            icon={emptyState.icon}
                         >
-                            {emptyState?.description && (
-                                <Text>
-                                    {emptyState.description}
-                                </Text>
-                            )}
+                            <Text>
+                                {emptyState.description}
+                            </Text>
                         </Placeholder>
                     )}
                 </div>
@@ -1560,6 +1578,7 @@ const Table = (props: TableProps) => {
                 disabled={disabled}
                 loading={loading}
                 editing={editing}
+                total={total}
                 saveDisabled={hasInvalidRequiredCells}
                 safeRows={safeRows}
                 pageIndex={pageIndex}

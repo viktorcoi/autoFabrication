@@ -10,7 +10,7 @@ import {
 } from "@vkontakte/icons";
 import {usePathname} from "next/navigation";
 import {useAppStore} from "@/store/app/app";
-import {ReactNode, useMemo, useRef, useState} from "react";
+import {ReactNode, use, useMemo, useRef, useState} from "react";
 import {ApiService} from "@/apiService/apiService";
 import styles from './Navigation.module.scss';
 
@@ -125,6 +125,7 @@ const Navigation = () => {
                     subtitle={role?.name}
                     before={(
                         <Avatar
+                            src={user?.avatarUrl ?? ''}
                             initials={`${user?.lastName?.[0]}${user?.firstName?.[0]}`}
                             size={36}
                         />

@@ -1,5 +1,6 @@
 import '@vkontakte/vkui/dist/vkui.css';
 import "./globals.scss";
+import 'react-photo-view/dist/react-photo-view.css';
 import {PropsWithChildren} from "react";
 import Wrapper from "@/app/wrapper";
 
