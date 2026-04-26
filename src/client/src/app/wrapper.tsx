@@ -4,14 +4,13 @@ import {PropsWithChildren, useEffect, useState} from "react";
 import { AdaptivityProvider, AppRoot, ConfigProvider } from "@vkontakte/vkui";
 import SnackbarProvider from "@/components/SnackbarProvider/SnackbarProvider";
 import { useAppStore } from "@/store/app/app";
-import {ApiService} from "@/apiService/apiService";
 import LoadingPage from "@/system/loading/page";
 
 const Wrapper = ({ children }: PropsWithChildren) => {
 
     const {
         user,
-        setUser,
+        getUser,
         appReady,
         theme,
         initializeApp
@@ -23,11 +22,7 @@ const Wrapper = ({ children }: PropsWithChildren) => {
         initializeApp();
 
         if (!user) {
-            ApiService.auth.me({}).then(async ({status, data}) => {
-                if (status === 'success') {
-                    setUser(data);
-                }
-            }).finally(() => setLoading(false));
+            getUser().finally(() => setLoading(false));
         }
     }, []);
 

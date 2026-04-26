@@ -13,8 +13,22 @@ import {
 	removeStoredFile,
 	saveAvatarFile,
 } from "../../shared/storage/avatars.js";
-import { createUserSchema, deleteUserIdsSchema, getUsersTableSchema, updateUserSchema } from "./user.schemas.js";
-import { createUser, deleteUsers, getUserById, getUsersTable, listUsers, updateUser } from "./user.service.js";
+import {
+	createUserSchema,
+	deleteUserIdsSchema,
+	getUsersTableSchema,
+	updateUsersTableSchema,
+	updateUserSchema,
+} from "./user.schemas.js";
+import {
+	createUser,
+	deleteUsers,
+	getUserById,
+	getUsersTable,
+	listUsers,
+	updateUsersTable,
+	updateUser,
+} from "./user.service.js";
 
 const parseId = (value: string) => {
 	const id = Number.parseInt(value, 10);
@@ -151,6 +165,18 @@ userRouter.delete(
 		const auth = requireAuth(request, response);
 		const payload = validate(deleteUserIdsSchema, request.body ?? []);
 		const result = await deleteUsers(payload, auth.userId);
+
+		response.json(result);
+	}),
+);
+
+userRouter.patch(
+	"/table",
+	requirePermission("/users", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(updateUsersTableSchema, request.body ?? {});
+		const result = await updateUsersTable(payload, auth.userId);
 
 		response.json(result);
 	}),

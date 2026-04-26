@@ -1,4 +1,4 @@
-import {DeleteUsersResponse} from "@/apiService/apiUsers/types";
+import {ActionUsersResponse} from "@/apiService/apiUsers/types";
 
 export type ShowErrorType = {
     id: number;
@@ -12,7 +12,7 @@ export type ShowErrorsStore = {
     render: boolean;
     show: boolean;
 
-    open(data: { id: number, name: string }[], result: DeleteUsersResponse): void;
+    open(data: { id: number, name: string }[], result: ActionUsersResponse): void;
     onClose(): void;
     onClosed(): void;
 };

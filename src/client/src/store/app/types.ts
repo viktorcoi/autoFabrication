@@ -11,4 +11,5 @@ export type AppStore = {
     setUser(user: GetAuthMeResponse | null): void;
     initializeApp(): void;
     toggleTheme(): void;
+    getUser(): Promise<void>;
 };

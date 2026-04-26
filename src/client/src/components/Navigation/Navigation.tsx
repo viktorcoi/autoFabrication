@@ -10,7 +10,7 @@ import {
 } from "@vkontakte/icons";
 import {usePathname} from "next/navigation";
 import {useAppStore} from "@/store/app/app";
-import {ReactNode, use, useMemo, useRef, useState} from "react";
+import {ReactNode, useMemo, useRef, useState} from "react";
 import {ApiService} from "@/apiService/apiService";
 import styles from './Navigation.module.scss';
 import ModalShowErrors from "@/components/modals/ModalShowErrors/ModalShowErrors";

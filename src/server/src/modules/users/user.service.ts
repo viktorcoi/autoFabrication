@@ -5,7 +5,8 @@ import { AppError } from "../../shared/errors/app-error.js";
 import { getStoredAvatarAbsolutePath, removeStoredFile } from "../../shared/storage/avatars.js";
 import { getRoleById } from "../roles/role.service.js";
 import type { RolePermissions } from "../roles/role.types.js";
-import type { GetUsersTableQuery } from "./user.schemas.js";
+import { updateUsersTableItemSchema } from "./user.schemas.js";
+import type { GetUsersTableQuery, UpdateUsersTablePayload } from "./user.schemas.js";
 
 const userSelect = {
 	id: true,
@@ -108,6 +109,8 @@ const DELETE_USER_NO_RIGHTS_ERROR = "У вас нет прав для удале
 const DELETE_USER_GOD_ERROR = "Первого пользователя нельзя удалить";
 const DELETE_USER_IN_USE_ERROR = "Этот пользователь используется и не может быть удален";
 
+const UPDATE_USER_NO_RIGHTS_ERROR = "\u0423 \u0432\u0430\u0441 \u043d\u0435\u0442 \u043f\u0440\u0430\u0432 \u0434\u043b\u044f \u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f";
+const UPDATE_USER_SUCCESS_DESCRIPTION = "\u041e\u0442\u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e";
 const getUniqueIds = (ids: number[]) => {
 	const uniqueIds = new Set<number>();
 
@@ -127,6 +130,21 @@ const hasUsersRemovingPermission = (permissions: RolePermissions) =>
 		&& permission.access.view
 		&& permission.access.removing
 	));
+
+const hasUsersEditingPermission = (permissions: RolePermissions) =>
+	Object.values(permissions).some((permission) => (
+		permission.url === "/users"
+		&& permission.access.view
+		&& permission.access.editing
+	));
+
+const getValidationErrorMessage = (issues: Array<{ message: string }>) => {
+	const messages = issues
+		.map((issue) => issue.message.trim())
+		.filter(Boolean);
+
+	return Array.from(new Set(messages)).join(" / ");
+};
 
 const isPrismaDeleteConstraintError = (error: unknown) =>
 	Boolean(
@@ -452,6 +470,68 @@ export const updateUser = async (id: number, data: UpdateUserData, actorId: numb
 		data: updateData,
 		select: userSelect,
 	});
+};
+
+export const updateUsersTable = async (
+	payload: UpdateUsersTablePayload,
+	actorId: number,
+): Promise<DeleteUsersResult> => {
+	const actor = await prisma.user.findUnique({
+		where: { id: actorId },
+		select: {
+			role: {
+				select: {
+					permissions: true,
+				},
+			},
+		},
+	});
+	if (!actor) {
+		throw new AppError(404, "\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d");
+	}
+	const permissions = actor.role.permissions as RolePermissions;
+	const ids = Object.keys(payload).map((id) => Number(id));
+	if (!hasUsersEditingPermission(permissions)) {
+		return {
+			success: [],
+			error: ids.map((id) => ({
+				id,
+				description: UPDATE_USER_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+	const result: DeleteUsersResult = {
+		success: [],
+		error: [],
+	};
+	for (const [rawId, rawItem] of Object.entries(payload)) {
+		const id = Number(rawId);
+		const parsedItem = updateUsersTableItemSchema.safeParse(rawItem);
+		if (!parsedItem.success) {
+			result.error.push({
+				id,
+				description: getValidationErrorMessage(parsedItem.error.issues) || "\u041d\u0435\u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u0435 \u0434\u0430\u043d\u043d\u044b\u0435",
+			});
+			continue;
+		}
+		try {
+			await updateUser(id, parsedItem.data, actorId);
+			result.success.push({
+				id,
+				description: UPDATE_USER_SUCCESS_DESCRIPTION,
+			});
+		} catch (error) {
+			if (error instanceof AppError) {
+				result.error.push({
+					id,
+					description: error.message,
+				});
+				continue;
+			}
+			throw error;
+		}
+	}
+	return result;
 };
 
 export const deleteUsers = async (ids: number[], actorId: number): Promise<DeleteUsersResult> => {

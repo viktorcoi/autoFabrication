@@ -15,7 +15,10 @@ import {mergeState} from "@/shared/helpers";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import Table from "@/components/Table/Table";
 import {ApiService} from "@/apiService/apiService";
-import {UserTableRow} from "@/apiService/apiUsers/types";
+import {
+    PatchUsersTableOptions,
+    UserTableRow
+} from "@/apiService/apiUsers/types";
 import {GetTableOptions, GetTableResponse} from "@/apiService/types";
 import {tableColumns} from "@/shared/tableColumns";
 import ModalManageUser from "@/components/modals/ModalManageUser/ModalManageUser";
@@ -25,6 +28,10 @@ import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import ModalChangePassword from "@/components/modals/ModalChangePassword/ModalChangePassword";
 import ModalChangeLogin from "@/components/modals/ModalChangeLogin/ModalChangeLogin";
 import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
+import {useSnackbarStore} from "@/store/snackbar/snackbar";
+import {useShowErrors} from "@/store/showErrors/showErrors";
+import {useAppStore} from "@/store/app/app";
+import {SnackbarItem} from "@/store/snackbar/types";
 
 const UsersPage = () => {
 
@@ -58,6 +65,10 @@ const UsersPage = () => {
     const [modals, setModals] = useState<OpenModalsType<
         'modal-manage-user' | 'modal-remove-user' | 'modal-create-user' | 'modal-change-password' | 'modal-change-login' | 'modal-multi-remove-user'
     >>({id: null, show: false, data: null});
+
+    const addSnackbar = useSnackbarStore(state => state.addSnackbar);
+    const showErrors = useShowErrors(state => state);
+    const { user, getUser } = useAppStore(state => state);
 
     const {
         createController,
@@ -95,6 +106,46 @@ const UsersPage = () => {
         if (r === 'updated-data') {
             getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
         }
+    };
+
+    const handleTableSave = async (changes: PatchUsersTableOptions) => {
+        mergeState({page: true}, setLoading);
+
+        const ids = Object.keys(changes);
+
+        await ApiService.users.table.patch({
+            options: changes,
+        }).then(async ({status, data}) => {
+
+            if (status === 'success') {
+                let snackbar: Omit<SnackbarItem, "id"> = {
+                    type: 'success',
+                    text: `Отредактировано ${data.success.length} из ${ids.length}`
+                }
+
+                if (data.error.length === ids.length) {
+                    snackbar.type = 'error';
+                } else if (data.error.length !== 0) {
+                    snackbar.type = 'warning';
+                }
+
+                if (data.error.length) {
+                    snackbar.onActionClick = () => {
+                        showErrors.open(table.data.filter(({id}) => ids.includes(String(id))).map((user) => ({
+                            id: user.id,
+                            name: `${user.lastName} ${user.firstName}${user.middleName ? ` ${user.middleName}` : ''}`
+                        })), data);
+                    }
+                    snackbar.action = 'Подробнее';
+                }
+
+                addSnackbar(snackbar);
+
+                if (data.success.some(({id}) => id === user?.id)) {
+                    await getUser();
+                }
+            }
+        })
     };
 
     const handleRemove = () => {
@@ -146,7 +197,11 @@ const UsersPage = () => {
             mergeState({editMode: e.editing}, setTableManage);
         }
         if (e.type === 'editSave') {
-            console.log(e)
+            if (Object.keys(e.changes).length === 0) return;
+
+            handleTableSave(e.changes).finally(() => {
+                getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+            });
         }
         if (e.type === 'contextMenu') {
             const data = {

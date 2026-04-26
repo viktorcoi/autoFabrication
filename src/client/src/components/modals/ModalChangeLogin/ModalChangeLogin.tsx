@@ -6,16 +6,16 @@ import {
     Input,
     ModalPage,
     ModalPageHeader,
-    PlatformProvider,
+    PlatformProvider, Spinner,
 } from "@vkontakte/vkui";
 import {mergeState} from "@/shared/helpers";
-import {SubmitEvent, useEffect, useState} from "react";
+import {SubmitEvent, useEffect, useRef, useState} from "react";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useController} from "@/shared/hooks";
 import {ModalChangeLoginProps} from "@/components/modals/ModalChangeLogin/types";
-import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
 import {useAppStore} from "@/store/app/app";
+import styles from './ModalManageUser.module.scss';
 
 const LOGIN_PATTERN = /^[\x21-\x7E]+$/;
 
@@ -30,7 +30,7 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
         ...restProps
     } = props;
 
-    const { user: currentUser, setUser } = useAppStore(state => state);
+    const { user: currentUser, getUser } = useAppStore(state => state);
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const { createController } = useController([]);
 
@@ -39,6 +39,8 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
         send: false
     });
     const [login, setLogin] = useState('');
+
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const controller = createController();
@@ -50,6 +52,7 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
             }).then(({status, data}) => {
                 if (status === 'success') {
                     setLogin(data.login);
+                    setTimeout(() => inputRef.current?.focus(), 100);
                 } else onClose('error')
             }).finally(() => mergeState({get: false}, setLoading));
         }
@@ -82,14 +85,14 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
         await ApiService.users.patch({
             id: userId,
             options: { login }
-        }).then(({status, data}) => {
+        }).then(async ({status, data}) => {
             if (status === 'success') {
                 addSnackbar({
                     type: 'success',
                     text: `Логин для пользователя "${name}" успешно изменен`
                 });
                 if (currentUser?.id === data.id) {
-                    setUser({...currentUser, ...data} as GetAuthMeResponse);
+                    await getUser();
                 }
                 onClose('updated-data');
             }
@@ -144,24 +147,27 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
             )}
             {...restProps}
         >
-            <form
-                id={'save-user'}
-                className={'modalForm'}
-                onSubmit={saveLogin}
-            >
-                <FormItem
-                    top={'Новый логин'}
-                    noPadding={true}
+            {loading.get ? <Spinner className={styles.plug} size={'xl'}/> : (
+                <form
+                    id={'save-user'}
+                    className={'modalForm'}
+                    onSubmit={saveLogin}
                 >
-                    <Input
-                        disabled={loading.send}
-                        value={login}
-                        onChange={(e) => setLogin(e.target.value)}
-                        placeholder={'Введите новый логин'}
-                        status={!login ? 'error' : 'default'}
-                    />
-                </FormItem>
-            </form>
+                    <FormItem
+                        top={'Новый логин'}
+                        noPadding={true}
+                    >
+                        <Input
+                            slotProps={{ input: { getRootRef: inputRef } }}
+                            disabled={loading.send}
+                            value={login}
+                            onChange={(e) => setLogin(e.target.value)}
+                            placeholder={'Введите новый логин'}
+                            status={!login ? 'error' : 'default'}
+                        />
+                    </FormItem>
+                </form>
+            )}
         </ModalPage>
     )
 };

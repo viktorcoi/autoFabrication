@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { AppStore } from "@/store/app/types";
 import {ColorSchemeType} from "@vkontakte/vkui";
+import {ApiService} from "@/apiService/apiService";
 
 const THEME_STORAGE_KEY = "theme";
 
@@ -36,6 +37,15 @@ export const useAppStore = create<AppStore>((
             theme: theme as ColorSchemeType,
             appReady: true,
         });
+    },
+
+    getUser: async () => {
+        await ApiService.auth.me({}).then(({status, data}) => {
+            if (status === 'success') {
+                const { role, ...me } = data;
+                set({ user: me, role });
+            } else set({ user: null, role: null });
+        })
     },
 
     setUser: (user) => {

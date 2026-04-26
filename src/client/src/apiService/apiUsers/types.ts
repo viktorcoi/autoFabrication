@@ -55,12 +55,16 @@ export interface PathUserOptions {
 	password?: string;
 }
 
-export type DeleteUsersResultItem = {
+export type PatchUsersTableRowOptions = Partial<Pick<UserTableRow, "firstName" | "lastName" | "middleName" | "birthDate">>;
+
+export type PatchUsersTableOptions = Record<number, PatchUsersTableRowOptions>;
+
+export type ActionUsersResultItem = {
 	id: number;
 	description: string;
 };
 
-export type DeleteUsersResponse = {
-	success: DeleteUsersResultItem[];
-	error: DeleteUsersResultItem[];
+export type ActionUsersResponse = {
+	success: ActionUsersResultItem[];
+	error: ActionUsersResultItem[];
 };

@@ -1,13 +1,13 @@
 import {create} from "zustand";
 import {ShowErrorsStore, ShowErrorType} from "@/store/showErrors/types";
-import {DeleteUsersResponse} from "@/apiService/apiUsers/types";
+import {ActionUsersResponse} from "@/apiService/apiUsers/types";
 
 export const useShowErrors = create<ShowErrorsStore>((set) => ({
     render: false,
     show: false,
     data: [],
 
-    open: (data: { id: number, name: string }[], result: DeleteUsersResponse) => {
+    open: (data: { id: number, name: string }[], result: ActionUsersResponse) => {
         const namesById = new Map(data.map((item) => [item.id, item.name]));
         const resultEntries: Array<[number, Omit<ShowErrorType, 'name'>]> = [
             ...result.success.map((item): [number, Omit<ShowErrorType, 'name'>] => [

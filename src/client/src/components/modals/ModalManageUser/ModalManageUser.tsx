@@ -27,7 +27,6 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {PhotoView} from "react-photo-view";
 import ImagesProvider from "@/components/ImagesProvider/ImagesProvider";
 import {useAppStore} from "@/store/app/app";
-import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
 
 const initialData: PostUserType = {
     roleId: 0,
@@ -65,7 +64,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
     });
 
     const selectFilter = useSelectFilter();
-    const { user: currentUser, setUser } = useAppStore(state => state);
+    const { user: currentUser, getUser } = useAppStore(state => state);
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const { createController } = useController([]);
 
@@ -147,14 +146,14 @@ const ModalManageUser = (props: ModalManageUserProps) => {
             await ApiService.users.patch({
                 id: idUser,
                 options: options as PathUserOptions,
-            }).then(({status, data}) => {
+            }).then(async ({status, data}) => {
                 if (status === 'success') {
                     addSnackbar({
                         type: 'success',
                         text: `Успешно сохранено ${data.login}`
                     });
                     if (currentUser?.id === data.id) {
-                        setUser({...currentUser, ...data} as GetAuthMeResponse);
+                        await getUser();
                     }
                     onClose('updated-data');
                 }
