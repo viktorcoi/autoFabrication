@@ -65,6 +65,7 @@ export const getColumnType = (column?: Column): ColumnType => {
         || column?.type === 'boolean'
         || column?.type === 'avatar'
         || column?.type === 'date'
+        || column?.type === 'status'
         || column?.type === 'text'
     ) {
         return column.type;

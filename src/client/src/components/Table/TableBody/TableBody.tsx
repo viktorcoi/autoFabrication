@@ -1,7 +1,12 @@
 import React, {useState} from 'react';
 import {flexRender} from '@tanstack/react-table';
 import {useVirtualizer} from '@tanstack/react-virtual';
-import {Icon16DownloadOutline, Icon24View} from '@vkontakte/icons';
+import {
+    Icon16CancelCircle,
+    Icon16DownloadOutline,
+    Icon24View,
+    Icon40DoneCircle
+} from '@vkontakte/icons';
 import {Avatar, Button, Checkbox, DateInput, Input, Text, Tooltip, classNames} from '@vkontakte/vkui';
 import {
     formatDateCellValue,
@@ -184,6 +189,9 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                     const avatarSrc = getAvatarCellSrc(cellValue);
                                     const checkboxValue = getBooleanCellValue(cellValue);
                                     const dateValue = getDateCellValue(draftValue);
+                                    const statusValue = typeof draftValue === 'string'
+                                        ? draftValue.trim().toLowerCase()
+                                        : null;
                                     const isDragging = draggingColumnId === columnId;
                                     const isResizing = resizingColumnId === columnId;
                                     const isConstCell = isCellConst(row.original, columnConfig);
@@ -379,6 +387,30 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 {formatDateCellValue(cellValue)}
                                             </Text>
                                         );
+                                    } else if (columnType === 'status') {
+                                        if (statusValue === 'success') {
+                                            cellContent = (
+                                                <Icon40DoneCircle
+                                                    width={24}
+                                                    height={24}
+                                                    fill={'var(--vkui--color_icon_positive)'}
+                                                />
+                                            );
+                                        } else if (statusValue === 'error') {
+                                            cellContent = (
+                                                <Icon16CancelCircle
+                                                    width={24}
+                                                    height={24}
+                                                    fill={'var(--vkui--color_icon_negative)'}
+                                                />
+                                            );
+                                        } else {
+                                            cellContent = (
+                                                <Text className={styles.text}>
+                                                    {cellTextValue}
+                                                </Text>
+                                            );
+                                        }
                                     } else if (editing) {
                                         cellContent = (
                                             <Input
@@ -488,6 +520,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     className={classNames(
                                                         styles.cellControl,
                                                         columnType === 'boolean' && styles.cellControlBoolean,
+                                                        columnType === 'status' && styles.cellControlStatus,
                                                     )}
                                                 >
                                                     {cellContent}

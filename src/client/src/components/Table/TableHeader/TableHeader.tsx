@@ -14,6 +14,7 @@ const TableHeader = (props: TableHeaderProps) => {
         disabled,
         loading,
         headerGroups,
+        columnMap,
         draggingColumnId,
         resizingColumnId,
         headerCellRefsRef,
@@ -30,8 +31,13 @@ const TableHeader = (props: TableHeaderProps) => {
                 <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                         const columnId = header.column.id;
+                        const columnConfig = columnMap.get(columnId);
                         const isDragging = draggingColumnId === columnId;
                         const isResizing = resizingColumnId === columnId;
+                        const canDrag = columnConfig?.dragging !== false;
+                        const canSort = header.column.getCanSort();
+                        const canResize = header.column.getCanResize();
+                        const hasPrimaryInteraction = canDrag || canSort;
 
                         return (
                             <th
@@ -63,10 +69,16 @@ const TableHeader = (props: TableHeaderProps) => {
                                 <div
                                     className={classNames(
                                         styles.headerInner,
+                                        (headerDisabled || !hasPrimaryInteraction) && styles['headerInner--static'],
+                                        !headerDisabled && canDrag && !canSort && styles['headerInner--draggable'],
                                         isDragging && styles['headerInner--dragging'],
                                         headerDisabled && 'disabled',
                                     )}
-                                    onMouseDown={(event) => beginColumnInteraction(columnId, event)}
+                                    onMouseDown={
+                                        headerDisabled || !hasPrimaryInteraction
+                                            ? undefined
+                                            : (event) => beginColumnInteraction(columnId, event)
+                                    }
                                 >
                                     <Text
                                         weight={'1'}
@@ -77,18 +89,18 @@ const TableHeader = (props: TableHeaderProps) => {
                                             styles.headerTitle,
                                         )}
                                     </Text>
-                                    {header.column.getIsSorted() === 'asc' && (
+                                    {canSort && header.column.getIsSorted() === 'asc' && (
                                         <Icon16SortArrowUp className={styles.sort} fill="var(--vkui--color_icon_tertiary)"/>
                                     )}
-                                    {header.column.getIsSorted() === 'desc' && (
+                                    {canSort && header.column.getIsSorted() === 'desc' && (
                                         <Icon16SortArrowDown className={styles.sort} fill="var(--vkui--color_icon_tertiary)"/>
                                     )}
-                                    {!header.column.getIsSorted() && (
+                                    {canSort && !header.column.getIsSorted() && (
                                         <Icon16SortOutline className={styles.sort} fill="var(--vkui--color_icon_tertiary)"/>
                                     )}
                                 </div>
 
-                                {header.column.getCanResize() && (
+                                {canResize && (
                                     <div
                                         data-table-resize-handle={true}
                                         className={styles.resizeHandle}

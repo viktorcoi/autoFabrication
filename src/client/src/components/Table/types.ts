@@ -10,7 +10,7 @@ export type TableRow = Record<string, unknown> & {
     isRequired?: string[];
 };
 
-export type ColumnType = 'text' | 'button' | 'download' | 'boolean' | 'avatar' | 'date';
+export type ColumnType = 'text' | 'button' | 'download' | 'boolean' | 'avatar' | 'date' | 'status';
 
 export type Column = {
     key: string;
@@ -21,6 +21,9 @@ export type Column = {
     maxSize?: number;
     isConst?: boolean;
     isRequired?: boolean;
+    resize?: boolean;
+    dragging?: boolean;
+    sortable?: boolean;
     render?: (value: unknown, row: TableRow) => ReactNode;
 };
 
@@ -112,6 +115,7 @@ export type TableEmptyState = {
 };
 
 export type TableProps = {
+    className?: string;
     hideFooter?: boolean;
     disabled?: boolean;
     tableId?: string;
@@ -150,6 +154,8 @@ export type ColumnDragInteraction = {
     startY: number;
     currentX: number;
     started: boolean;
+    canDrag: boolean;
+    canSort: boolean;
     offsetX: number;
     top: number;
     width: number;

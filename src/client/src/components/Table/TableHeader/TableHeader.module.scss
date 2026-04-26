@@ -48,6 +48,14 @@
     padding: 10px 10px 10px 15px;
     cursor: pointer;
 
+    &--static {
+        cursor: default;
+    }
+
+    &--draggable {
+        cursor: grab;
+    }
+
     &--dragging {
         cursor: grabbing;
     }

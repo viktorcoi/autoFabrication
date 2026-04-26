@@ -1,9 +1,17 @@
 .modal {
-    max-width: 650px !important;
+    max-width: 700px !important;
+    :global(.modalFooter) {
+        background-color: var(--vkui--color_background_content);
+        border-top: unset;
+        border-bottom: 1px solid var(--vkui--color_separator_primary);
+    }
 }
 
 .wrap {
     display: flex;
     min-height: 300px;
-    //padding: var(--app-default-padding);
+}
+
+.table {
+    border-radius: unset;
 }

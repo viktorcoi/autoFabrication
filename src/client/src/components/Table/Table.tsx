@@ -87,6 +87,7 @@ const Table = (props: TableProps) => {
         tableId,
         hideFooter,
         componentName,
+        className,
         data,
         columns,
         total,
@@ -245,6 +246,8 @@ const Table = (props: TableProps) => {
             size: getColumnDefaultWidth(column),
             minSize: getColumnMinWidth(column),
             maxSize: getColumnMaxWidth(column),
+            enableResizing: column.resize !== false,
+            enableSorting: column.sortable !== false,
             cell: (info) => {
                 if (column.render) {
                     return column.render(info.getValue(), info.row.original);
@@ -316,6 +319,11 @@ const Table = (props: TableProps) => {
     const tableSortingState = useMemo(() => tableSortingToSortingState(sorting), [sorting]);
 
     const applySorting = (nextSorting: TableSorting, target: EventTarget | null, force = false) => {
+        if (nextSorting && columnMap.get(nextSorting.id)?.sortable === false) {
+            pendingSortTargetRef.current = null;
+            return;
+        }
+
         if (!force && areSortingsEqual(sortingRef.current, nextSorting)) {
             pendingSortTargetRef.current = null;
             return;
@@ -497,6 +505,7 @@ const Table = (props: TableProps) => {
 
             if (
                 availableColumnIds.includes(item.key)
+                && columnMap.get(item.key)?.sortable !== false
                 && (item.settings.sort === 'asc' || item.settings.sort === 'desc')
             ) {
                 return {
@@ -542,7 +551,7 @@ const Table = (props: TableProps) => {
         selectionStateRef.current.active = false;
         selectionStateRef.current.dirty = false;
         setSettingsReady(true);
-    }, [availableColumnIds, settingsKey]);
+    }, [availableColumnIds, columnMap, settingsKey]);
 
     useEffect(() => {
         if (!settingsReady) {
@@ -1040,6 +1049,10 @@ const Table = (props: TableProps) => {
             return;
         }
 
+        if (!interaction.canDrag) {
+            return;
+        }
+
         const deltaX = event.clientX - interaction.startX;
         const deltaY = event.clientY - interaction.startY;
 
@@ -1074,7 +1087,7 @@ const Table = (props: TableProps) => {
             return;
         }
 
-        const shouldToggleSort = !interaction.started;
+        const shouldToggleSort = !interaction.started && interaction.canSort;
         const columnId = interaction.columnId;
         const target = interaction.target;
 
@@ -1240,12 +1253,12 @@ const Table = (props: TableProps) => {
         }
 
         const cell = headerCellRefsRef.current[columnId];
+        const column = columnMap.get(columnId);
 
-        if (!cell) {
+        if (!cell || !column || column.resize === false) {
             return;
         }
 
-        const column = columnMap.get(columnId);
         const baseSizing = columns.reduce<ColumnSizingState>((result, currentColumn) => {
             const currentCell = headerCellRefsRef.current[currentColumn.key];
             const fallbackWidth = liveColumnSizingRef.current[currentColumn.key]
@@ -1284,8 +1297,11 @@ const Table = (props: TableProps) => {
         }
 
         const cell = headerCellRefsRef.current[columnId];
+        const column = columnMap.get(columnId);
+        const canDrag = column?.dragging !== false;
+        const canSort = table.getColumn(columnId)?.getCanSort() ?? false;
 
-        if (!cell) {
+        if (!cell || (!canDrag && !canSort)) {
             return;
         }
 
@@ -1297,6 +1313,8 @@ const Table = (props: TableProps) => {
             startY: event.clientY,
             currentX: event.clientX,
             started: false,
+            canDrag,
+            canSort,
             offsetX: event.clientX - rect.left,
             top: rect.top - 1,
             width: rect.width,
@@ -1408,6 +1426,7 @@ const Table = (props: TableProps) => {
                 className={classNames(
                     'island',
                     styles.wrap,
+                    className,
                 )}
             >
                 <div
@@ -1431,6 +1450,7 @@ const Table = (props: TableProps) => {
                             disabled={disabled || editing}
                             loading={loading}
                             headerGroups={table.getHeaderGroups()}
+                            columnMap={columnMap}
                             draggingColumnId={draggingColumnId}
                             resizingColumnId={resizingColumnId}
                             headerCellRefsRef={headerCellRefsRef}
@@ -1516,13 +1536,13 @@ const Table = (props: TableProps) => {
                                     headerStyles.headerTitle,
                                 )}
                             </Text>
-                            {dragGhostHeader.column.getIsSorted() === 'asc' && (
+                            {dragGhostHeader.column.getCanSort() && dragGhostHeader.column.getIsSorted() === 'asc' && (
                                 <Icon16SortArrowUp fill="var(--vkui--color_icon_tertiary)"/>
                             )}
-                            {dragGhostHeader.column.getIsSorted() === 'desc' && (
+                            {dragGhostHeader.column.getCanSort() && dragGhostHeader.column.getIsSorted() === 'desc' && (
                                 <Icon16SortArrowDown fill="var(--vkui--color_icon_tertiary)"/>
                             )}
-                            {!dragGhostHeader.column.getIsSorted() && (
+                            {dragGhostHeader.column.getCanSort() && !dragGhostHeader.column.getIsSorted() && (
                                 <Icon16SortOutline fill="var(--vkui--color_icon_tertiary)"/>
                             )}
                         </div>
