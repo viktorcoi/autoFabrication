@@ -1,6 +1,7 @@
 node_modules
 .next
 src/client/.next
+src/client/next-env.d.ts
 dist
 src/server/dist
 .turbo
@@ -13,6 +14,6 @@ coverage
 .env.test.local
 .env.production.local
 .idea/
-src/server/prisma/dev.db
-src/server/prisma/dev.db-journal
+src/server/src/generated/
+src/server/dev.db*
 src/server/storage
