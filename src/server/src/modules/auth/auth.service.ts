@@ -2,7 +2,10 @@ import * as bcrypt from "bcrypt";
 import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../shared/errors/app-error.js";
-import type { RolePermissions } from "../roles/role.types.js";
+import {
+	getMainUrl,
+	hasAccessibleRoute,
+} from "../../shared/http/permissions.js";
 
 const authUserSelect = {
 	id: true,
@@ -30,22 +33,9 @@ type AuthUser = Prisma.UserGetPayload<{
 	select: typeof authUserSelect;
 }>;
 
-const hasAnyPermission = (permissions: RolePermissions) =>
-	Object.values(permissions).some((permissionGroup) => Object.values(permissionGroup.access).some(Boolean));
-
-const getMainUrl = (permissions: RolePermissions) => {
-	for (const permissionGroup of Object.values(permissions)) {
-		if (Object.values(permissionGroup.access).some(Boolean)) {
-			return permissionGroup.url;
-		}
-	}
-
-	return "";
-};
-
 const enrichAuthUser = (user: AuthUser) => {
-	const permissions = user.role.permissions as RolePermissions;
-	const isActive = hasAnyPermission(permissions);
+	const permissions = user.role.permissions as Parameters<typeof hasAccessibleRoute>[0];
+	const isActive = hasAccessibleRoute(permissions);
 
 	if (!isActive) {
 		throw new AppError(403, "Ваша учетная запись не активна");

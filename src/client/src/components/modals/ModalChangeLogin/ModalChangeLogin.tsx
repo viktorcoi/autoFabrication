@@ -38,6 +38,7 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
         get: true,
         send: false
     });
+    const [savedLogin, setSavedLogin] = useState('');
     const [login, setLogin] = useState('');
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +53,7 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
             }).then(({status, data}) => {
                 if (status === 'success') {
                     setLogin(data.login);
+                    setSavedLogin(data.login);
                     setTimeout(() => inputRef.current?.focus(), 100);
                 } else onClose('error')
             }).finally(() => mergeState({get: false}, setLoading));
@@ -61,7 +63,7 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
     const saveLogin = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (!login.trim() || loading.send) return;
+        if (!login.trim() || (login.trim() === savedLogin.trim()) || loading.send) return;
 
         if (login.length < 5) {
             addSnackbar({
@@ -136,7 +138,7 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
                         <Button
                             form={'save-user'}
                             type={'submit'}
-                            disabled={!login.trim() || loading.get}
+                            disabled={!login.trim() || (login.trim() === savedLogin.trim()) || loading.get}
                             loading={loading.send}
                             size={'m'}
                         >

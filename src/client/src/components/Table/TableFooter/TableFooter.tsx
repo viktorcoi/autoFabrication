@@ -12,6 +12,7 @@ import type {TableFooterProps} from './types';
 
 const TableFooter = (props: TableFooterProps) => {
     const {
+        editMode,
         disabled,
         loading,
         editing,
@@ -61,41 +62,43 @@ const TableFooter = (props: TableFooterProps) => {
                     }}
                 />
 
-                {editing ? (
-                    <>
+                {editMode && (
+                    editing ? (
+                        <>
+                            <Button
+                                size="m"
+                                mode="secondary"
+                                disabled={loading || disabled}
+                                onClick={(event) => onCancelEdit(event.target)}
+                            >
+                                Отмена
+                            </Button>
+                            <Button
+                                size="m"
+                                mode="primary"
+                                disabled={loading || disabled || saveDisabled}
+                                onClick={(event) => onSaveEdit(event.target)}
+                            >
+                                Сохранить
+                            </Button>
+                        </>
+                    ) : (
                         <Button
                             size="m"
                             mode="secondary"
-                            disabled={loading || disabled}
-                            onClick={(event) => onCancelEdit(event.target)}
+                            disabled={loading || disabled || total === 0}
+                            before={(
+                                <Icon20WarningTriangleOutline
+                                    width={16}
+                                    height={16}
+                                    fill="var(--vkui--color_icon_warning)"
+                                />
+                            )}
+                            onClick={(event) => onStartEdit(event.target)}
                         >
-                            Отмена
+                            Режим редактирования
                         </Button>
-                        <Button
-                            size="m"
-                            mode="primary"
-                            disabled={loading || disabled || saveDisabled}
-                            onClick={(event) => onSaveEdit(event.target)}
-                        >
-                            Сохранить
-                        </Button>
-                    </>
-                ) : (
-                    <Button
-                        size="m"
-                        mode="secondary"
-                        disabled={loading || disabled || total === 0}
-                        before={(
-                            <Icon20WarningTriangleOutline
-                                width={16}
-                                height={16}
-                                fill="var(--vkui--color_icon_warning)"
-                            />
-                        )}
-                        onClick={(event) => onStartEdit(event.target)}
-                    >
-                        Режим редактирования
-                    </Button>
+                    )
                 )}
             </div>
             <div

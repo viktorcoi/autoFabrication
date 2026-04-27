@@ -1,6 +1,6 @@
 'use client'
 
-import React, {ReactNode, useEffect, useRef, useState} from "react";
+import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import {ApiService} from "@/apiService/apiService";
 import {GetRolesResponse} from "@/apiService/apiRoles/types";
 import {
@@ -30,6 +30,7 @@ import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/type
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import {useController, useSearch} from "@/shared/hooks";
 import DetailInfoRole from "@/sections/roles/DetailInfoRole";
+import {useAppStore} from "@/store/app/app";
 
 const RolesPage = () => {
 
@@ -52,6 +53,8 @@ const RolesPage = () => {
         inputRef
     } = useSearch(loading.page);
 
+    // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
+    const { TEST, permissions } = useAppStore(s => s);
     const { createController } = useController([delaySearch]);
 
     const getRoles = async () => {
@@ -76,7 +79,16 @@ const RolesPage = () => {
         getRoles().finally(() => mergeState({page: false}, setLoading));
     }, [delaySearch]);
 
+    const closeModal = (r: ModalPageCloseReasonType) => {
+        mergeState({show: false}, setModals);
+        if (r === 'updated-data') {
+            getRoles().finally(() => mergeState({page: false}, setLoading));
+        }
+    };
+
     const openMenu = (role: GetRolesResponse, target: HTMLElement) => {
+        if (!access.editing && !access?.removing) return;
+
         setActionSheet(
             <ActionSheet
                 placement={'bottom-end'}
@@ -84,29 +96,33 @@ const RolesPage = () => {
                 toggleRef={target}
                 onClosed={() => setActionSheet(null)}
             >
-                <ActionSheetItem
-                    onClick={() => setModals({id: 'modal-manage-role', show: true, data: role.id})}
-                    before={<Icon24PenOutline width={20} height={20}/>}
-                >
-                    Редактировать
-                </ActionSheetItem>
-                <ActionSheetItem
-                    onClick={() => setModals({id: 'modal-remove-role', show: true, data: {id: role.id, name: role.name}})}
-                    mode={'destructive'}
-                    before={<Icon24TrashSimpleOutline width={20} height={20}/>}
-                >
-                    Удалить
-                </ActionSheetItem>
+                {access.editing && (
+                    <ActionSheetItem
+                        onClick={() => setModals({id: 'modal-manage-role', show: true, data: role.id})}
+                        before={<Icon24PenOutline width={20} height={20}/>}
+                    >
+                        Редактировать
+                    </ActionSheetItem>
+                )}
+                {access.removing && (
+                    <ActionSheetItem
+                        onClick={() => setModals({id: 'modal-remove-role', show: true, data: {id: role.id, name: role.name}})}
+                        mode={'destructive'}
+                        before={<Icon24TrashSimpleOutline width={20} height={20}/>}
+                    >
+                        Удалить
+                    </ActionSheetItem>
+                )}
             </ActionSheet>,
         );
     };
 
-    const closeModal = (r: ModalPageCloseReasonType) => {
-        mergeState({show: false}, setModals);
-        if (r === 'updated-data') {
-            getRoles().finally(() => mergeState({page: false}, setLoading));
-        }
-    };
+    // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
+    const access = useMemo(() => ({
+        adding: permissions.get('/roles')?.adding || !TEST,
+        editing: permissions.get('/roles')?.editing || !TEST,
+        removing: permissions.get('/roles')?.removing || !TEST,
+    }), [permissions, TEST]);
 
     return (
         <>
@@ -135,14 +151,16 @@ const RolesPage = () => {
             <Container
                 header={(
                     <>
-                        <Button
-                            size={'m'}
-                            disabled={loading.page || loading.permissions}
-                            before={<Icon24Add/>}
-                            onClick={() => mergeState({id: 'modal-manage-role', show: true}, setModals)}
-                        >
-                            Добавить
-                        </Button>
+                        {access.adding && (
+                            <Button
+                                size={'m'}
+                                disabled={loading.page || loading.permissions}
+                                before={<Icon24Add/>}
+                                onClick={() => mergeState({id: 'modal-manage-role', show: true}, setModals)}
+                            >
+                                Добавить
+                            </Button>
+                        )}
                         <Search
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -179,20 +197,22 @@ const RolesPage = () => {
                                         {!!r._count.users && (
                                             <Counter size={'s'}>{r._count.users}</Counter>
                                         )}
-                                        <IconButton
-                                            disabled={r.isAdmin}
-                                            className={classNames(
-                                                styles.menu,
-                                                loading.permissions && 'disabled'
-                                            )}
-                                            label={'Меню'}
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                openMenu(r, e.currentTarget);
-                                            }}
-                                        >
-                                            <Icon24MoreVertical fill={'var(--vkui--color_icon_primary)'} width={24} height={24}/>
-                                        </IconButton>
+                                        {(access.editing || access.removing) && (
+                                            <IconButton
+                                                disabled={r.isAdmin}
+                                                className={classNames(
+                                                    styles.menu,
+                                                    loading.permissions && 'disabled'
+                                                )}
+                                                label={'Меню'}
+                                                onClick={e => {
+                                                    e.stopPropagation();
+                                                    openMenu(r, e.currentTarget);
+                                                }}
+                                            >
+                                                <Icon24MoreVertical fill={'var(--vkui--color_icon_primary)'} width={24} height={24}/>
+                                            </IconButton>
+                                        )}
                                     </>
                                 }
                             >

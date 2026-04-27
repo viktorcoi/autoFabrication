@@ -1,3 +1,47 @@
+export type RolePermissionFlagsType = {
+    view: boolean;
+    adding: boolean;
+    changeAccess: boolean;
+    editing: boolean;
+    removing: boolean;
+}
+
+export type UserPermissionFlagsType = {
+    view: boolean;
+    adding: boolean;
+    editing: boolean;
+    resetPassword: boolean;
+    removing: boolean;
+}
+
+export type GuidePermissionFlagsType = {
+    view: boolean;
+    adding: boolean;
+    editing: boolean;
+    removing: boolean;
+}
+
+type RolePermissionType = {
+    url: '/roles';
+    access: RolePermissionFlagsType;
+}
+
+type UserPermissionType = {
+    url: '/users';
+    access: UserPermissionFlagsType;
+}
+
+type GuidePermissionType = {
+    url: '/guide';
+    access: GuidePermissionFlagsType;
+}
+
+export type RolePermissionsType = {
+    1: RolePermissionType;
+    2: UserPermissionType;
+    3: GuidePermissionType;
+}
+
 export type GetAuthMeResponse = {
     id: number;
     firstName: string;
@@ -14,7 +58,7 @@ export type GetAuthMeResponse = {
         id: number;
         name: string;
         description: string | null;
-        permissions: Record<string, unknown>;
+        permissions: RolePermissionsType;
     };
     mainUrl: string;
 }

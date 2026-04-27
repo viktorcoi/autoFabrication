@@ -4,6 +4,18 @@ import { env } from "../../config/env.js";
 import { AppError } from "../errors/app-error.js";
 import { verifyAuthToken } from "../auth/token.js";
 
+export const AUTH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+const isSecureCookie = () => new URL(env.CLIENT_URL).protocol === "https:";
+
+export const getAuthCookieOptions = (maxAge?: number) => ({
+	httpOnly: true,
+	sameSite: "lax" as const,
+	secure: isSecureCookie(),
+	path: "/",
+	...(typeof maxAge === "number" ? { maxAge } : {}),
+});
+
 export const readAuthToken = (request: Request) => {
 	const authHeader = request.headers.authorization;
 
@@ -16,12 +28,7 @@ export const readAuthToken = (request: Request) => {
 };
 
 export const clearAuthCookie = (response: Response) => {
-	response.clearCookie(env.AUTH_COOKIE_NAME, {
-		httpOnly: true,
-		sameSite: "lax",
-		secure: false,
-		path: "/",
-	});
+	response.clearCookie(env.AUTH_COOKIE_NAME, getAuthCookieOptions());
 };
 
 export const requireAuth = (

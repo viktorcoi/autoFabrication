@@ -1,0 +1,14 @@
+﻿.wrap {
+	display: grid;
+	place-items: center;
+	height: 100%;
+}
+
+.status {
+	max-width: 520px;
+	box-shadow: var(--vkui--elevation2);
+
+	:global(.vkuiBanner__content) {
+		align-items: center;
+	}
+}

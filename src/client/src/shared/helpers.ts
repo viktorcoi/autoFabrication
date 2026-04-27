@@ -1,7 +1,8 @@
 import {Dispatch, SetStateAction} from "react";
+import {RolePermissionsType} from "@/apiService/apiAuth/types";
 
 export const hasPathPermission = (
-    permissions: Record<string, unknown>,
+    permissions: RolePermissionsType,
     path: string,
 ) => {
     const permissionEntry = Object.values(permissions).find((value) => {
@@ -27,7 +28,7 @@ export const hasPathPermission = (
 };
 
 export const hasPathActionPermission = (
-    permissions: Record<string, unknown>,
+    permissions: RolePermissionsType,
     path: string,
     action: string,
 ) => {

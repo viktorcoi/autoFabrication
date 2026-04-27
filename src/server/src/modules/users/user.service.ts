@@ -106,6 +106,7 @@ export type DeleteUsersResult = {
 const UPDATE_GOD_USER_ERROR = "Первого пользователя может изменять только он сам";
 
 const DELETE_USER_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
+const DELETE_SELF_ERROR = "Нельзя удалить самого себя";
 const DELETE_USER_GOD_ERROR = "Первого пользователя нельзя удалить";
 const DELETE_USER_IN_USE_ERROR = "Этот пользователь используется и не может быть удален";
 
@@ -583,6 +584,14 @@ export const deleteUsers = async (ids: number[], actorId: number): Promise<Delet
 
 	for (const id of uniqueIds) {
 		const user = usersById.get(id);
+
+		if (id === actorId) {
+			result.error.push({
+				id,
+				description: DELETE_SELF_ERROR,
+			});
+			continue;
+		}
 
 		if (user?.isAdmin) {
 			result.error.push({

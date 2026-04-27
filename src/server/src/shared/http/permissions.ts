@@ -24,6 +24,9 @@ type RequestWithPermissions = Request & {
 	rolePermissions?: RolePermissions;
 };
 
+const findPermissionByPath = (permissions: RolePermissions, path: string) =>
+	Object.values(permissions).find((permission) => permission.url === path);
+
 const getPermissionByUrl = <TUrl extends PermissionUrl>(
 	permissions: RolePermissions,
 	url: TUrl,
@@ -32,6 +35,31 @@ const getPermissionByUrl = <TUrl extends PermissionUrl>(
 		(permission): permission is PermissionItemByUrl<TUrl> => permission.url === url,
 	);
 };
+
+export const hasAccessibleRoute = (permissions: RolePermissions) =>
+	Object.values(permissions).some((permissionGroup) => permissionGroup.access.view);
+
+export const getMainUrl = (permissions: RolePermissions) => {
+	for (const permissionGroup of Object.values(permissions)) {
+		if (permissionGroup.access.view) {
+			return permissionGroup.url;
+		}
+	}
+
+	return "";
+};
+
+export const normalizePermissionPath = (path: string) => {
+	const [firstSegment] = path
+		.trim()
+		.split("/")
+		.filter(Boolean);
+
+	return firstSegment ? `/${firstSegment}` : "/";
+};
+
+export const isPermissionRoute = (permissions: RolePermissions, path: string): path is PermissionUrl =>
+	Boolean(findPermissionByPath(permissions, path));
 
 export const hasPermission = <TUrl extends PermissionUrl>(
 	permissions: RolePermissions,

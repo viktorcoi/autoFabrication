@@ -8,10 +8,11 @@ import { errorHandler } from "../shared/http/error-handler.js";
 
 export const createApp = () => {
 	const app = express();
+	const isProduction = process.env.NODE_ENV === "production";
 
 	app.use(
 		cors({
-			origin: env.CLIENT_URL,
+			origin: isProduction ? env.CLIENT_URL : true,
 			credentials: true,
 		}),
 	);

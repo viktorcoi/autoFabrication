@@ -16,6 +16,7 @@ import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {PostRolesOptions} from "@/apiService/apiRoles/types";
 import {useController} from "@/shared/hooks";
+import {useAppStore} from "@/store/app/app";
 
 const initialData: PostRolesOptions = {
     name: "",
@@ -42,6 +43,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
     });
 
     const { createController } = useController([]);
+    const { role, getUser } = useAppStore(s => s);
 
     useEffect(() => {
         if (idRole === null) {
@@ -54,7 +56,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
         ApiService.roles.getById({
             id: idRole,
             controller
-        }).then(({status, data}) => {
+        }).then(async ({status, data}) => {
             if (status === 'success') {
                 const init = {
                     name: data.name,
@@ -75,7 +77,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
         onLoading(true);
 
         try {
-            const { status } = idRole === null ? await ApiService.roles.post({
+            const { status, data: result } = idRole === null ? await ApiService.roles.post({
                 options: {
                     name: data.name.trim(),
                     description: data.description.trim(),
@@ -93,6 +95,11 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
                     type: 'success',
                     text: `Успешно ${idRole === null ? 'добавлено' : 'отредактировано'}: "${data.name}"`
                 });
+
+                if (idRole !== null && result.id === role?.id) {
+                    await getUser();
+                }
+
                 onClose('updated-data');
             }
         } finally {

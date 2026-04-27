@@ -115,6 +115,7 @@ export type TableEmptyState = {
 };
 
 export type TableProps = {
+    editMode?: boolean;
     className?: string;
     hideFooter?: boolean;
     disabled?: boolean;

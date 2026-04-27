@@ -5,8 +5,10 @@ import {ApiRoles} from "@/apiService/apiRoles/apiRoles";
 import {ApiUsers} from "@/apiService/apiUsers/apiUsers";
 import {ApiServiceErrorOptions, ApiServiceResponse, GetTableOptions} from "@/apiService/types";
 
+const resolveApiBaseUrl = () => process.env.NEXT_PUBLIC_API_URL ?? "/api/";
+
 export const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/",
+    baseURL: resolveApiBaseUrl(),
     withCredentials: true,
 });
 

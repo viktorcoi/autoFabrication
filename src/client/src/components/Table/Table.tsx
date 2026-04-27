@@ -90,6 +90,7 @@ const Table = (props: TableProps) => {
         className,
         data,
         columns,
+        editMode = true,
         total,
         page,
         rows,
@@ -1493,12 +1494,11 @@ const Table = (props: TableProps) => {
                         />
                     </table>
 
-                    {loading && (
+                    {(loading || (visibleRowIds.length === 0 && !!data.length)) ? (
                         <div className={styles.loading}>
                             <Spinner size={'xl'}/>
                         </div>
-                    )}
-                    {(visibleRows.length === 0 && !loading) && (
+                    ) : (data.length === 0 && visibleRows.length === 0 && !loading) && (
                         <Placeholder
                             className={styles.empty}
                             title={emptyState.title}
@@ -1597,6 +1597,7 @@ const Table = (props: TableProps) => {
 
             {!hideFooter && (
                 <TableFooter
+                    editMode={editMode}
                     disabled={disabled}
                     loading={loading}
                     editing={editing}

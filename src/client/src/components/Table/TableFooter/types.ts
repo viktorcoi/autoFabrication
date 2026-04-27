@@ -2,6 +2,7 @@ import type {Dispatch, SetStateAction} from 'react';
 import type {PaginationItem} from '../types';
 
 export type TableFooterProps = {
+    editMode?: boolean;
     disabled?: boolean;
     loading: boolean;
     editing: boolean;

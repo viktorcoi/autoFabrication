@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { AppStore } from "@/store/app/types";
 import {ColorSchemeType} from "@vkontakte/vkui";
 import {ApiService} from "@/apiService/apiService";
+import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
 
 const THEME_STORAGE_KEY = "theme";
 
@@ -12,6 +13,23 @@ const autoDetectAppearance = (): 'dark' | 'light' => {
     return 'light';
 };
 
+const parseUser = (user: GetAuthMeResponse) => {
+    const { role, ...me } = user;
+    const {permissions, ...restRole} = role;
+
+    const permissionsMap = new Map();
+
+    Object.values(permissions).forEach(({url, access}) => {
+        permissionsMap.set(url, access);
+    })
+
+    return {
+        user: me,
+        role: restRole,
+        permissions: permissionsMap,
+    }
+}
+
 export const useAppStore = create<AppStore>((
     set,
     get
@@ -21,6 +39,12 @@ export const useAppStore = create<AppStore>((
     appReady: false,
     theme: "light",
     delaySearch: 500,
+    permissions: new Map(),
+    // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
+    TEST: true,
+    toggleTEST: () => {
+        set({TEST: !get().TEST})
+    },
 
     initializeApp: () => {
         if (get().appReady || typeof window === "undefined") {
@@ -42,17 +66,27 @@ export const useAppStore = create<AppStore>((
     getUser: async () => {
         await ApiService.auth.me({}).then(({status, data}) => {
             if (status === 'success') {
-                const { role, ...me } = data;
-                set({ user: me, role });
+                const {
+                    user,
+                    role,
+                    permissions,
+                } = parseUser(data);
+
+                set({ user, role, permissions });
             } else set({ user: null, role: null });
         })
     },
 
-    setUser: (user) => {
-        if (user !== null) {
-            const { role, ...me } = user;
-            set({ user: me, role });
-        } else set({ user, role: null });
+    setUser: (data) => {
+        if (data !== null) {
+            const {
+                user,
+                role,
+                permissions,
+            } = parseUser(data);
+
+            set({ user, role, permissions });
+        } else set({ user: data, role: null });
     },
 
     toggleTheme: () => {

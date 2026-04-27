@@ -9,7 +9,7 @@ import {
     Icon24TrashSimpleOutline
 } from "@vkontakte/icons";
 import Container from "@/components/Container/Container";
-import React, {ReactNode, useEffect, useState} from "react";
+import React, {ReactNode, useEffect, useMemo, useState} from "react";
 import {useController, useSearch} from "@/shared/hooks";
 import {mergeState} from "@/shared/helpers";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
@@ -32,6 +32,7 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 import {useAppStore} from "@/store/app/app";
 import {SnackbarItem} from "@/store/snackbar/types";
+import {UserPermissionFlagsType} from "@/apiService/apiAuth/types";
 
 const UsersPage = () => {
 
@@ -68,7 +69,8 @@ const UsersPage = () => {
 
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const showErrors = useShowErrors(state => state);
-    const { user, getUser } = useAppStore(state => state);
+    // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
+    const { TEST, permissions, user, getUser } = useAppStore(state => state);
 
     const {
         createController,
@@ -188,6 +190,8 @@ const UsersPage = () => {
             }, setTableOptions);
         }
         if (e.type === 'cellDoubleClick') {
+            if (!access.editing) return;
+
             setModals({id: 'modal-manage-user', show: true, data: e.row.id});
         }
         if (e.type === 'selected') {
@@ -204,6 +208,8 @@ const UsersPage = () => {
             });
         }
         if (e.type === 'contextMenu') {
+            if (!access.editing && !access.resetPassword && !access.removing) return;
+
             const data = {
                 id: e.row.id,
                 name: `${e.row.lastName} ${e.row.firstName}${e.row.middleName ? ` ${e.row.middleName}` : ''}`
@@ -216,25 +222,31 @@ const UsersPage = () => {
                     toggleRef={e.target as HTMLElement}
                     onClosed={() => mergeState({actionSheet: null}, setTableManage)}
                 >
-                    <ActionSheetItem
-                        onClick={() => setModals({id: 'modal-manage-user', show: true, data: e.row.id})}
-                        before={<Icon24PenOutline width={20} height={20}/>}
-                    >
-                        Редактировать
-                    </ActionSheetItem>
-                    <ActionSheetItem
-                        onClick={() => setModals({id: 'modal-change-login', show: true, data})}
-                        before={<Icon20MentionOutline width={20} height={20}/>}
-                    >
-                        Изменить логин
-                    </ActionSheetItem>
-                    <ActionSheetItem
-                        onClick={() => setModals({id: 'modal-change-password', show: true, data})}
-                        before={<Icon20KeyOutline width={20} height={20}/>}
-                    >
-                        Сбросить пароль
-                    </ActionSheetItem>
-                    {!e.row.isAdmin && (
+                    {access.editing && (
+                        <>
+                            <ActionSheetItem
+                                onClick={() => setModals({id: 'modal-manage-user', show: true, data: e.row.id})}
+                                before={<Icon24PenOutline width={20} height={20}/>}
+                            >
+                                Редактировать
+                            </ActionSheetItem>
+                            <ActionSheetItem
+                                onClick={() => setModals({id: 'modal-change-login', show: true, data})}
+                                before={<Icon20MentionOutline width={20} height={20}/>}
+                            >
+                                Изменить логин
+                            </ActionSheetItem>
+                        </>
+                    )}
+                    {access.resetPassword && (
+                        <ActionSheetItem
+                            onClick={() => setModals({id: 'modal-change-password', show: true, data})}
+                            before={<Icon20KeyOutline width={20} height={20}/>}
+                        >
+                            Сбросить пароль
+                        </ActionSheetItem>
+                    )}
+                    {(!e.row.isAdmin && access.removing) && (
                         <ActionSheetItem
                             onClick={() => setModals({id: 'modal-remove-user', show: true, data})}
                             mode={'destructive'}
@@ -247,6 +259,14 @@ const UsersPage = () => {
             }, setTableManage);
         }
     };
+
+    // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
+    const access = useMemo(() => ({
+        adding: permissions.get('/users')?.adding || !TEST,
+        editing: permissions.get('/users')?.editing || !TEST,
+        removing: permissions.get('/users')?.removing || !TEST,
+        resetPassword: (permissions.get('/users') as UserPermissionFlagsType)?.resetPassword || !TEST
+    }), [permissions, TEST]);
 
     return (
         <>
@@ -320,30 +340,48 @@ const UsersPage = () => {
             <Container
                 header={(
                     <>
-                        <ButtonGroup gap={'s'}>
-                            <Button
-                                size={'m'}
-                                disabled={loading.page || tableManage.editMode}
-                                before={<Icon24Add/>}
-                                onClick={() => mergeState({id: 'modal-manage-user', show: true}, setModals)}
-                            >
-                                Добавить
-                            </Button>
-                            <Tooltip
-                                description={`Удалить`}
-                                usePortal={true}
-                                placement={'top'}
-                                disableTriggerOnFocus={true}
-                            >
-                                <Button
-                                    size={'m'}
-                                    appearance={'negative'}
-                                    disabled={loading.page || !selected.length || tableManage.editMode}
-                                    before={<Icon24TrashSimpleOutline/>}
-                                    onClick={handleRemove}
-                                />
-                            </Tooltip>
-                        </ButtonGroup>
+                        {(access.adding || access.removing) && (
+                            <ButtonGroup gap={'s'}>
+                                {access.adding && (
+                                    <Button
+                                        size={'m'}
+                                        disabled={loading.page || tableManage.editMode}
+                                        before={<Icon24Add/>}
+                                        onClick={() => mergeState({id: 'modal-manage-user', show: true}, setModals)}
+                                    >
+                                        Добавить
+                                    </Button>
+                                )}
+                                {access.removing && (
+                                    !access.adding ? (
+                                        <Button
+                                            size={'m'}
+                                            appearance={'negative'}
+                                            disabled={loading.page || !selected.length || tableManage.editMode}
+                                            before={<Icon24TrashSimpleOutline/>}
+                                            onClick={handleRemove}
+                                        >
+                                            Удалить
+                                        </Button>
+                                    ) : (
+                                        <Tooltip
+                                            description={`Удалить`}
+                                            usePortal={true}
+                                            placement={'top'}
+                                            disableTriggerOnFocus={true}
+                                        >
+                                            <Button
+                                                size={'m'}
+                                                appearance={'negative'}
+                                                disabled={loading.page || !selected.length || tableManage.editMode}
+                                                before={<Icon24TrashSimpleOutline/>}
+                                                onClick={handleRemove}
+                                            />
+                                        </Tooltip>
+                                    )
+                                )}
+                            </ButtonGroup>
+                        )}
                         <Search
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -356,6 +394,7 @@ const UsersPage = () => {
                 )}
             >
                 <Table
+                    editMode={access.editing}
                     data={table.data}
                     columns={tableColumns.user}
                     total={table.total}

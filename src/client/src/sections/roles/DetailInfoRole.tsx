@@ -24,6 +24,8 @@ import {
 } from "@/apiService/apiRoles/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useController} from "@/shared/hooks";
+import {useAppStore} from "@/store/app/app";
+import {RolePermissionFlagsType} from "@/apiService/apiAuth/types";
 
 const SECTION_TITLES: Record<RolePermissionSection["url"], string> = {
     "/roles": "Роли пользователей",
@@ -48,6 +50,8 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
     } = props;
 
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
+    // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
+    const { TEST, permissions, role, getUser } = useAppStore(s => s);
 
     const [savedData, setSavedData] = useState<GetByIdRoleResponse | null>(null);
     const [data, setData] = useState<GetByIdRoleResponse | null>(null);
@@ -185,10 +189,8 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
 
         await ApiService.roles.permissions.patch({
             id,
-            options: {
-                permissions: data.permissions,
-            },
-        }).then(({status, data}) => {
+            options: { permissions: data.permissions },
+        }).then(async ({status, data}) => {
             if (status === 'success') {
                 const nextData = data;
 
@@ -198,12 +200,22 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                     type: 'success',
                     text: `Права роли "${data.name}" успешно обновлены`,
                 });
+
+                if (data.id === role?.id) {
+                    await getUser();
+                }
             }
         }).finally(() => {
             mergeState({send: false}, setLoading);
             onLoading(false);
         });
     };
+
+    // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
+    const accessChanges = useMemo(
+        () => (permissions.get('/roles') as RolePermissionFlagsType)?.changeAccess || !TEST,
+        [TEST, permissions]
+    );
 
     return (
         <div className={styles.wrap}>
@@ -255,7 +267,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                                                 Component={'label'}
                                                 className={classNames(
                                                     styles.section__root,
-                                                    data?.isAdmin && 'activated',
+                                                    (data?.isAdmin || !accessChanges) && 'activated',
                                                     loading.send && 'disabled',
                                                 )}
                                             >
@@ -265,7 +277,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                                                 <Checkbox
                                                     checked={allChecked}
                                                     indeterminate={indeterminate}
-                                                    disabled={loading.send || !!data?.isAdmin}
+                                                    disabled={loading.send || !!data?.isAdmin || !accessChanges}
                                                     onChange={(event) => updateSectionPermissions(sectionKey, event.target.checked)}
                                                 />
                                             </Tappable>
@@ -283,7 +295,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                                                             Component={'label'}
                                                             className={classNames(
                                                                 styles.section__root,
-                                                                data?.isAdmin && 'activated',
+                                                                (data?.isAdmin || !accessChanges) && 'activated',
                                                                 loading.send && 'disabled',
                                                             )}
                                                         >
@@ -292,7 +304,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                                                             </Text>
                                                             <Checkbox
                                                                 checked={enabled}
-                                                                disabled={loading.send || !!data?.isAdmin}
+                                                                disabled={loading.send || !!data?.isAdmin || !accessChanges}
                                                                 onChange={(event) => updatePermission(sectionKey, accessKey, event.target.checked)}
                                                             />
                                                         </Tappable>
@@ -307,7 +319,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
                     </>
                 )}
             </div>
-            {!(loading.get || data?.isAdmin) && (
+            {!(loading.get || data?.isAdmin || !accessChanges) && (
                 <div className={styles.foot}>
                     <ButtonGroup
                         stretched={true}

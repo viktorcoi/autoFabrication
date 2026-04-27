@@ -1,6 +1,7 @@
 import {ActionSheet, ActionSheetItem, Avatar, classNames, Separator, SimpleCell} from "@vkontakte/vkui";
 import Link from "next/link";
 import {
+    Icon16Lock, Icon16LockOpen,
     Icon20DoorArrowRightOutline,
     Icon20MoonOutline,
     Icon20SunOutline,
@@ -45,7 +46,10 @@ const Navigation = () => {
         user,
         role,
         theme,
-        toggleTheme
+        toggleTheme,
+        // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
+        TEST,
+        toggleTEST
     } = useAppStore(state => state);
     const showErrors = useShowErrors(state => state);
 
@@ -70,6 +74,15 @@ const Navigation = () => {
                 toggleRef={menuRef}
                 onClosed={() => setActionSheet(null)}
             >
+                {/* TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты */}
+                <ActionSheetItem
+                    onClick={toggleTEST}
+                    before={TEST ? <Icon16LockOpen width={20} height={20}/> : <Icon16Lock width={20} height={20}/>}
+                >
+                    {`${TEST ? 'Отключить' : 'Включить'} обработку доступа`}
+                </ActionSheetItem>
+
+
                 <ActionSheetItem
                     before={<Icon28SettingsOutline width={20} height={20}/>}
                 >
