@@ -1,6 +1,11 @@
 import {HTMLAttributes, ReactNode} from "react";
 
-export type DragAndDropFileErrorCode = 'max-files' | 'file-too-large' | 'file-invalid-type' | 'file-duplicate';
+export type DragAndDropFileErrorCode =
+    | 'max-files'
+    | 'file-too-large'
+    | 'file-invalid-type'
+    | 'file-duplicate'
+    | 'total-size-exceeded';
 
 export type DragAndDropFileError = {
     code: DragAndDropFileErrorCode;
@@ -14,6 +19,7 @@ export interface DragAndDropFileProps extends Omit<HTMLAttributes<HTMLDivElement
     accept?: string | string[];
     maxFiles?: number;
     maxSize: number;
+    maxTotalSize?: number;
     disabled?: boolean;
     name?: string;
     icon?: ReactNode;

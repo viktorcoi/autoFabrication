@@ -6,11 +6,13 @@ src/server/dist
 .turbo
 coverage
 *.log
+*.tsbuildinfo
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.idea/
 src/server/prisma/dev.db
 src/server/prisma/dev.db-journal
 src/server/storage

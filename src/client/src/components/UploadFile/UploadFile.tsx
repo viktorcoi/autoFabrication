@@ -17,14 +17,13 @@ import {
 } from "@vkontakte/icons";
 import styles from "./UploadFile.module.scss";
 import {DragAndDropFileError, DragAndDropFileProps} from "@/components/UploadFile/types";
-import {formatBytes, getAcceptItems, isFileAccepted} from "@/components/UploadFile/helpers";
-
-const isSameFile = (file: File, compareFile: File) => (
-    file.name === compareFile.name &&
-    file.size === compareFile.size &&
-    file.lastModified === compareFile.lastModified &&
-    file.type === compareFile.type
-);
+import {
+    formatBytes,
+    getAcceptItems,
+    getFilesTotalSize,
+    isFileAccepted,
+    isSameFile
+} from "@/components/UploadFile/helpers";
 
 export const UploadFile = (props: DragAndDropFileProps) => {
 
@@ -36,11 +35,11 @@ export const UploadFile = (props: DragAndDropFileProps) => {
         accept,
         maxFiles,
         maxSize,
+        maxTotalSize,
         disabled = false,
         name,
         title = 'Выберите файлы',
         description,
-        browseLabel = 'Выбрать файл',
         showFileList = true,
         removable = true,
         className,
@@ -57,7 +56,7 @@ export const UploadFile = (props: DragAndDropFileProps) => {
     const isControlled = value !== undefined;
     const files = isControlled ? value : innerFiles;
     const acceptValue = Array.isArray(accept) ? accept.join(',') : accept;
-    const acceptItems = useMemo(() => getAcceptItems(accept), [acceptValue]);
+    const acceptItems = useMemo(() => getAcceptItems(accept), [accept]);
     const filesLimit = maxFiles === undefined || !Number.isFinite(maxFiles)
         ? Number.POSITIVE_INFINITY
         : Math.max(0, Math.floor(maxFiles));
@@ -67,6 +66,29 @@ export const UploadFile = (props: DragAndDropFileProps) => {
         ? maxSize * 1024 * 1024
         : null;
     const maxSizeText = maxSizeBytes === null ? null : formatBytes(maxSizeBytes);
+    const maxTotalSizeBytes = typeof maxTotalSize === 'number' && Number.isFinite(maxTotalSize) && maxTotalSize > 0
+        ? maxTotalSize * 1024 * 1024
+        : null;
+    const maxTotalSizeText = maxTotalSizeBytes === null ? null : formatBytes(maxTotalSizeBytes);
+    const isMultipleFiles = Number.isFinite(filesLimit) ? filesLimit > 1 : true;
+
+    const defaultDescription = useMemo(() => {
+        const limitParts: string[] = [];
+
+        if (Number.isFinite(filesLimit)) {
+            limitParts.push(`максимум файлов: ${filesLimit}`);
+        }
+
+        if (maxSizeText) {
+            limitParts.push(`максимальный размер файла: ${maxSizeText}`);
+        }
+
+        if (maxTotalSizeText) {
+            limitParts.push(`максимальный общий размер: ${maxTotalSizeText}`);
+        }
+
+        return `Можно выбрать файл${isMultipleFiles ? 'ы' : ''} через проводник или перетащить ${isMultipleFiles ? 'их' : 'его'} в эту область${limitParts.length ? ` (${limitParts.join(', ')})` : ''}`;
+    }, [filesLimit, isMultipleFiles, maxSizeText, maxTotalSizeText]);
 
     const updateFiles = (nextFiles: File[]) => {
         if (!isControlled) {
@@ -82,6 +104,12 @@ export const UploadFile = (props: DragAndDropFileProps) => {
         message: file
             ? `Файл "${file.name}" не добавлен: максимум ${filesLimit}`
             : `Нельзя добавить больше файлов: максимум ${filesLimit}`,
+    });
+
+    const getMaxTotalSizeError = (file: File): DragAndDropFileError => ({
+        code: 'total-size-exceeded',
+        file,
+        message: `Файл "${file.name}" не добавлен: общий размер файлов больше ${maxTotalSizeText}`,
     });
 
     const emitError = (error: DragAndDropFileError) => {
@@ -105,6 +133,8 @@ export const UploadFile = (props: DragAndDropFileProps) => {
             ? Math.max(0, filesLimit - baseFiles.length)
             : Number.POSITIVE_INFINITY;
         const nextFiles: File[] = [];
+        const baseFilesTotalSize = getFilesTotalSize(baseFiles);
+        let nextFilesTotalSize = 0;
 
         incomingFiles.forEach(file => {
             if ([...baseFiles, ...nextFiles].some(currentFile => isSameFile(file, currentFile))) {
@@ -139,7 +169,13 @@ export const UploadFile = (props: DragAndDropFileProps) => {
                 return;
             }
 
+            if (maxTotalSizeBytes !== null && (baseFilesTotalSize + nextFilesTotalSize + file.size) > maxTotalSizeBytes) {
+                emitError(getMaxTotalSizeError(file));
+                return;
+            }
+
             nextFiles.push(file);
+            nextFilesTotalSize += file.size;
         });
 
         if (nextFiles.length) {
@@ -244,7 +280,7 @@ export const UploadFile = (props: DragAndDropFileProps) => {
                         level={'2'}
                         className={styles.description}
                     >
-                        {description || `Можно выбрать файл${(maxFiles && maxFiles > 1) ? 'ы' : ''} через проводник или перетащить ${(maxFiles && maxFiles > 1) ? 'их' : 'его'} в эту область${maxSizeText ? ` (${maxFiles ? `максимум файлов: ${maxFiles}, ` : ''}максимальный размер файла: ${maxSizeText})` : ''}`}
+                        {description || defaultDescription}
                     </Caption>
                 </div>
             </div>

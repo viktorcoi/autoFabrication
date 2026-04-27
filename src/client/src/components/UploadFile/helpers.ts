@@ -1,3 +1,12 @@
+export const isSameFile = (file: File, compareFile: File) => (
+    file.name === compareFile.name &&
+    file.size === compareFile.size &&
+    file.lastModified === compareFile.lastModified &&
+    file.type === compareFile.type
+);
+
+export const getFilesTotalSize = (files: File[]) => files.reduce((total, file) => total + file.size, 0);
+
 export const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 B';
 
