@@ -21,6 +21,13 @@ import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/type
 import {ApiService} from "@/apiService/apiService";
 import {SnackbarItem} from "@/store/snackbar/types";
 import {PatchTypeProductsTableOptions, TypeProductsTableRow} from "@/apiService/apiGuide/types";
+import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
+import ModalChangeLogin from "@/components/modals/ModalChangeLogin/ModalChangeLogin";
+import ModalChangePassword from "@/components/modals/ModalChangePassword/ModalChangePassword";
+import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
+import ModalCreateUser from "@/components/modals/ModalCreateUser/ModalCreateUser";
+import ModalManageUser from "@/components/modals/ModalManageUser/ModalManageUser";
+import ModalManageTypeProducts from "@/components/modals/ModalGuide/ModalManageTypeProducts/ModalManageTypeProducts";
 
 const TypeProducts = () => {
 
@@ -79,6 +86,11 @@ const TypeProducts = () => {
             controller
         }).then(({status, data}) => {
             if (status === 'success') {
+                if (data.data.length === 0 && tableOptions.page !== 0) {
+                    mergeState({page: tableOptions.page - 1}, setTableOptions);
+                    cancelRef.current = true;
+                    return;
+                }
                 setTable(data);
                 cancelRef.current = false;
             } else if (data === 'canceled') {
@@ -192,12 +204,8 @@ const TypeProducts = () => {
             });
         }
         if (e.type === 'contextMenu') {
+            console.log('AA')
             if (!access.editing && !access.removing) return;
-
-            const data = {
-                id: e.row.id,
-                name: `${e.row.lastName} ${e.row.firstName}${e.row.middleName ? ` ${e.row.middleName}` : ''}`
-            };
 
             mergeState({actionSheet:
                     <ActionSheet
@@ -218,7 +226,10 @@ const TypeProducts = () => {
                         )}
                         {(!e.row.isAdmin && access.removing) && (
                             <ActionSheetItem
-                                onClick={() => setModals({id: 'modal-remove-type-product', show: true, data})}
+                                onClick={() => setModals({id: 'modal-remove-type-product', show: true, data: {
+                                    id: e.row.id,
+                                    name: e.row.name
+                                }})}
                                 mode={'destructive'}
                                 before={<Icon24TrashSimpleOutline width={20} height={20}/>}
                             >
@@ -237,78 +248,113 @@ const TypeProducts = () => {
     }), [permissions, TEST]);
 
     return (
-        <div className={styles.wrap}>
-            <div className={classNames('island', styles.header)}>
-                {(access.adding || access.removing) && (
-                    <ButtonGroup gap={'s'}>
-                        {access.adding && (
-                            <Button
-                                size={'m'}
-                                disabled={loading.page || tableManage.editMode}
-                                before={<Icon24Add/>}
-                                onClick={() => mergeState({id: 'modal-manage-type-product', show: true}, setModals)}
-                            >
-                                Добавить
-                            </Button>
-                        )}
-                        {access.removing && (
-                            !access.adding ? (
+        <>
+            {tableManage.actionSheet}
+            {'modal-multi-remove-type-product' === modals.id ? (
+                <ModalMultiRemove
+                    data={modals.data}
+                    url={'/typeProducts'}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    open={modals.show}
+                    preventClose={loading.modal}
+                />
+            ) : 'modal-remove-type-product' === modals.id ? (
+                <ModalRemove
+                    removeId={modals.data?.id}
+                    mode={'table'}
+                    name={modals.data?.name}
+                    url={'/typeProducts'}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                    open={modals.show}
+                    preventClose={loading.modal}
+                />
+            ) : 'modal-manage-type-product' === modals.id && (
+                <ModalManageTypeProducts
+                    idTypeProducts={modals.data}
+                    preventClose={loading.modal}
+                    open={modals.show}
+                    onClose={closeModal}
+                    onLoading={v => mergeState({modal: v}, setLoading)}
+                    onClosed={() => setModals({id: null,  show: false, data: null})}
+                />
+            )}
+            <div className={styles.wrap}>
+                <div className={classNames('island', styles.header)}>
+                    {(access.adding || access.removing) && (
+                        <ButtonGroup gap={'s'}>
+                            {access.adding && (
                                 <Button
                                     size={'m'}
-                                    appearance={'negative'}
-                                    disabled={loading.page || !selected.length || tableManage.editMode}
-                                    before={<Icon24TrashSimpleOutline/>}
-                                    onClick={handleRemove}
+                                    disabled={loading.page || tableManage.editMode}
+                                    before={<Icon24Add/>}
+                                    onClick={() => mergeState({id: 'modal-manage-type-product', show: true}, setModals)}
                                 >
-                                    Удалить
+                                    Добавить
                                 </Button>
-                            ) : (
-                                <Tooltip
-                                    description={`Удалить`}
-                                    usePortal={true}
-                                    placement={'top'}
-                                    disableTriggerOnFocus={true}
-                                >
+                            )}
+                            {access.removing && (
+                                !access.adding ? (
                                     <Button
                                         size={'m'}
                                         appearance={'negative'}
                                         disabled={loading.page || !selected.length || tableManage.editMode}
                                         before={<Icon24TrashSimpleOutline/>}
-                                        // onClick={handleRemove}
-                                    />
-                                </Tooltip>
-                            )
-                        )}
-                    </ButtonGroup>
-                )}
-                <Search
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    disabled={loading.page || tableManage.editMode}
-                    noPadding={true}
-                    className={'search'}
-                    slotProps={{ input: { getRootRef: inputRef } }}
-                />
+                                        onClick={handleRemove}
+                                    >
+                                        Удалить
+                                    </Button>
+                                ) : (
+                                    <Tooltip
+                                        description={`Удалить`}
+                                        usePortal={true}
+                                        placement={'top'}
+                                        disableTriggerOnFocus={true}
+                                    >
+                                        <Button
+                                            size={'m'}
+                                            appearance={'negative'}
+                                            disabled={loading.page || !selected.length || tableManage.editMode}
+                                            before={<Icon24TrashSimpleOutline/>}
+                                            onClick={handleRemove}
+                                        />
+                                    </Tooltip>
+                                )
+                            )}
+                        </ButtonGroup>
+                    )}
+                    <Search
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        disabled={loading.page || tableManage.editMode}
+                        noPadding={true}
+                        className={'search'}
+                        slotProps={{ input: { getRootRef: inputRef } }}
+                    />
 
+                </div>
+                <Table
+                    componentName={'typeProducts'}
+                    columns={tableColumns.typeProducts}
+                    editMode={access.editing}
+                    data={table.data}
+                    total={table.total}
+                    page={tableOptions.page}
+                    rows={tableOptions.rows}
+                    loading={loading.page}
+                    selected={selected}
+                    onEvent={onEventTable}
+                    emptyState={!delaySearch.trim() ? undefined :{
+                        icon: <Icon24SearchSlashOutline width={62} height={62} />,
+                        title: 'Совпадений не найдено',
+                        description: 'Попробуйте изменить параметры поиска',
+                    }}
+                />
             </div>
-            <Table
-                componentName={'typeProducts'}
-                columns={tableColumns.typeProducts}
-                editMode={access.editing}
-                data={table.data}
-                total={table.total}
-                page={tableOptions.page}
-                rows={tableOptions.rows}
-                loading={loading.page}
-                selected={selected}
-                onEvent={onEventTable}
-                emptyState={{
-                    icon: <Icon24SearchSlashOutline width={62} height={62} />,
-                    title: 'Совпадений не найдено',
-                    description: 'Попробуйте изменить параметры поиска',
-                }}
-            />
-        </div>
+        </>
     )
 }
 

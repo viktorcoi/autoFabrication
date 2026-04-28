@@ -9,6 +9,7 @@ import {SnackbarItem} from "@/store/snackbar/types";
 const urlList = {
     '/roles': (id: number) => ApiService.roles.delete({ id }),
     '/users': (id: number) => ApiService.users.delete({ ids: [id] }),
+    '/typeProducts': (id: number) => ApiService.guide.typeProducts.delete({ ids: [id] }),
 };
 
 const ModalRemove = (props: ModalManageRoleProps) => {

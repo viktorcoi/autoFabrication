@@ -2,7 +2,7 @@
 
 import Container from "@/components/Container/Container";
 import styles from './page.module.scss';
-import {classNames, SimpleCell} from "@vkontakte/vkui";
+import {classNames, FormStatus, Placeholder, SimpleCell} from "@vkontakte/vkui";
 import {useState} from "react";
 import TypeProducts from "@/sections/guide/TypeProducts";
 
@@ -45,10 +45,7 @@ const GuidePage = () => {
 
     const [activeSection, setActiveSection] = useState(1);
 
-
-
     return (
-
         <Container>
             <div className={styles.wrap}>
                 <div className={classNames('island scroll', styles.list)}>
@@ -66,9 +63,16 @@ const GuidePage = () => {
                         </SimpleCell>
                     ))}
                 </div>
-                {activeSection === 1 && (
+                {activeSection === 1 ? (
                     <TypeProducts/>
-                )}
+                ) : <Placeholder
+                    stretched={true}
+                >
+                    <FormStatus mode={'error'}>
+                        Сань ну ты тоже не охуевай, я не киборг, чтобы еще и это сделать
+                    </FormStatus>
+
+                </Placeholder>}
             </div>
         </Container>
     )

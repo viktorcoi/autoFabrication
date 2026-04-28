@@ -1,0 +1,374 @@
+import type { Prisma } from "../../generated/prisma/client.js";
+import { prisma } from "../../lib/prisma.js";
+import type { RolePermissions } from "../roles/role.types.js";
+import { AppError } from "../../shared/errors/app-error.js";
+import { hasPermission } from "../../shared/http/permissions.js";
+import { updateTypeProductsTableItemSchema } from "./guide.schemas.js";
+import type {
+	GetTypeProductsTableQuery,
+	UpdateTypeProductsTablePayload,
+} from "./guide.schemas.js";
+
+const typeProductSelect = {
+	id: true,
+	name: true,
+	description: true,
+	createdAt: true,
+	updatedAt: true,
+} satisfies Prisma.TypeProductSelect;
+
+const typeProductTableSelect = {
+	id: true,
+	name: true,
+	description: true,
+} satisfies Prisma.TypeProductSelect;
+
+const TYPE_PRODUCT_TABLE_FIELD_TO_MODEL_FIELD = {
+	id: "id",
+	name: "name",
+	description: "description",
+} as const;
+
+const TYPE_PRODUCT_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
+const TYPE_PRODUCT_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
+
+const typeProductTableMeta = Object.freeze({
+	isConst: Object.freeze(
+		Object.entries(TYPE_PRODUCT_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([, modelField]) => TYPE_PRODUCT_SYSTEM_MODEL_FIELDS.has(modelField))
+			.map(([columnId]) => columnId),
+	),
+	isRequired: Object.freeze(
+		Object.entries(TYPE_PRODUCT_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([, modelField]) => !TYPE_PRODUCT_OPTIONAL_MODEL_FIELDS.has(modelField))
+			.filter(([, modelField]) => !TYPE_PRODUCT_SYSTEM_MODEL_FIELDS.has(modelField))
+			.map(([columnId]) => columnId),
+	),
+});
+
+type CreateTypeProductData = {
+	name: string;
+	description?: string | null;
+};
+
+type UpdateTypeProductData = Partial<CreateTypeProductData>;
+
+type ActionByTableResultItem = {
+	id: number;
+	description: string;
+};
+
+export type ActionByTableResult = {
+	success: ActionByTableResultItem[];
+	error: ActionByTableResultItem[];
+};
+
+const TYPE_PRODUCT_NOT_FOUND_ERROR = "Тип изделия не найден";
+const TYPE_PRODUCT_DUPLICATE_ERROR = "Тип изделия с таким названием уже существует";
+const UPDATE_TYPE_PRODUCT_NO_RIGHTS_ERROR = "У вас нет прав для редактирования";
+const UPDATE_TYPE_PRODUCT_SUCCESS_DESCRIPTION = "Отредактировано";
+const DELETE_TYPE_PRODUCT_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
+const DELETE_TYPE_PRODUCT_IN_USE_ERROR = "Этот тип изделия используется и не может быть удален";
+
+const getUniqueIds = (ids: number[]) => {
+	const uniqueIds = new Set<number>();
+
+	return ids.filter((id) => {
+		if (uniqueIds.has(id)) {
+			return false;
+		}
+
+		uniqueIds.add(id);
+		return true;
+	});
+};
+
+const getValidationErrorMessage = (issues: Array<{ message: string }>) => {
+	const messages = issues
+		.map((issue) => issue.message.trim())
+		.filter(Boolean);
+
+	return Array.from(new Set(messages)).join(" / ");
+};
+
+const isPrismaDeleteConstraintError = (error: unknown) =>
+	Boolean(
+		error
+		&& typeof error === "object"
+		&& "code" in error
+		&& (error.code === "P2003" || error.code === "P2014"),
+	);
+
+const isPrismaRecordNotFoundError = (error: unknown) =>
+	Boolean(
+		error
+		&& typeof error === "object"
+		&& "code" in error
+		&& error.code === "P2025",
+	);
+
+const buildTypeProductsTableWhere = (search?: string): Prisma.TypeProductWhereInput | undefined => {
+	if (!search) {
+		return undefined;
+	}
+
+	return {
+		OR: [
+			{
+				name: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+			{
+				description: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+		],
+	};
+};
+
+const buildTypeProductsTableOrderBy = (
+	sorting: GetTypeProductsTableQuery["sorting"],
+): Prisma.TypeProductOrderByWithRelationInput[] => {
+	if (!sorting) {
+		return [{ id: "asc" }];
+	}
+
+	return [
+		{ [sorting.id]: sorting.sort } as Prisma.TypeProductOrderByWithRelationInput,
+		{ id: "asc" },
+	];
+};
+
+const ensureTypeProductNameIsUnique = async (name: string, excludedId?: number) => {
+	const existingTypeProduct = await prisma.typeProduct.findUnique({
+		where: { name },
+		select: { id: true },
+	});
+
+	if (existingTypeProduct && existingTypeProduct.id !== excludedId) {
+		throw new AppError(409, TYPE_PRODUCT_DUPLICATE_ERROR);
+	}
+};
+
+const getGuidePermissions = async (actorId: number) => {
+	const actor = await prisma.user.findUnique({
+		where: { id: actorId },
+		select: {
+			role: {
+				select: {
+					permissions: true,
+				},
+			},
+		},
+	});
+
+	if (!actor) {
+		throw new AppError(404, "Пользователь не найден");
+	}
+
+	return actor.role.permissions as RolePermissions;
+};
+
+export const getTypeProductsTable = async (query: GetTypeProductsTableQuery) => {
+	const where = buildTypeProductsTableWhere(query.search);
+	const orderBy = buildTypeProductsTableOrderBy(query.sorting);
+	const skip = query.page * query.rows;
+	const [total, typeProducts] = await prisma.$transaction([
+		prisma.typeProduct.count({ where }),
+		prisma.typeProduct.findMany({
+			where,
+			select: typeProductTableSelect,
+			orderBy,
+			skip,
+			take: query.rows,
+		}),
+	]);
+
+	return {
+		total,
+		data: typeProducts.map((typeProduct) => ({
+			id: typeProduct.id,
+			name: typeProduct.name,
+			...(typeProduct.description ? { description: typeProduct.description } : {}),
+			isConst: [...typeProductTableMeta.isConst],
+			isRequired: [...typeProductTableMeta.isRequired],
+		})),
+	};
+};
+
+export const getTypeProductById = async (id: number) => {
+	const typeProduct = await prisma.typeProduct.findUnique({
+		where: { id },
+		select: typeProductSelect,
+	});
+
+	if (!typeProduct) {
+		throw new AppError(404, TYPE_PRODUCT_NOT_FOUND_ERROR);
+	}
+
+	return typeProduct;
+};
+
+export const createTypeProduct = async (data: CreateTypeProductData) => {
+	await ensureTypeProductNameIsUnique(data.name);
+
+	return prisma.typeProduct.create({
+		data: {
+			name: data.name,
+			description: data.description,
+		},
+		select: typeProductSelect,
+	});
+};
+
+export const updateTypeProduct = async (id: number, data: UpdateTypeProductData) => {
+	await getTypeProductById(id);
+
+	if (typeof data.name === "string") {
+		await ensureTypeProductNameIsUnique(data.name, id);
+	}
+
+	return prisma.typeProduct.update({
+		where: { id },
+		data: {
+			name: data.name,
+			description: data.description,
+		},
+		select: typeProductSelect,
+	});
+};
+
+export const updateTypeProductsTable = async (
+	payload: UpdateTypeProductsTablePayload,
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const permissions = await getGuidePermissions(actorId);
+	const ids = Object.keys(payload).map((id) => Number(id));
+
+	if (!hasPermission(permissions, "/guide", "editing")) {
+		return {
+			success: [],
+			error: ids.map((id) => ({
+				id,
+				description: UPDATE_TYPE_PRODUCT_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const [rawId, rawItem] of Object.entries(payload)) {
+		const id = Number(rawId);
+		const parsedItem = updateTypeProductsTableItemSchema.safeParse(rawItem);
+
+		if (!parsedItem.success) {
+			result.error.push({
+				id,
+				description: getValidationErrorMessage(parsedItem.error.issues) || "Некорректные данные",
+			});
+			continue;
+		}
+
+		try {
+			await updateTypeProduct(id, parsedItem.data);
+			result.success.push({
+				id,
+				description: UPDATE_TYPE_PRODUCT_SUCCESS_DESCRIPTION,
+			});
+		} catch (error) {
+			if (error instanceof AppError) {
+				result.error.push({
+					id,
+					description: error.message,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const deleteTypeProducts = async (
+	ids: number[],
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const uniqueIds = getUniqueIds(ids);
+	const permissions = await getGuidePermissions(actorId);
+
+	if (!hasPermission(permissions, "/guide", "removing")) {
+		return {
+			success: [],
+			error: uniqueIds.map((id) => ({
+				id,
+				description: DELETE_TYPE_PRODUCT_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const existingTypeProducts = await prisma.typeProduct.findMany({
+		where: {
+			id: {
+				in: uniqueIds,
+			},
+		},
+		select: {
+			id: true,
+		},
+	});
+	const typeProductsById = new Map(existingTypeProducts.map((typeProduct) => [typeProduct.id, typeProduct]));
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const id of uniqueIds) {
+		if (!typeProductsById.has(id)) {
+			result.error.push({
+				id,
+				description: TYPE_PRODUCT_NOT_FOUND_ERROR,
+			});
+			continue;
+		}
+
+		try {
+			await prisma.typeProduct.delete({
+				where: { id },
+				select: { id: true },
+			});
+			result.success.push({
+				id,
+				description: "Удалено",
+			});
+		} catch (error) {
+			if (isPrismaDeleteConstraintError(error)) {
+				result.error.push({
+					id,
+					description: DELETE_TYPE_PRODUCT_IN_USE_ERROR,
+				});
+				continue;
+			}
+
+			if (isPrismaRecordNotFoundError(error)) {
+				result.error.push({
+					id,
+					description: TYPE_PRODUCT_NOT_FOUND_ERROR,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};

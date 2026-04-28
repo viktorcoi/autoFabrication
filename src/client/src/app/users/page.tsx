@@ -91,6 +91,11 @@ const UsersPage = () => {
             controller
         }).then(({status, data}) => {
             if (status === 'success') {
+                if (data.data.length === 0 && tableOptions.page !== 0) {
+                    mergeState({page: tableOptions.page - 1}, setTableOptions);
+                    cancelRef.current = true;
+                    return;
+                }
                 setTable(data);
                 cancelRef.current = false;
             } else if (data === 'canceled') {

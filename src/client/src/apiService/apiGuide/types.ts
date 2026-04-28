@@ -3,7 +3,7 @@ import {TableRow} from "@/components/Table/types";
 export interface GetByIdTypeProductsResponse {
     id: number;
     name: string;
-    description?: string;
+    description: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -21,7 +21,7 @@ export interface PathTypeProductsOptions {
 export interface TypeProductsTableRow extends TableRow {
     id: number;
     name: string;
-    description?: string;
+    description: string;
 }
 
 export type PatchTypeProductsTableOptions = Record<number, Partial<Omit<TypeProductsTableRow, "id">>>;

@@ -17,12 +17,11 @@ import styles from './ModalManageUser.module.scss'
 import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {PathUserOptions, PostUserOptions} from "@/apiService/apiUsers/types";
-import {ModalManageUserProps} from "@/components/modals/ModalManageUser/types";
+import {ModalManageUserProps, PostUserType} from "@/components/modals/ModalManageUser/types";
 import {useController, useSelectFilter} from "@/shared/hooks";
 import ModalAddAvatar from "@/components/modals/ModalAddAvatar/ModalAddAvatar";
 import {Icon24View, Icon56UserCircleOutline} from "@vkontakte/icons";
 import {OpenModalsType} from "@/components/modals/types";
-import {PostUserType} from "@/components/modals/ModalManageRole/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {PhotoView} from "react-photo-view";
 import ImagesProvider from "@/components/ImagesProvider/ImagesProvider";
