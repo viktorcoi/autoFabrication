@@ -4,11 +4,8 @@ import {FormStatus, PlatformProvider, Title} from "@vkontakte/vkui";
 import Container from "@/components/Container/Container";
 import styles from "./page.module.scss";
 import {
-	Icon24DrillOutline,
-	Icon24HammerOutline,
 	Icon28Settings,
 	Icon56SettingsOutline,
-	Icon56WrenchOutline
 } from "@vkontakte/icons";
 
 const ForbiddenPage = () => {
@@ -17,6 +14,17 @@ const ForbiddenPage = () => {
 			<div className={styles.wrap}>
 				<div className={styles.error}>
 					<div className={styles.machine}>
+						<div className={styles.sparks} aria-hidden="true">
+							<div className={styles.sparks__flash}/>
+							<div className={`${styles.sparks__line} ${styles["sparks__line--1"]}`}/>
+							<div className={`${styles.sparks__line} ${styles["sparks__line--2"]}`}/>
+							<div className={`${styles.sparks__line} ${styles["sparks__line--3"]}`}/>
+							<div className={`${styles.sparks__line} ${styles["sparks__line--4"]}`}/>
+							<div className={`${styles.sparks__line} ${styles["sparks__line--5"]}`}/>
+							<div className={`${styles.sparks__particle} ${styles["sparks__particle--1"]}`}/>
+							<div className={`${styles.sparks__particle} ${styles["sparks__particle--2"]}`}/>
+							<div className={`${styles.sparks__particle} ${styles["sparks__particle--3"]}`}/>
+						</div>
 						<svg width="350" height="277" viewBox="0 0 350 277" xmlns="http://www.w3.org/2000/svg">
 							<g clipPath="url(#clip0_38636_6426)">
 								<path d="M336 230.403C343.583 230.403 350 223.996 350 216.424L344.166 202.737L331.625 207.979L320.833 198.368L295.75 192.253L313.25 179.147V159.053C313.25 159.053 341.25 158.179 344.75 156.14C348.25 154.101 344.75 149.442 338.333 148.859C334.5 148.859 335 148.859 326.666 148.859V8.07711C326.666 5.25438 319.5 0 316 0L33 1.64048e-05C29.5 1.64048e-05 23.3338 5.25438 23.3338 8.07711V148.859H15H11.6669C5.25 150.024 0 155.849 0 162.256V216.424C0 223.996 6.41689 230.403 14 230.403H17.5V265.351H5.83311C2.33311 265.351 0 267.68 0 271.175C0 274.67 2.33311 276.999 5.83311 276.999H23.3331H58.3331H291.666H326.666H344.166C347.666 276.999 349.999 274.67 349.999 271.175C349.999 267.68 347.666 265.351 344.166 265.351H332.5V230.403H336ZM70 37.6366H128.333V56.4546H116.666V51.7503C116.666 48.9275 114.333 47.0459 110.833 47.0459C107.333 47.0459 105 48.9275 105 51.7503V70.5683C105 73.391 107.333 75.2727 110.833 75.2727C114.333 75.2727 116.666 73.391 116.666 70.5683V65.8639H128.333V79.9776C128.333 82.8003 130.666 84.682 134.166 84.682H151.666H161C161 84.682 168.5 84.682 172 84.682H183C186.5 84.682 190.5 84.682 190.5 84.682H198.332H215.832C219.332 84.682 221.666 82.8003 221.666 79.9776V65.8639H233.332V70.5683C233.332 73.391 235.666 75.2727 239.166 75.2727C242.666 75.2727 244.999 73.391 244.999 70.5683V51.7503C244.999 48.9275 242.666 47.0459 239.166 47.0459C235.666 47.0459 233.332 48.9275 233.332 51.7503V56.4546H221.666V37.6366H280V148.859H221.667V124.972C221.667 121.389 219.334 119 215.834 119H134.167C130.667 119 128.334 121.389 128.334 124.972V148.859H70V37.6366ZM52.5 265.351H29.1669V230.403H52.5V265.351ZM285.833 265.351H64.1669V230.403H285.834L285.833 265.351ZM320.833 265.351H297.5V230.403H320.833V265.351Z" fill="currentColor"/>
@@ -30,7 +38,19 @@ const ForbiddenPage = () => {
 							width={65}
 							height={65}
 						/>
-
+						<div className={styles.code}>
+							<PlatformProvider value={'android'}>
+								<Title className={styles.code__symbol} Component={'span'}>4</Title>
+							</PlatformProvider>
+							<Icon56SettingsOutline
+								className={styles.code__gear}
+								width={65}
+								height={65}
+							/>
+							<PlatformProvider value={'android'}>
+								<Title className={styles.code__symbol} Component={'span'}>3</Title>
+							</PlatformProvider>
+						</div>
 						<svg className={styles.machine__tape} width="330" height="167" viewBox="0 0 330 167" xmlns="http://www.w3.org/2000/svg">
 							<path d="M26.0312 0.154769C24.5088 -1.12023 16.8969 5.65824 24.2427 14.0091L37.3703 13.4308C32.9309 9.80641 30.3591 3.77949 26.0312 0.154769Z" fill="var(--vkui--color_background)"/>
 							<path d="M50.0876 23.5524L34.9089 26.3795C39.4948 31.1175 44.566 35.7407 50.0876 40.2169L66.0869 35.3142C60.5576 31.4686 55.2461 27.5352 50.0876 23.5524Z" fill="var(--vkui--color_background)"/>
@@ -74,31 +94,7 @@ const ForbiddenPage = () => {
 							<path d="M274.077 91.1798L258.898 102.937C263.922 102.874 268.983 102.718 274.077 102.465L288.712 91.0118C283.735 91.1208 278.857 91.1762 274.077 91.1798Z" fill="var(--vkui--color_icon_warning)"/>
 							<path d="M288.712 101.478C289.576 101.405 290.441 101.328 291.307 101.249C293.125 100.663 295.234 99.9558 297.522 99.1746C301.042 97.9731 304.984 96.596 308.937 95.2141L309.401 95.0518C313.247 93.7071 317.089 92.364 320.546 91.1798C322.583 90.4822 324.487 89.8397 326.18 89.2845C318.446 89.8157 310.927 90.2311 303.614 90.5359L288.712 101.478Z" fill="var(--vkui--color_icon_warning)"/>
 						</svg>
-
-
-
-
-
-
-						<div className={styles.code}>
-							<PlatformProvider value={'android'}>
-								<Title className={styles.code__symbol} Component={'span'}>4</Title>
-							</PlatformProvider>
-							<Icon56SettingsOutline
-								className={styles.code__gear}
-								width={65}
-								height={65}
-							/>
-							<PlatformProvider value={'android'}>
-								<Title className={styles.code__symbol} Component={'span'}>3</Title>
-							</PlatformProvider>
-						</div>
-
 					</div>
-
-
-
-
 					<FormStatus
 						className={styles.status}
 						mode={"error"}
