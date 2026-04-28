@@ -1,4 +1,4 @@
-import {ActionUsersResponse} from "@/apiService/apiUsers/types";
+import {ActionByTableResponse} from "@/apiService/types";
 
 export type ShowErrorType = {
     id: number;
@@ -12,7 +12,7 @@ export type ShowErrorsStore = {
     render: boolean;
     show: boolean;
 
-    open(data: { id: number, name: string }[], result: ActionUsersResponse): void;
+    open(data: { id: number, name: string }[], result: ActionByTableResponse): void;
     onClose(): void;
     onClosed(): void;
 };

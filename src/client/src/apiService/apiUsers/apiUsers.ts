@@ -1,7 +1,12 @@
-import {ApiServiceOptions, ApiServiceResponse, GetTableOptions, GetTableResponse} from "@/apiService/types";
+import {
+	ActionByTableResponse,
+	ApiServiceOptions,
+	ApiServiceResponse,
+	GetTableOptions,
+	GetTableResponse
+} from "@/apiService/types";
 import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {
-	ActionUsersResponse,
 	GetByIdUserResponse,
 	PatchUsersTableOptions,
 	PathUserOptions,
@@ -58,7 +63,7 @@ export const ApiUsers = {
 
 	delete: async (options: ApiServiceOptions<{
 		ids: number[];
-	}>): Promise<ApiServiceResponse<ActionUsersResponse>> => {
+	}>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
 		return await api.delete("/users", {
 			signal: options.controller?.signal,
 			data: options.ids,
@@ -89,7 +94,7 @@ export const ApiUsers = {
 
 		patch: async (options: ApiServiceOptions<{
 			options: PatchUsersTableOptions;
-		}>): Promise<ApiServiceResponse<ActionUsersResponse>> => {
+		}>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
 			return await api.patch("/users/table",
 				options.options,
 				{ signal: options.controller?.signal }

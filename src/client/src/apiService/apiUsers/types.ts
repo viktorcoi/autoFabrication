@@ -55,16 +55,4 @@ export interface PathUserOptions {
 	password?: string;
 }
 
-export type PatchUsersTableRowOptions = Partial<Pick<UserTableRow, "firstName" | "lastName" | "middleName" | "birthDate">>;
-
-export type PatchUsersTableOptions = Record<number, PatchUsersTableRowOptions>;
-
-export type ActionUsersResultItem = {
-	id: number;
-	description: string;
-};
-
-export type ActionUsersResponse = {
-	success: ActionUsersResultItem[];
-	error: ActionUsersResultItem[];
-};
+export type PatchUsersTableOptions = Record<number, Partial<Pick<UserTableRow, "firstName" | "lastName" | "middleName" | "birthDate">>>;

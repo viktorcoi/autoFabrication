@@ -120,7 +120,7 @@ export type TableProps = {
     hideFooter?: boolean;
     disabled?: boolean;
     tableId?: string;
-    componentName?: string;
+    componentName: string;
     data: TableRow[];
     columns: Column[];
     total: number;

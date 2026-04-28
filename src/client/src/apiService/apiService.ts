@@ -4,6 +4,7 @@ import {ApiAuth} from "@/apiService/apiAuth/apiAuth";
 import {ApiRoles} from "@/apiService/apiRoles/apiRoles";
 import {ApiUsers} from "@/apiService/apiUsers/apiUsers";
 import {ApiServiceErrorOptions, ApiServiceResponse, GetTableOptions} from "@/apiService/types";
+import {ApiGuide} from "@/apiService/apiGuide/ApiGuide";
 
 const resolveApiBaseUrl = () => process.env.NEXT_PUBLIC_API_URL ?? "/api/";
 
@@ -16,6 +17,7 @@ export const ApiService = {
     auth: ApiAuth,
     roles: ApiRoles,
     users: ApiUsers,
+    guide: ApiGuide,
 };
 
 export const buildTableOptions = (options?: GetTableOptions) => {

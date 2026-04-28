@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import {AppStore, Navigate} from "@/store/app/types";
+import {AppStore} from "@/store/app/types";
 import {ColorSchemeType} from "@vkontakte/vkui";
 import {ApiService} from "@/apiService/apiService";
 import {GetAuthMeResponse} from "@/apiService/apiAuth/types";

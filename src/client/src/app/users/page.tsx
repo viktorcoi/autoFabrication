@@ -48,11 +48,11 @@ const UsersPage = () => {
         inputRef
     } = useSearch(loading.page);
 
+    const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<UserTableRow[]>>({
         data: [],
         total: 0,
     });
-    const [selected, setSelected] = useState<number[]>([]);
     const [tableOptions, setTableOptions] = useState<Required<GetTableOptions>>({
         page: 0,
         sorting: null,
@@ -394,6 +394,7 @@ const UsersPage = () => {
                 )}
             >
                 <Table
+                    componentName={'users'}
                     editMode={access.editing}
                     data={table.data}
                     columns={tableColumns.user}

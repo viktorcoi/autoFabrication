@@ -509,18 +509,10 @@ export const applyColumnSizingPreview = (
     tableElement.style.setProperty(TABLE_TOTAL_WIDTH_CSS_VAR, `${totalWidth}px`);
 };
 
-export const getStorageId = (tableId?: string, componentName?: string) => {
+export const getStorageId = (tableId: string | undefined, componentName: string) => {
     if (tableId) {
         return tableId;
     }
 
-    if (componentName) {
-        return componentName;
-    }
-
-    if (typeof window === 'undefined') {
-        return 'table';
-    }
-
-    return window.location.pathname.replace(/\//g, '_') || 'table';
+    return componentName;
 };

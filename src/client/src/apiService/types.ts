@@ -29,3 +29,13 @@ export type GetTableOptions <T extends object = {}> = T & {
     search?: string;
     sorting?: TableSorting;
 }
+
+type ActionByTableResultItem = {
+    id: number;
+    description: string;
+};
+
+export type ActionByTableResponse = {
+    success: ActionByTableResultItem[];
+    error: ActionByTableResultItem[];
+};
