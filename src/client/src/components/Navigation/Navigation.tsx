@@ -1,7 +1,7 @@
 import {ActionSheet, ActionSheetItem, Avatar, classNames, Separator, SimpleCell} from "@vkontakte/vkui";
 import Link from "next/link";
 import {
-    Icon16Lock, Icon16LockOpen,
+    Icon16Lock, Icon16LockOpen, Icon20BookSpreadSimpleOutline,
     Icon20DoorArrowRightOutline,
     Icon20MoonOutline,
     Icon20SunOutline,
@@ -32,6 +32,11 @@ const navigations = [
         name: 'separator',
         icon: '',
         url: ''
+    },
+    {
+        name: 'Справочники',
+        url: '/guide',
+        icon: <Icon20BookSpreadSimpleOutline fill={'var(--vkui--color_text_primary)'} width={20} height={20}/>,
     },
     {
         name: 'Изделия',
