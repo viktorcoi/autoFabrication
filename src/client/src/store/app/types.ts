@@ -5,8 +5,15 @@ import {
     RolePermissionFlagsType,
     UserPermissionFlagsType
 } from "@/apiService/apiAuth/types";
+import {ReactNode} from "react";
 
 type NamePermission = '/users' | '/roles' | '/guide';
+
+export type Navigate = {
+    name: string;
+    url: string;
+    icon: ReactNode;
+}
 
 export type AppStore = {
     user: Omit<GetAuthMeResponse, 'role'> | null;
@@ -15,6 +22,7 @@ export type AppStore = {
     appReady: boolean;
     theme: ColorSchemeType;
     delaySearch: number;
+    navigations: Navigate[];
     // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
     TEST: boolean,
     toggleTEST(): void;

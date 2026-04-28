@@ -1,8 +1,9 @@
 import { create } from "zustand";
-import { AppStore } from "@/store/app/types";
+import {AppStore, Navigate} from "@/store/app/types";
 import {ColorSchemeType} from "@vkontakte/vkui";
 import {ApiService} from "@/apiService/apiService";
 import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
+import {allUrl} from "@/shared/navigations";
 
 const THEME_STORAGE_KEY = "theme";
 
@@ -21,12 +22,35 @@ const parseUser = (user: GetAuthMeResponse) => {
 
     Object.values(permissions).forEach(({url, access}) => {
         permissionsMap.set(url, access);
-    })
+    });
+
+    const newNav = allUrl.filter((nav) => permissionsMap.get(nav.url)?.view);
+
+    const separatorAnchorIndex = newNav.length > 1
+        ? newNav.findIndex(({url}) => url === '/users')
+        : -1;
+
+    const fallbackSeparatorAnchorIndex = newNav.length > 1 && separatorAnchorIndex === -1
+        ? newNav.findIndex(({url}) => url === '/roles')
+        : -1;
+
+    const resolvedSeparatorAnchorIndex = separatorAnchorIndex !== -1
+        ? separatorAnchorIndex
+        : fallbackSeparatorAnchorIndex;
+
+    if (resolvedSeparatorAnchorIndex !== -1) {
+        newNav.splice(resolvedSeparatorAnchorIndex + 1, 0, {
+            name: 'separator',
+            icon: null,
+            url: ''
+        });
+    }
 
     return {
         user: me,
         role: restRole,
         permissions: permissionsMap,
+        navigations: newNav,
     }
 }
 
@@ -40,6 +64,7 @@ export const useAppStore = create<AppStore>((
     theme: "light",
     delaySearch: 500,
     permissions: new Map(),
+    navigations: [],
     // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
     TEST: true,
     toggleTEST: () => {
@@ -70,9 +95,10 @@ export const useAppStore = create<AppStore>((
                     user,
                     role,
                     permissions,
+                    navigations
                 } = parseUser(data);
 
-                set({ user, role, permissions });
+                set({ user, role, navigations, permissions });
             } else set({ user: null, role: null });
         })
     },
@@ -83,9 +109,10 @@ export const useAppStore = create<AppStore>((
                 user,
                 role,
                 permissions,
+                navigations
             } = parseUser(data);
 
-            set({ user, role, permissions });
+            set({ user, role, navigations, permissions });
         } else set({ user: data, role: null });
     },
 

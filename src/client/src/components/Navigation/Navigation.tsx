@@ -1,13 +1,12 @@
 import {ActionSheet, ActionSheetItem, Avatar, classNames, Separator, SimpleCell} from "@vkontakte/vkui";
 import Link from "next/link";
 import {
-    Icon16Lock, Icon16LockOpen, Icon20BookSpreadSimpleOutline,
+    Icon16Lock,
+    Icon16LockOpen,
     Icon20DoorArrowRightOutline,
     Icon20MoonOutline,
     Icon20SunOutline,
-    Icon20UsersOutline,
-    Icon20WrenchOutline,
-    Icon24BriefcaseOutline, Icon28SettingsOutline
+    Icon28SettingsOutline
 } from "@vkontakte/icons";
 import {usePathname} from "next/navigation";
 import {useAppStore} from "@/store/app/app";
@@ -17,34 +16,6 @@ import styles from './Navigation.module.scss';
 import ModalShowErrors from "@/components/modals/ModalShowErrors/ModalShowErrors";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 
-const navigations = [
-    {
-        name: 'Роли пользователей',
-        url: '/roles',
-        icon: <Icon24BriefcaseOutline fill={'var(--vkui--color_text_primary)'} width={20} height={20}/>,
-    },
-    {
-        name: 'Пользователи',
-        url: '/users',
-        icon: <Icon20UsersOutline fill={'var(--vkui--color_text_primary)'} width={20} height={20}/>,
-    },
-    {
-        name: 'separator',
-        icon: '',
-        url: ''
-    },
-    {
-        name: 'Справочники',
-        url: '/guide',
-        icon: <Icon20BookSpreadSimpleOutline fill={'var(--vkui--color_text_primary)'} width={20} height={20}/>,
-    },
-    {
-        name: 'Изделия',
-        url: '/products',
-        icon: <Icon20WrenchOutline fill={'var(--vkui--color_text_primary)'} width={20} height={20}/>,
-    }
-]
-
 const Navigation = () => {
 
     const {
@@ -52,9 +23,10 @@ const Navigation = () => {
         role,
         theme,
         toggleTheme,
+        navigations,
         // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
         TEST,
-        toggleTEST
+        toggleTEST,
     } = useAppStore(state => state);
     const showErrors = useShowErrors(state => state);
 
