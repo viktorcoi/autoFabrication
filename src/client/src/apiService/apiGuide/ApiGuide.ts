@@ -47,7 +47,7 @@ export const ApiGuide = {
             id: number,
             options: PathTypeProductsOptions;
         }>): Promise<ApiServiceResponse<GetByIdTypeProductsResponse>> => {
-            return await api.patch(`/users/${options.id}`,
+            return await api.patch(`/guide/typeProducts/${options.id}`,
                 {...options.options},
                 { signal: options.controller?.signal }
             ).then(r => {
