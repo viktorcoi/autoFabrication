@@ -17,6 +17,23 @@ const typeProductsTableSortingSchema = z.object({
 	sort: z.enum(["asc", "desc"]),
 }).strict();
 
+const materialGroupNameSchema = z
+	.string()
+	.trim()
+	.min(1, "Название группы материалов обязательно")
+	.max(255, "Название группы материалов слишком длинное");
+
+const materialGroupDescriptionSchema = z
+	.string()
+	.trim()
+	.max(1000, "Описание группы материалов слишком длинное")
+	.transform((value) => value.length > 0 ? value : null);
+
+const materialGroupsTableSortingSchema = z.object({
+	id: z.enum(["name", "description"]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
 const parseTableSorting = (value: unknown) => {
 	if (value === null || value === undefined || value === "" || value === "null") {
 		return null;
@@ -97,5 +114,65 @@ export const getTypeProductsTableSchema = z.object({
 		.transform((value) => value ?? null),
 });
 
+export const createMaterialGroupSchema = z.object({
+	name: materialGroupNameSchema,
+	description: materialGroupDescriptionSchema.optional(),
+});
+
+export const updateMaterialGroupSchema = z
+	.object({
+		name: materialGroupNameSchema.optional(),
+		description: materialGroupDescriptionSchema.optional(),
+	})
+	.refine(
+		(value) => value.name !== undefined || value.description !== undefined,
+		"Нужно передать хотя бы одно поле для обновления",
+	);
+
+export const updateMaterialGroupsTableItemSchema = z
+	.object({
+		name: materialGroupNameSchema.optional(),
+		description: materialGroupDescriptionSchema.optional(),
+	})
+	.strict()
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нет данных для обновления",
+	);
+
+export const updateMaterialGroupsTableSchema = z
+	.record(
+		z.string().regex(/^[1-9]\d*$/, "Некорректный id группы материалов"),
+		z.unknown(),
+	)
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нужно передать хотя бы одну строку для редактирования",
+	);
+
+export const deleteMaterialGroupIdsSchema = z
+	.array(
+		z.coerce
+			.number()
+			.int()
+			.positive("id группы материалов должен быть положительным числом"),
+	)
+	.min(1, "Нужно выбрать хотя бы одну группу материалов");
+
+export const getMaterialGroupsTableSchema = z.object({
+	page: z.coerce.number().int().min(0).default(0),
+	rows: z.coerce.number().int().positive().max(100).default(20),
+	search: z.preprocess(
+		(value) => typeof value === "string" ? value.trim() : undefined,
+		z.string().optional(),
+	).transform((value) => value && value.length > 0 ? value : undefined),
+	sorting: z
+		.preprocess(parseTableSorting, materialGroupsTableSortingSchema.nullable())
+		.optional()
+		.transform((value) => value ?? null),
+});
+
 export type GetTypeProductsTableQuery = z.infer<typeof getTypeProductsTableSchema>;
 export type UpdateTypeProductsTablePayload = z.infer<typeof updateTypeProductsTableSchema>;
+export type GetMaterialGroupsTableQuery = z.infer<typeof getMaterialGroupsTableSchema>;
+export type UpdateMaterialGroupsTablePayload = z.infer<typeof updateMaterialGroupsTableSchema>;

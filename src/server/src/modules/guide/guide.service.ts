@@ -1,11 +1,16 @@
 import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
-import type { RolePermissions } from "../roles/role.types.js";
 import { AppError } from "../../shared/errors/app-error.js";
 import { hasPermission } from "../../shared/http/permissions.js";
-import { updateTypeProductsTableItemSchema } from "./guide.schemas.js";
+import type { RolePermissions } from "../roles/role.types.js";
+import {
+	updateMaterialGroupsTableItemSchema,
+	updateTypeProductsTableItemSchema,
+} from "./guide.schemas.js";
 import type {
+	GetMaterialGroupsTableQuery,
 	GetTypeProductsTableQuery,
+	UpdateMaterialGroupsTablePayload,
 	UpdateTypeProductsTablePayload,
 } from "./guide.schemas.js";
 
@@ -23,7 +28,27 @@ const typeProductTableSelect = {
 	description: true,
 } satisfies Prisma.TypeProductSelect;
 
+const materialGroupSelect = {
+	id: true,
+	name: true,
+	description: true,
+	createdAt: true,
+	updatedAt: true,
+} satisfies Prisma.materialGroupSelect;
+
+const materialGroupTableSelect = {
+	id: true,
+	name: true,
+	description: true,
+} satisfies Prisma.materialGroupSelect;
+
 const TYPE_PRODUCT_TABLE_FIELD_TO_MODEL_FIELD = {
+	id: "id",
+	name: "name",
+	description: "description",
+} as const;
+
+const MATERIAL_GROUP_TABLE_FIELD_TO_MODEL_FIELD = {
 	id: "id",
 	name: "name",
 	description: "description",
@@ -31,6 +56,8 @@ const TYPE_PRODUCT_TABLE_FIELD_TO_MODEL_FIELD = {
 
 const TYPE_PRODUCT_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
 const TYPE_PRODUCT_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
+const MATERIAL_GROUP_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
+const MATERIAL_GROUP_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
 
 const typeProductTableMeta = Object.freeze({
 	isConst: Object.freeze(
@@ -46,12 +73,33 @@ const typeProductTableMeta = Object.freeze({
 	),
 });
 
+const materialGroupTableMeta = Object.freeze({
+	isConst: Object.freeze(
+		Object.entries(MATERIAL_GROUP_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([, modelField]) => MATERIAL_GROUP_SYSTEM_MODEL_FIELDS.has(modelField))
+			.map(([columnId]) => columnId),
+	),
+	isRequired: Object.freeze(
+		Object.entries(MATERIAL_GROUP_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([, modelField]) => !MATERIAL_GROUP_OPTIONAL_MODEL_FIELDS.has(modelField))
+			.filter(([, modelField]) => !MATERIAL_GROUP_SYSTEM_MODEL_FIELDS.has(modelField))
+			.map(([columnId]) => columnId),
+	),
+});
+
 type CreateTypeProductData = {
 	name: string;
 	description?: string | null;
 };
 
 type UpdateTypeProductData = Partial<CreateTypeProductData>;
+
+type CreateMaterialGroupData = {
+	name: string;
+	description?: string | null;
+};
+
+type UpdateMaterialGroupData = Partial<CreateMaterialGroupData>;
 
 type ActionByTableResultItem = {
 	id: number;
@@ -69,6 +117,12 @@ const UPDATE_TYPE_PRODUCT_NO_RIGHTS_ERROR = "У вас нет прав для р
 const UPDATE_TYPE_PRODUCT_SUCCESS_DESCRIPTION = "Отредактировано";
 const DELETE_TYPE_PRODUCT_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
 const DELETE_TYPE_PRODUCT_IN_USE_ERROR = "Этот тип изделия используется и не может быть удален";
+const MATERIAL_GROUP_NOT_FOUND_ERROR = "Группа материалов не найдена";
+const MATERIAL_GROUP_DUPLICATE_ERROR = "Группа материалов с таким названием уже существует";
+const UPDATE_MATERIAL_GROUP_NO_RIGHTS_ERROR = "У вас нет прав для редактирования";
+const UPDATE_MATERIAL_GROUP_SUCCESS_DESCRIPTION = "Отредактировано";
+const DELETE_MATERIAL_GROUP_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
+const DELETE_MATERIAL_GROUP_IN_USE_ERROR = "Эта группа материалов используется и не может быть удалена";
 
 const getUniqueIds = (ids: number[]) => {
 	const uniqueIds = new Set<number>();
@@ -130,6 +184,29 @@ const buildTypeProductsTableWhere = (search?: string): Prisma.TypeProductWhereIn
 	};
 };
 
+const buildMaterialGroupsTableWhere = (search?: string): Prisma.materialGroupWhereInput | undefined => {
+	if (!search) {
+		return undefined;
+	}
+
+	return {
+		OR: [
+			{
+				name: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+			{
+				description: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+		],
+	};
+};
+
 const buildTypeProductsTableOrderBy = (
 	sorting: GetTypeProductsTableQuery["sorting"],
 ): Prisma.TypeProductOrderByWithRelationInput[] => {
@@ -143,6 +220,19 @@ const buildTypeProductsTableOrderBy = (
 	];
 };
 
+const buildMaterialGroupsTableOrderBy = (
+	sorting: GetMaterialGroupsTableQuery["sorting"],
+): Prisma.materialGroupOrderByWithRelationInput[] => {
+	if (!sorting) {
+		return [{ id: "asc" }];
+	}
+
+	return [
+		{ [sorting.id]: sorting.sort } as Prisma.materialGroupOrderByWithRelationInput,
+		{ id: "asc" },
+	];
+};
+
 const ensureTypeProductNameIsUnique = async (name: string, excludedId?: number) => {
 	const existingTypeProduct = await prisma.typeProduct.findUnique({
 		where: { name },
@@ -151,6 +241,17 @@ const ensureTypeProductNameIsUnique = async (name: string, excludedId?: number) 
 
 	if (existingTypeProduct && existingTypeProduct.id !== excludedId) {
 		throw new AppError(409, TYPE_PRODUCT_DUPLICATE_ERROR);
+	}
+};
+
+const ensureMaterialGroupNameIsUnique = async (name: string, excludedId?: number) => {
+	const existingMaterialGroup = await prisma.materialGroup.findUnique({
+		where: { name },
+		select: { id: true },
+	});
+
+	if (existingMaterialGroup && existingMaterialGroup.id !== excludedId) {
+		throw new AppError(409, MATERIAL_GROUP_DUPLICATE_ERROR);
 	}
 };
 
@@ -200,6 +301,33 @@ export const getTypeProductsTable = async (query: GetTypeProductsTableQuery) => 
 	};
 };
 
+export const getMaterialGroupsTable = async (query: GetMaterialGroupsTableQuery) => {
+	const where = buildMaterialGroupsTableWhere(query.search);
+	const orderBy = buildMaterialGroupsTableOrderBy(query.sorting);
+	const skip = query.page * query.rows;
+	const [total, materialGroups] = await prisma.$transaction([
+		prisma.materialGroup.count({ where }),
+		prisma.materialGroup.findMany({
+			where,
+			select: materialGroupTableSelect,
+			orderBy,
+			skip,
+			take: query.rows,
+		}),
+	]);
+
+	return {
+		total,
+		data: materialGroups.map((materialGroup) => ({
+			id: materialGroup.id,
+			name: materialGroup.name,
+			...(materialGroup.description ? { description: materialGroup.description } : {}),
+			isConst: [...materialGroupTableMeta.isConst],
+			isRequired: [...materialGroupTableMeta.isRequired],
+		})),
+	};
+};
+
 export const getTypeProductById = async (id: number) => {
 	const typeProduct = await prisma.typeProduct.findUnique({
 		where: { id },
@@ -213,6 +341,19 @@ export const getTypeProductById = async (id: number) => {
 	return typeProduct;
 };
 
+export const getMaterialGroupById = async (id: number) => {
+	const materialGroup = await prisma.materialGroup.findUnique({
+		where: { id },
+		select: materialGroupSelect,
+	});
+
+	if (!materialGroup) {
+		throw new AppError(404, MATERIAL_GROUP_NOT_FOUND_ERROR);
+	}
+
+	return materialGroup;
+};
+
 export const createTypeProduct = async (data: CreateTypeProductData) => {
 	await ensureTypeProductNameIsUnique(data.name);
 
@@ -222,6 +363,18 @@ export const createTypeProduct = async (data: CreateTypeProductData) => {
 			description: data.description,
 		},
 		select: typeProductSelect,
+	});
+};
+
+export const createMaterialGroup = async (data: CreateMaterialGroupData) => {
+	await ensureMaterialGroupNameIsUnique(data.name);
+
+	return prisma.materialGroup.create({
+		data: {
+			name: data.name,
+			description: data.description,
+		},
+		select: materialGroupSelect,
 	});
 };
 
@@ -239,6 +392,23 @@ export const updateTypeProduct = async (id: number, data: UpdateTypeProductData)
 			description: data.description,
 		},
 		select: typeProductSelect,
+	});
+};
+
+export const updateMaterialGroup = async (id: number, data: UpdateMaterialGroupData) => {
+	await getMaterialGroupById(id);
+
+	if (typeof data.name === "string") {
+		await ensureMaterialGroupNameIsUnique(data.name, id);
+	}
+
+	return prisma.materialGroup.update({
+		where: { id },
+		data: {
+			name: data.name,
+			description: data.description,
+		},
+		select: materialGroupSelect,
 	});
 };
 
@@ -281,6 +451,62 @@ export const updateTypeProductsTable = async (
 			result.success.push({
 				id,
 				description: UPDATE_TYPE_PRODUCT_SUCCESS_DESCRIPTION,
+			});
+		} catch (error) {
+			if (error instanceof AppError) {
+				result.error.push({
+					id,
+					description: error.message,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const updateMaterialGroupsTable = async (
+	payload: UpdateMaterialGroupsTablePayload,
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const permissions = await getGuidePermissions(actorId);
+	const ids = Object.keys(payload).map((id) => Number(id));
+
+	if (!hasPermission(permissions, "/guide", "editing")) {
+		return {
+			success: [],
+			error: ids.map((id) => ({
+				id,
+				description: UPDATE_MATERIAL_GROUP_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const [rawId, rawItem] of Object.entries(payload)) {
+		const id = Number(rawId);
+		const parsedItem = updateMaterialGroupsTableItemSchema.safeParse(rawItem);
+
+		if (!parsedItem.success) {
+			result.error.push({
+				id,
+				description: getValidationErrorMessage(parsedItem.error.issues) || "Некорректные данные",
+			});
+			continue;
+		}
+
+		try {
+			await updateMaterialGroup(id, parsedItem.data);
+			result.success.push({
+				id,
+				description: UPDATE_MATERIAL_GROUP_SUCCESS_DESCRIPTION,
 			});
 		} catch (error) {
 			if (error instanceof AppError) {
@@ -362,6 +588,81 @@ export const deleteTypeProducts = async (
 				result.error.push({
 					id,
 					description: TYPE_PRODUCT_NOT_FOUND_ERROR,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const deleteMaterialGroups = async (
+	ids: number[],
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const uniqueIds = getUniqueIds(ids);
+	const permissions = await getGuidePermissions(actorId);
+
+	if (!hasPermission(permissions, "/guide", "removing")) {
+		return {
+			success: [],
+			error: uniqueIds.map((id) => ({
+				id,
+				description: DELETE_MATERIAL_GROUP_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const existingMaterialGroups = await prisma.materialGroup.findMany({
+		where: {
+			id: {
+				in: uniqueIds,
+			},
+		},
+		select: {
+			id: true,
+		},
+	});
+	const materialGroupsById = new Map(existingMaterialGroups.map((materialGroup) => [materialGroup.id, materialGroup]));
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const id of uniqueIds) {
+		if (!materialGroupsById.has(id)) {
+			result.error.push({
+				id,
+				description: MATERIAL_GROUP_NOT_FOUND_ERROR,
+			});
+			continue;
+		}
+
+		try {
+			await prisma.materialGroup.delete({
+				where: { id },
+				select: { id: true },
+			});
+			result.success.push({
+				id,
+				description: "Удалено",
+			});
+		} catch (error) {
+			if (isPrismaDeleteConstraintError(error)) {
+				result.error.push({
+					id,
+					description: DELETE_MATERIAL_GROUP_IN_USE_ERROR,
+				});
+				continue;
+			}
+
+			if (isPrismaRecordNotFoundError(error)) {
+				result.error.push({
+					id,
+					description: MATERIAL_GROUP_NOT_FOUND_ERROR,
 				});
 				continue;
 			}
