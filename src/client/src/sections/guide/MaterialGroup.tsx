@@ -18,13 +18,13 @@ import {TableEvent} from "@/components/Table/types";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import {ApiService} from "@/apiService/apiService";
 import {SnackbarItem} from "@/store/snackbar/types";
-import {PatchTypeProductsTableOptions, TypeProductsTableRow} from "@/apiService/apiGuide/types";
+import {PatchMaterialGroupTableOptions, MaterialGroupTableRow} from "@/apiService/apiGuide/types";
 import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
-import ModalManageTypeProducts from "@/components/modals/ModalGuide/ModalManageTypeProducts/ModalManageTypeProducts";
+import ModalManageMaterialGroup from "@/components/modals/ModalGuide/ModalManageMaterialGroup/ModalManageMaterialGroup";
 import styles from './GuideSections.module.scss';
 
-const TypeProducts = (
+const MaterialGroup = (
     {onLoading}: {onLoading(value: boolean): void}
 ) => {
 
@@ -41,7 +41,7 @@ const TypeProducts = (
     } = useSearch(loading.page);
 
     const [selected, setSelected] = useState<number[]>([]);
-    const [table, setTable] = useState<GetTableResponse<TypeProductsTableRow[]>>({
+    const [table, setTable] = useState<GetTableResponse<MaterialGroupTableRow[]>>({
         data: [],
         total: 0,
     });
@@ -51,7 +51,7 @@ const TypeProducts = (
         rows: 20,
         search: ''
     });
-    const [tableManage, setTableManage] = useState<{ editMode: boolean, actionSheet: ReactNode }>({
+    const [tableManage, setTableManage] = useState<{editMode: boolean, actionSheet: ReactNode}>({
         editMode: false,
         actionSheet: null
     });
@@ -62,7 +62,7 @@ const TypeProducts = (
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const showErrors = useShowErrors(state => state);
     // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
-    const {TEST, permissions} = useAppStore(state => state);
+    const { TEST, permissions } = useAppStore(state => state);
 
     const {
         createController,
@@ -78,7 +78,7 @@ const TypeProducts = (
 
         const controller = createController();
 
-        await ApiService.guide.typeProducts.table.get({
+        await ApiService.guide.materialGroup.table.get({
             options: {...tableOptions},
             controller
         }).then(({status, data}) => {
@@ -107,13 +107,13 @@ const TypeProducts = (
         }
     };
 
-    const handleTableSave = async (changes: PatchTypeProductsTableOptions) => {
+    const handleTableSave = async (changes: PatchMaterialGroupTableOptions) => {
         mergeState({page: true}, setLoading);
         onLoading(true);
 
         const ids = Object.keys(changes);
 
-        await ApiService.guide.typeProducts.table.patch({
+        await ApiService.guide.materialGroup.table.patch({
             options: changes,
         }).then(async ({status, data}) => {
 
@@ -146,23 +146,23 @@ const TypeProducts = (
 
     const handleRemove = () => {
         if (selected.length === 1) {
-            const typeProduct = table.data.find(({id}) => id === selected[0]);
-            if (typeProduct) {
+            const materialGroup = table.data.find(({id}) => id === selected[0]);
+            if (materialGroup) {
                 setModals({
                     id: 'modal-remove-type-product',
                     show: true,
                     data: {
-                        id: typeProduct.id,
-                        name: typeProduct.name
+                        id: materialGroup.id,
+                        name: materialGroup.name
                     }
                 });
             }
         } else {
-            const typeProducts = table.data.filter(({id}) => selected.includes(id));
+            const materialGroup = table.data.filter(({id}) => selected.includes(id));
             setModals({
                 id: 'modal-multi-remove-type-product',
                 show: true,
-                data: typeProducts.map(({id, name}) => ({id, name}))
+                data: materialGroup.map(({id, name}) => ({id, name}))
             })
         }
     };
@@ -206,8 +206,7 @@ const TypeProducts = (
             console.log('AA')
             if (!access.editing && !access.removing) return;
 
-            mergeState({
-                actionSheet:
+            mergeState({actionSheet:
                     <ActionSheet
                         placement={'bottom-end'}
                         popupOffsetDistance={8}
@@ -217,11 +216,7 @@ const TypeProducts = (
                         {access.editing && (
                             <>
                                 <ActionSheetItem
-                                    onClick={() => setModals({
-                                        id: 'modal-manage-type-product',
-                                        show: true,
-                                        data: e.row.id
-                                    })}
+                                    onClick={() => setModals({id: 'modal-manage-type-product', show: true, data: e.row.id})}
                                     before={<Icon24PenOutline width={20} height={20}/>}
                                 >
                                     Редактировать
@@ -230,12 +225,10 @@ const TypeProducts = (
                         )}
                         {(!e.row.isAdmin && access.removing) && (
                             <ActionSheetItem
-                                onClick={() => setModals({
-                                    id: 'modal-remove-type-product', show: true, data: {
+                                onClick={() => setModals({id: 'modal-remove-type-product', show: true, data: {
                                         id: e.row.id,
                                         name: e.row.name
-                                    }
-                                })}
+                                    }})}
                                 mode={'destructive'}
                                 before={<Icon24TrashSimpleOutline width={20} height={20}/>}
                             >
@@ -259,7 +252,7 @@ const TypeProducts = (
             {'modal-multi-remove-type-product' === modals.id ? (
                 <ModalMultiRemove
                     data={modals.data}
-                    url={'/typeProducts'}
+                    url={'/materialGroup'}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     onLoading={v => mergeState({modal: v}, setLoading)}
@@ -271,7 +264,7 @@ const TypeProducts = (
                     removeId={modals.data?.id}
                     mode={'table'}
                     name={modals.data?.name}
-                    url={'/typeProducts'}
+                    url={'/materialGroup'}
                     onLoading={v => mergeState({modal: v}, setLoading)}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
@@ -279,13 +272,13 @@ const TypeProducts = (
                     preventClose={loading.modal}
                 />
             ) : 'modal-manage-type-product' === modals.id && (
-                <ModalManageTypeProducts
-                    idTypeProducts={modals.data}
+                <ModalManageMaterialGroup
+                    idMaterialGroup={modals.data}
                     preventClose={loading.modal}
                     open={modals.show}
                     onClose={closeModal}
                     onLoading={v => mergeState({modal: v}, setLoading)}
-                    onClosed={() => setModals({id: null, show: false, data: null})}
+                    onClosed={() => setModals({id: null,  show: false, data: null})}
                 />
             )}
             <div className={styles.wrap}>
@@ -338,13 +331,13 @@ const TypeProducts = (
                         disabled={loading.page || tableManage.editMode}
                         noPadding={true}
                         className={'search'}
-                        slotProps={{input: {getRootRef: inputRef}}}
+                        slotProps={{ input: { getRootRef: inputRef } }}
                     />
 
                 </div>
                 <Table
-                    componentName={'typeProducts'}
-                    columns={tableColumns.typeProducts}
+                    componentName={'materialGroup'}
+                    columns={tableColumns.materialGroup}
                     editMode={access.editing}
                     data={table.data}
                     total={table.total}
@@ -353,8 +346,8 @@ const TypeProducts = (
                     loading={loading.page}
                     selected={selected}
                     onEvent={onEventTable}
-                    emptyState={!delaySearch.trim() ? undefined : {
-                        icon: <Icon24SearchSlashOutline width={62} height={62}/>,
+                    emptyState={!delaySearch.trim() ? undefined :{
+                        icon: <Icon24SearchSlashOutline width={62} height={62} />,
                         title: 'Совпадений не найдено',
                         description: 'Попробуйте изменить параметры поиска',
                     }}
@@ -364,4 +357,4 @@ const TypeProducts = (
     )
 }
 
-export default TypeProducts;
+export default MaterialGroup;

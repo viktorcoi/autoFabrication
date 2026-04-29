@@ -11,6 +11,7 @@ import {SnackbarItem} from "@/store/snackbar/types";
 const urlList = {
     '/users': ApiService.users.delete,
     '/typeProducts': ApiService.guide.typeProducts.delete,
+    '/materialGroup': ApiService.guide.materialGroup.delete,
 };
 
 const ModalMultiRemove = (props: ModalMultiRemoveProps) => {

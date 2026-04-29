@@ -25,3 +25,29 @@ export interface TypeProductsTableRow extends TableRow {
 }
 
 export type PatchTypeProductsTableOptions = Record<number, Partial<Omit<TypeProductsTableRow, "id">>>;
+
+export interface GetByIdMaterialGroupResponse {
+    id: number;
+    name: string;
+    description: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PostMaterialGroupOptions {
+    name: string;
+    description: string;
+}
+
+export interface PathMaterialGroupOptions {
+    name: string;
+    description: string;
+}
+
+export interface MaterialGroupTableRow extends TableRow {
+    id: number;
+    name: string;
+    description: string;
+}
+
+export type PatchMaterialGroupTableOptions = Record<number, Partial<Omit<MaterialGroupTableRow, "id">>>;

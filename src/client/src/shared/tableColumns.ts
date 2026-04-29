@@ -21,4 +21,9 @@ export const tableColumns: Record<string, Column[]> = {
         {key: 'name', header: 'Название', minSize: 120},
         {key: 'description', header: 'Описание', minSize: 180},
     ],
+
+    materialGroup: [
+        {key: 'name', header: 'Название', minSize: 120},
+        {key: 'description', header: 'Описание', minSize: 180},
+    ]
 }

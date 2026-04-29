@@ -5,6 +5,7 @@ import styles from './page.module.scss';
 import {classNames, FormStatus, Placeholder, SimpleCell} from "@vkontakte/vkui";
 import {useState} from "react";
 import TypeProducts from "@/sections/guide/TypeProducts";
+import MaterialGroup from "@/sections/guide/MaterialGroup";
 
 const sections = [
     {
@@ -44,6 +45,7 @@ const sections = [
 const GuidePage = () => {
 
     const [activeSection, setActiveSection] = useState(1);
+    const [loading, setLoading] = useState(false);
 
     return (
         <Container>
@@ -54,7 +56,7 @@ const GuidePage = () => {
                             key={id}
                             className={classNames(
                                 activeSection === id && 'activated',
-                                // loading.permissions && 'disabled'
+                                loading && 'disabled'
                             )}
                             activated={activeSection === id}
                             onClick={() => setActiveSection(id)}
@@ -64,15 +66,10 @@ const GuidePage = () => {
                     ))}
                 </div>
                 {activeSection === 1 ? (
-                    <TypeProducts/>
-                ) : <Placeholder
-                    stretched={true}
-                >
-                    <FormStatus mode={'error'}>
-                        Сань ну ты тоже не охуевай, я не киборг, чтобы еще и это сделать
-                    </FormStatus>
-
-                </Placeholder>}
+                    <TypeProducts onLoading={setLoading} />
+                ) : activeSection === 2 && (
+                    <MaterialGroup onLoading={setLoading} />
+                )}
             </div>
         </Container>
     )
