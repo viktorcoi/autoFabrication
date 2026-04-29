@@ -13,6 +13,7 @@ const urlList = {
     '/typeProducts': ApiService.guide.typeProducts.delete,
     '/materialGroup': ApiService.guide.materialGroup.delete,
     '/operationGroup': ApiService.guide.operationGroup.delete,
+    '/material': ApiService.guide.material.delete,
 };
 
 const ModalMultiRemove = (props: ModalMultiRemoveProps) => {

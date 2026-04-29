@@ -50,6 +50,7 @@ model materialGroup {
 	description String?
 	createdAt   DateTime @default(now())
 	updatedAt   DateTime @updatedAt
+	materials   material[]
 }
 
 model operationGroup {
@@ -58,4 +59,16 @@ model operationGroup {
 	description String?
 	createdAt   DateTime @default(now())
 	updatedAt   DateTime @updatedAt
+}
+
+model material {
+	id              Int           @id @default(autoincrement())
+	name            String        @unique
+	description     String?
+	materialGroupId Int
+	createdAt       DateTime      @default(now())
+	updatedAt       DateTime      @updatedAt
+	materialGroup   materialGroup @relation(fields: [materialGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+	@@index([materialGroupId])
 }

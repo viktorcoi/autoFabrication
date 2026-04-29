@@ -6,6 +6,7 @@ import {classNames, SimpleCell} from "@vkontakte/vkui";
 import {useState} from "react";
 import TypeProducts from "@/sections/guide/TypeProducts";
 import MaterialGroup from "@/sections/guide/MaterialGroup";
+import Material from "@/sections/guide/Material";
 import OperationGroup from "@/sections/guide/OperationGroup";
 
 const sections = [
@@ -70,6 +71,8 @@ const GuidePage = () => {
                     <TypeProducts onLoading={setLoading} />
                 ) : activeSection === 2 ? (
                     <MaterialGroup onLoading={setLoading} />
+                ) : activeSection === 3 ? (
+                    <Material onLoading={setLoading} />
                 ) : activeSection === 5 ? (
                     <OperationGroup onLoading={setLoading} />
                 ) : null}

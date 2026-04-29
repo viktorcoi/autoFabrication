@@ -30,5 +30,11 @@ export const tableColumns: Record<string, Column[]> = {
     operationGroup: [
         {key: 'name', header: 'Название', minSize: 120},
         {key: 'description', header: 'Описание', minSize: 180},
+    ],
+
+    material: [
+        {key: 'name', header: 'Название', minSize: 120},
+        {key: 'materialGroup', header: 'Группа материалов', minSize: 180},
+        {key: 'description', header: 'Описание', minSize: 180},
     ]
 }

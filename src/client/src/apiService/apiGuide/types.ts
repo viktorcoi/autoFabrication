@@ -1,5 +1,10 @@
 import {TableRow} from "@/components/Table/types";
 
+export interface GetMaterialGroupsResponse {
+    id: number;
+    name: string;
+}
+
 export interface GetByIdTypeProductsResponse {
     id: number;
     name: string;
@@ -77,3 +82,38 @@ export interface OperationGroupTableRow extends TableRow {
 }
 
 export type PatchOperationGroupTableOptions = Record<number, Partial<Omit<OperationGroupTableRow, "id">>>;
+
+export interface GetByIdMaterialResponse {
+    id: number;
+    name: string;
+    description: string;
+    materialGroupId: number;
+    createdAt: string;
+    updatedAt: string;
+    materialGroup: {
+        id: number;
+        name: string;
+        description: string;
+    };
+}
+
+export interface PostMaterialOptions {
+    name: string;
+    description: string;
+    materialGroupId: number;
+}
+
+export interface PathMaterialOptions {
+    name: string;
+    description: string;
+    materialGroupId: number;
+}
+
+export interface MaterialTableRow extends TableRow {
+    id: number;
+    name: string;
+    description: string;
+    materialGroup: string;
+}
+
+export type PatchMaterialTableOptions = Record<number, Partial<Pick<MaterialTableRow, "name" | "description">>>;

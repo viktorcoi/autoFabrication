@@ -8,17 +8,23 @@ import {
 import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {
     GetByIdMaterialGroupResponse,
+    GetByIdMaterialResponse,
     GetByIdOperationGroupResponse,
     GetByIdTypeProductsResponse,
+    GetMaterialGroupsResponse,
     MaterialGroupTableRow,
+    MaterialTableRow,
     OperationGroupTableRow,
     PatchMaterialGroupTableOptions,
+    PatchMaterialTableOptions,
     PatchOperationGroupTableOptions,
     PatchTypeProductsTableOptions,
     PathMaterialGroupOptions,
+    PathMaterialOptions,
     PathOperationGroupOptions,
     PathTypeProductsOptions,
     PostMaterialGroupOptions,
+    PostMaterialOptions,
     PostOperationGroupOptions,
     PostTypeProductsOptions,
     TypeProductsTableRow
@@ -26,6 +32,18 @@ import {
 
 export const ApiGuide = {
     materialGroup: {
+        get: async (options: ApiServiceOptions = {}): Promise<ApiServiceResponse<GetMaterialGroupsResponse[]>> => {
+            return await api.get("/guide/materialGroup", {
+                signal: options.controller?.signal,
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && Array.isArray(response.data),
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
         getById: async (options: ApiServiceOptions<{
             id: number
         }>): Promise<ApiServiceResponse<GetByIdMaterialGroupResponse>> => {
@@ -200,6 +218,100 @@ export const ApiGuide = {
                 options: PatchOperationGroupTableOptions;
             }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
                 return await api.patch("/guide/operationGroup/table",
+                    options.options,
+                    { signal: options.controller?.signal }
+                ).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+        }
+    },
+
+    material: {
+        getById: async (options: ApiServiceOptions<{
+            id: number
+        }>): Promise<ApiServiceResponse<GetByIdMaterialResponse>> => {
+            return await api.get(`/guide/material/${options.id}`, {
+                signal: options.controller?.signal
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        post: async (options: ApiServiceOptions<{
+            options: PostMaterialOptions;
+        }>): Promise<ApiServiceResponse<GetByIdMaterialResponse>> => {
+            return await api.post("/guide/material",
+                {...options.options},
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 201 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        patch: async (options: ApiServiceOptions<{
+            id: number,
+            options: PathMaterialOptions;
+        }>): Promise<ApiServiceResponse<GetByIdMaterialResponse>> => {
+            return await api.patch(`/guide/material/${options.id}`,
+                {...options.options},
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        delete: async (options: ApiServiceOptions<{
+            ids: number[];
+        }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+            return await api.delete("/guide/material", {
+                signal: options.controller?.signal,
+                data: options.ids,
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        table: {
+            get: async (options: ApiServiceOptions<{
+                options?: GetTableOptions;
+            }>): Promise<ApiServiceResponse<GetTableResponse<MaterialTableRow[]>>> => {
+                return await api.get("/guide/material/table", {
+                    signal: options.controller?.signal,
+                    params: buildTableOptions(options.options),
+                }).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+
+            patch: async (options: ApiServiceOptions<{
+                options: PatchMaterialTableOptions;
+            }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+                return await api.patch("/guide/material/table",
                     options.options,
                     { signal: options.controller?.signal }
                 ).then((response) => {
