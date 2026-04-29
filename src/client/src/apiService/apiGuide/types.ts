@@ -51,3 +51,29 @@ export interface MaterialGroupTableRow extends TableRow {
 }
 
 export type PatchMaterialGroupTableOptions = Record<number, Partial<Omit<MaterialGroupTableRow, "id">>>;
+
+export interface GetByIdOperationGroupResponse {
+    id: number;
+    name: string;
+    description: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PostOperationGroupOptions {
+    name: string;
+    description: string;
+}
+
+export interface PathOperationGroupOptions {
+    name: string;
+    description: string;
+}
+
+export interface OperationGroupTableRow extends TableRow {
+    id: number;
+    name: string;
+    description: string;
+}
+
+export type PatchOperationGroupTableOptions = Record<number, Partial<Omit<OperationGroupTableRow, "id">>>;

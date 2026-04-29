@@ -2,10 +2,11 @@
 
 import Container from "@/components/Container/Container";
 import styles from './page.module.scss';
-import {classNames, FormStatus, Placeholder, SimpleCell} from "@vkontakte/vkui";
+import {classNames, SimpleCell} from "@vkontakte/vkui";
 import {useState} from "react";
 import TypeProducts from "@/sections/guide/TypeProducts";
 import MaterialGroup from "@/sections/guide/MaterialGroup";
+import OperationGroup from "@/sections/guide/OperationGroup";
 
 const sections = [
     {
@@ -67,9 +68,11 @@ const GuidePage = () => {
                 </div>
                 {activeSection === 1 ? (
                     <TypeProducts onLoading={setLoading} />
-                ) : activeSection === 2 && (
+                ) : activeSection === 2 ? (
                     <MaterialGroup onLoading={setLoading} />
-                )}
+                ) : activeSection === 5 ? (
+                    <OperationGroup onLoading={setLoading} />
+                ) : null}
             </div>
         </Container>
     )

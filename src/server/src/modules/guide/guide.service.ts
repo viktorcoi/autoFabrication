@@ -5,12 +5,15 @@ import { hasPermission } from "../../shared/http/permissions.js";
 import type { RolePermissions } from "../roles/role.types.js";
 import {
 	updateMaterialGroupsTableItemSchema,
+	updateOperationGroupsTableItemSchema,
 	updateTypeProductsTableItemSchema,
 } from "./guide.schemas.js";
 import type {
 	GetMaterialGroupsTableQuery,
+	GetOperationGroupsTableQuery,
 	GetTypeProductsTableQuery,
 	UpdateMaterialGroupsTablePayload,
+	UpdateOperationGroupsTablePayload,
 	UpdateTypeProductsTablePayload,
 } from "./guide.schemas.js";
 
@@ -42,6 +45,20 @@ const materialGroupTableSelect = {
 	description: true,
 } satisfies Prisma.materialGroupSelect;
 
+const operationGroupSelect = {
+	id: true,
+	name: true,
+	description: true,
+	createdAt: true,
+	updatedAt: true,
+} satisfies Prisma.operationGroupSelect;
+
+const operationGroupTableSelect = {
+	id: true,
+	name: true,
+	description: true,
+} satisfies Prisma.operationGroupSelect;
+
 const TYPE_PRODUCT_TABLE_FIELD_TO_MODEL_FIELD = {
 	id: "id",
 	name: "name",
@@ -54,10 +71,18 @@ const MATERIAL_GROUP_TABLE_FIELD_TO_MODEL_FIELD = {
 	description: "description",
 } as const;
 
+const OPERATION_GROUP_TABLE_FIELD_TO_MODEL_FIELD = {
+	id: "id",
+	name: "name",
+	description: "description",
+} as const;
+
 const TYPE_PRODUCT_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
 const TYPE_PRODUCT_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
 const MATERIAL_GROUP_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
 const MATERIAL_GROUP_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
+const OPERATION_GROUP_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
+const OPERATION_GROUP_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
 
 const typeProductTableMeta = Object.freeze({
 	isConst: Object.freeze(
@@ -87,6 +112,20 @@ const materialGroupTableMeta = Object.freeze({
 	),
 });
 
+const operationGroupTableMeta = Object.freeze({
+	isConst: Object.freeze(
+		Object.entries(OPERATION_GROUP_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([, modelField]) => OPERATION_GROUP_SYSTEM_MODEL_FIELDS.has(modelField))
+			.map(([columnId]) => columnId),
+	),
+	isRequired: Object.freeze(
+		Object.entries(OPERATION_GROUP_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([, modelField]) => !OPERATION_GROUP_OPTIONAL_MODEL_FIELDS.has(modelField))
+			.filter(([, modelField]) => !OPERATION_GROUP_SYSTEM_MODEL_FIELDS.has(modelField))
+			.map(([columnId]) => columnId),
+	),
+});
+
 type CreateTypeProductData = {
 	name: string;
 	description?: string | null;
@@ -100,6 +139,13 @@ type CreateMaterialGroupData = {
 };
 
 type UpdateMaterialGroupData = Partial<CreateMaterialGroupData>;
+
+type CreateOperationGroupData = {
+	name: string;
+	description?: string | null;
+};
+
+type UpdateOperationGroupData = Partial<CreateOperationGroupData>;
 
 type ActionByTableResultItem = {
 	id: number;
@@ -117,12 +163,18 @@ const UPDATE_TYPE_PRODUCT_NO_RIGHTS_ERROR = "У вас нет прав для р
 const UPDATE_TYPE_PRODUCT_SUCCESS_DESCRIPTION = "Отредактировано";
 const DELETE_TYPE_PRODUCT_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
 const DELETE_TYPE_PRODUCT_IN_USE_ERROR = "Этот тип изделия используется и не может быть удален";
-const MATERIAL_GROUP_NOT_FOUND_ERROR = "Группа материалов не найдена";
-const MATERIAL_GROUP_DUPLICATE_ERROR = "Группа материалов с таким названием уже существует";
+const MATERIAL_GROUP_NOT_FOUND_ERROR = "Группа материала не найдена";
+const MATERIAL_GROUP_DUPLICATE_ERROR = "Группа материала с таким названием уже существует";
 const UPDATE_MATERIAL_GROUP_NO_RIGHTS_ERROR = "У вас нет прав для редактирования";
 const UPDATE_MATERIAL_GROUP_SUCCESS_DESCRIPTION = "Отредактировано";
 const DELETE_MATERIAL_GROUP_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
-const DELETE_MATERIAL_GROUP_IN_USE_ERROR = "Эта группа материалов используется и не может быть удалена";
+const DELETE_MATERIAL_GROUP_IN_USE_ERROR = "Эта группа материала используется и не может быть удалена";
+const OPERATION_GROUP_NOT_FOUND_ERROR = "Группа операций не найдена";
+const OPERATION_GROUP_DUPLICATE_ERROR = "Группа операций с таким названием уже существует";
+const UPDATE_OPERATION_GROUP_NO_RIGHTS_ERROR = "У вас нет прав для редактирования";
+const UPDATE_OPERATION_GROUP_SUCCESS_DESCRIPTION = "Отредактировано";
+const DELETE_OPERATION_GROUP_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
+const DELETE_OPERATION_GROUP_IN_USE_ERROR = "Эта группа операций используется и не может быть удалена";
 
 const getUniqueIds = (ids: number[]) => {
 	const uniqueIds = new Set<number>();
@@ -207,6 +259,29 @@ const buildMaterialGroupsTableWhere = (search?: string): Prisma.materialGroupWhe
 	};
 };
 
+const buildOperationGroupsTableWhere = (search?: string): Prisma.operationGroupWhereInput | undefined => {
+	if (!search) {
+		return undefined;
+	}
+
+	return {
+		OR: [
+			{
+				name: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+			{
+				description: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+		],
+	};
+};
+
 const buildTypeProductsTableOrderBy = (
 	sorting: GetTypeProductsTableQuery["sorting"],
 ): Prisma.TypeProductOrderByWithRelationInput[] => {
@@ -233,6 +308,19 @@ const buildMaterialGroupsTableOrderBy = (
 	];
 };
 
+const buildOperationGroupsTableOrderBy = (
+	sorting: GetOperationGroupsTableQuery["sorting"],
+): Prisma.operationGroupOrderByWithRelationInput[] => {
+	if (!sorting) {
+		return [{ id: "asc" }];
+	}
+
+	return [
+		{ [sorting.id]: sorting.sort } as Prisma.operationGroupOrderByWithRelationInput,
+		{ id: "asc" },
+	];
+};
+
 const ensureTypeProductNameIsUnique = async (name: string, excludedId?: number) => {
 	const existingTypeProduct = await prisma.typeProduct.findUnique({
 		where: { name },
@@ -252,6 +340,17 @@ const ensureMaterialGroupNameIsUnique = async (name: string, excludedId?: number
 
 	if (existingMaterialGroup && existingMaterialGroup.id !== excludedId) {
 		throw new AppError(409, MATERIAL_GROUP_DUPLICATE_ERROR);
+	}
+};
+
+const ensureOperationGroupNameIsUnique = async (name: string, excludedId?: number) => {
+	const existingOperationGroup = await prisma.operationGroup.findUnique({
+		where: { name },
+		select: { id: true },
+	});
+
+	if (existingOperationGroup && existingOperationGroup.id !== excludedId) {
+		throw new AppError(409, OPERATION_GROUP_DUPLICATE_ERROR);
 	}
 };
 
@@ -328,6 +427,33 @@ export const getMaterialGroupsTable = async (query: GetMaterialGroupsTableQuery)
 	};
 };
 
+export const getOperationGroupsTable = async (query: GetOperationGroupsTableQuery) => {
+	const where = buildOperationGroupsTableWhere(query.search);
+	const orderBy = buildOperationGroupsTableOrderBy(query.sorting);
+	const skip = query.page * query.rows;
+	const [total, operationGroups] = await prisma.$transaction([
+		prisma.operationGroup.count({ where }),
+		prisma.operationGroup.findMany({
+			where,
+			select: operationGroupTableSelect,
+			orderBy,
+			skip,
+			take: query.rows,
+		}),
+	]);
+
+	return {
+		total,
+		data: operationGroups.map((operationGroup) => ({
+			id: operationGroup.id,
+			name: operationGroup.name,
+			...(operationGroup.description ? { description: operationGroup.description } : {}),
+			isConst: [...operationGroupTableMeta.isConst],
+			isRequired: [...operationGroupTableMeta.isRequired],
+		})),
+	};
+};
+
 export const getTypeProductById = async (id: number) => {
 	const typeProduct = await prisma.typeProduct.findUnique({
 		where: { id },
@@ -354,6 +480,19 @@ export const getMaterialGroupById = async (id: number) => {
 	return materialGroup;
 };
 
+export const getOperationGroupById = async (id: number) => {
+	const operationGroup = await prisma.operationGroup.findUnique({
+		where: { id },
+		select: operationGroupSelect,
+	});
+
+	if (!operationGroup) {
+		throw new AppError(404, OPERATION_GROUP_NOT_FOUND_ERROR);
+	}
+
+	return operationGroup;
+};
+
 export const createTypeProduct = async (data: CreateTypeProductData) => {
 	await ensureTypeProductNameIsUnique(data.name);
 
@@ -375,6 +514,18 @@ export const createMaterialGroup = async (data: CreateMaterialGroupData) => {
 			description: data.description,
 		},
 		select: materialGroupSelect,
+	});
+};
+
+export const createOperationGroup = async (data: CreateOperationGroupData) => {
+	await ensureOperationGroupNameIsUnique(data.name);
+
+	return prisma.operationGroup.create({
+		data: {
+			name: data.name,
+			description: data.description,
+		},
+		select: operationGroupSelect,
 	});
 };
 
@@ -409,6 +560,23 @@ export const updateMaterialGroup = async (id: number, data: UpdateMaterialGroupD
 			description: data.description,
 		},
 		select: materialGroupSelect,
+	});
+};
+
+export const updateOperationGroup = async (id: number, data: UpdateOperationGroupData) => {
+	await getOperationGroupById(id);
+
+	if (typeof data.name === "string") {
+		await ensureOperationGroupNameIsUnique(data.name, id);
+	}
+
+	return prisma.operationGroup.update({
+		where: { id },
+		data: {
+			name: data.name,
+			description: data.description,
+		},
+		select: operationGroupSelect,
 	});
 };
 
@@ -507,6 +675,62 @@ export const updateMaterialGroupsTable = async (
 			result.success.push({
 				id,
 				description: UPDATE_MATERIAL_GROUP_SUCCESS_DESCRIPTION,
+			});
+		} catch (error) {
+			if (error instanceof AppError) {
+				result.error.push({
+					id,
+					description: error.message,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const updateOperationGroupsTable = async (
+	payload: UpdateOperationGroupsTablePayload,
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const permissions = await getGuidePermissions(actorId);
+	const ids = Object.keys(payload).map((id) => Number(id));
+
+	if (!hasPermission(permissions, "/guide", "editing")) {
+		return {
+			success: [],
+			error: ids.map((id) => ({
+				id,
+				description: UPDATE_OPERATION_GROUP_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const [rawId, rawItem] of Object.entries(payload)) {
+		const id = Number(rawId);
+		const parsedItem = updateOperationGroupsTableItemSchema.safeParse(rawItem);
+
+		if (!parsedItem.success) {
+			result.error.push({
+				id,
+				description: getValidationErrorMessage(parsedItem.error.issues) || "Некорректные данные",
+			});
+			continue;
+		}
+
+		try {
+			await updateOperationGroup(id, parsedItem.data);
+			result.success.push({
+				id,
+				description: UPDATE_OPERATION_GROUP_SUCCESS_DESCRIPTION,
 			});
 		} catch (error) {
 			if (error instanceof AppError) {
@@ -663,6 +887,81 @@ export const deleteMaterialGroups = async (
 				result.error.push({
 					id,
 					description: MATERIAL_GROUP_NOT_FOUND_ERROR,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const deleteOperationGroups = async (
+	ids: number[],
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const uniqueIds = getUniqueIds(ids);
+	const permissions = await getGuidePermissions(actorId);
+
+	if (!hasPermission(permissions, "/guide", "removing")) {
+		return {
+			success: [],
+			error: uniqueIds.map((id) => ({
+				id,
+				description: DELETE_OPERATION_GROUP_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const existingOperationGroups = await prisma.operationGroup.findMany({
+		where: {
+			id: {
+				in: uniqueIds,
+			},
+		},
+		select: {
+			id: true,
+		},
+	});
+	const operationGroupsById = new Map(existingOperationGroups.map((operationGroup) => [operationGroup.id, operationGroup]));
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const id of uniqueIds) {
+		if (!operationGroupsById.has(id)) {
+			result.error.push({
+				id,
+				description: OPERATION_GROUP_NOT_FOUND_ERROR,
+			});
+			continue;
+		}
+
+		try {
+			await prisma.operationGroup.delete({
+				where: { id },
+				select: { id: true },
+			});
+			result.success.push({
+				id,
+				description: "Удалено",
+			});
+		} catch (error) {
+			if (isPrismaDeleteConstraintError(error)) {
+				result.error.push({
+					id,
+					description: DELETE_OPERATION_GROUP_IN_USE_ERROR,
+				});
+				continue;
+			}
+
+			if (isPrismaRecordNotFoundError(error)) {
+				result.error.push({
+					id,
+					description: OPERATION_GROUP_NOT_FOUND_ERROR,
 				});
 				continue;
 			}

@@ -20,16 +20,33 @@ const typeProductsTableSortingSchema = z.object({
 const materialGroupNameSchema = z
 	.string()
 	.trim()
-	.min(1, "Название группы материалов обязательно")
-	.max(255, "Название группы материалов слишком длинное");
+	.min(1, "Название группы материала обязательно")
+	.max(255, "Название группы материала слишком длинное");
 
 const materialGroupDescriptionSchema = z
 	.string()
 	.trim()
-	.max(1000, "Описание группы материалов слишком длинное")
+	.max(1000, "Описание группы материала слишком длинное")
 	.transform((value) => value.length > 0 ? value : null);
 
 const materialGroupsTableSortingSchema = z.object({
+	id: z.enum(["name", "description"]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
+const operationGroupNameSchema = z
+	.string()
+	.trim()
+	.min(1, "Название группы операций обязательно")
+	.max(255, "Название группы операций слишком длинное");
+
+const operationGroupDescriptionSchema = z
+	.string()
+	.trim()
+	.max(1000, "Описание группы операций слишком длинное")
+	.transform((value) => value.length > 0 ? value : null);
+
+const operationGroupsTableSortingSchema = z.object({
 	id: z.enum(["name", "description"]),
 	sort: z.enum(["asc", "desc"]),
 }).strict();
@@ -142,7 +159,7 @@ export const updateMaterialGroupsTableItemSchema = z
 
 export const updateMaterialGroupsTableSchema = z
 	.record(
-		z.string().regex(/^[1-9]\d*$/, "Некорректный id группы материалов"),
+		z.string().regex(/^[1-9]\d*$/, "Некорректный id группы материала"),
 		z.unknown(),
 	)
 	.refine(
@@ -155,9 +172,9 @@ export const deleteMaterialGroupIdsSchema = z
 		z.coerce
 			.number()
 			.int()
-			.positive("id группы материалов должен быть положительным числом"),
+			.positive("id группы материала должен быть положительным числом"),
 	)
-	.min(1, "Нужно выбрать хотя бы одну группу материалов");
+	.min(1, "Нужно выбрать хотя бы одну группу материала");
 
 export const getMaterialGroupsTableSchema = z.object({
 	page: z.coerce.number().int().min(0).default(0),
@@ -172,7 +189,67 @@ export const getMaterialGroupsTableSchema = z.object({
 		.transform((value) => value ?? null),
 });
 
+export const createOperationGroupSchema = z.object({
+	name: operationGroupNameSchema,
+	description: operationGroupDescriptionSchema.optional(),
+});
+
+export const updateOperationGroupSchema = z
+	.object({
+		name: operationGroupNameSchema.optional(),
+		description: operationGroupDescriptionSchema.optional(),
+	})
+	.refine(
+		(value) => value.name !== undefined || value.description !== undefined,
+		"Нужно передать хотя бы одно поле для обновления",
+	);
+
+export const updateOperationGroupsTableItemSchema = z
+	.object({
+		name: operationGroupNameSchema.optional(),
+		description: operationGroupDescriptionSchema.optional(),
+	})
+	.strict()
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нет данных для обновления",
+	);
+
+export const updateOperationGroupsTableSchema = z
+	.record(
+		z.string().regex(/^[1-9]\d*$/, "Некорректный id группы операций"),
+		z.unknown(),
+	)
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нужно передать хотя бы одну строку для редактирования",
+	);
+
+export const deleteOperationGroupIdsSchema = z
+	.array(
+		z.coerce
+			.number()
+			.int()
+			.positive("id группы операций должен быть положительным числом"),
+	)
+	.min(1, "Нужно выбрать хотя бы одну группу операций");
+
+export const getOperationGroupsTableSchema = z.object({
+	page: z.coerce.number().int().min(0).default(0),
+	rows: z.coerce.number().int().positive().max(100).default(20),
+	search: z.preprocess(
+		(value) => typeof value === "string" ? value.trim() : undefined,
+		z.string().optional(),
+	).transform((value) => value && value.length > 0 ? value : undefined),
+	sorting: z
+		.preprocess(parseTableSorting, operationGroupsTableSortingSchema.nullable())
+		.optional()
+		.transform((value) => value ?? null),
+});
+
 export type GetTypeProductsTableQuery = z.infer<typeof getTypeProductsTableSchema>;
 export type UpdateTypeProductsTablePayload = z.infer<typeof updateTypeProductsTableSchema>;
 export type GetMaterialGroupsTableQuery = z.infer<typeof getMaterialGroupsTableSchema>;
 export type UpdateMaterialGroupsTablePayload = z.infer<typeof updateMaterialGroupsTableSchema>;
+export type GetOperationGroupsTableQuery = z.infer<typeof getOperationGroupsTableSchema>;
+export type UpdateOperationGroupsTablePayload = z.infer<typeof updateOperationGroupsTableSchema>;
