@@ -274,6 +274,7 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                             disabled={loading.send}
                             maxFiles={MAX_FILES}
                             maxSize={MAX_FILE_SIZE_MB}
+                            accept={['.zip', '.rar', '.7zip', 'image/png', 'image/jpeg', 'image/webp', '.docx', '.doc', '.dotx', '.xls', '.pptx', '.pdf']}
                             maxTotalSize={MAX_TOTAL_SIZE_MB}
                             onChange={(files) => mergeState({files}, setData)}
                             onRemoveSavedFile={(file) => mergeState({
