@@ -18,30 +18,30 @@ export const tableColumns: Record<string, Column[]> = {
     ],
 
     typeProducts: [
-        {key: 'name', header: 'Название', minSize: 120},
-        {key: 'description', header: 'Описание', minSize: 180},
+        {key: 'name', header: 'Название', minSize: 120, size: 250},
+        {key: 'description', header: 'Описание', minSize: 300},
     ],
 
     materialGroup: [
-        {key: 'name', header: 'Название', minSize: 120},
-        {key: 'description', header: 'Описание', minSize: 180},
+        {key: 'name', header: 'Название', minSize: 120, size: 250},
+        {key: 'description', header: 'Описание', minSize: 300},
     ],
 
     operationGroup: [
-        {key: 'name', header: 'Название', minSize: 120},
-        {key: 'description', header: 'Описание', minSize: 180},
+        {key: 'name', header: 'Название', minSize: 120, size: 250},
+        {key: 'description', header: 'Описание', minSize: 300},
     ],
 
     material: [
-        {key: 'name', header: 'Название', minSize: 120},
+        {key: 'name', header: 'Название', minSize: 120, size: 250},
         {key: 'materialGroup', header: 'Группа материалов', minSize: 180},
-        {key: 'description', header: 'Описание', minSize: 180},
+        {key: 'description', header: 'Описание', minSize: 300},
     ],
 
     operation: [
-        {key: 'name', header: 'Название', minSize: 120},
+        {key: 'name', header: 'Название', minSize: 120, size: 250},
         {key: 'operationGroup', header: 'Группа операций', minSize: 180},
         {key: 'download', header: 'Файлы', type: 'download', size: 95, minSize: 95, maxSize: 95, resize: false},
-        {key: 'description', header: 'Описание', minSize: 180},
+        {key: 'description', header: 'Описание', minSize: 300},
     ]
 }

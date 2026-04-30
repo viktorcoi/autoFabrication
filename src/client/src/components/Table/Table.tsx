@@ -40,6 +40,7 @@ import {
     getColumnDefaultWidth,
     getColumnMaxWidth,
     getColumnMinWidth,
+    isColumnWidthFixed,
     getDefaultRowId,
     getMeasuredRowHeight,
     getRange,
@@ -244,10 +245,10 @@ const Table = (props: TableProps) => {
             id: column.key,
             accessorFn: (row) => row[column.key],
             header: () => column.header ?? '',
-            size: getColumnDefaultWidth(column),
+            size: clampColumnWidth(getColumnDefaultWidth(column), column),
             minSize: getColumnMinWidth(column),
             maxSize: getColumnMaxWidth(column),
-            enableResizing: column.resize !== false,
+            enableResizing: column.resize !== false && !isColumnWidthFixed(column),
             enableSorting: column.sortable !== false,
             cell: (info) => {
                 if (column.render) {
@@ -264,6 +265,7 @@ const Table = (props: TableProps) => {
 
         columns.forEach((column) => {
             const width = nextSizing[column.key];
+            const defaultWidth = clampColumnWidth(getColumnDefaultWidth(column), column);
 
             if (typeof width !== 'number') {
                 return;
@@ -271,7 +273,7 @@ const Table = (props: TableProps) => {
 
             const normalizedWidth = clampColumnWidth(width, column);
 
-            if (normalizedWidth !== getColumnDefaultWidth(column)) {
+            if (normalizedWidth !== defaultWidth) {
                 normalizedSizing[column.key] = normalizedWidth;
             }
         });
@@ -1256,7 +1258,7 @@ const Table = (props: TableProps) => {
         const cell = headerCellRefsRef.current[columnId];
         const column = columnMap.get(columnId);
 
-        if (!cell || !column || column.resize === false) {
+        if (!cell || !column || column.resize === false || isColumnWidthFixed(column)) {
             return;
         }
 
@@ -1264,16 +1266,20 @@ const Table = (props: TableProps) => {
             const currentCell = headerCellRefsRef.current[currentColumn.key];
             const fallbackWidth = liveColumnSizingRef.current[currentColumn.key]
                 ?? committedColumnSizingRef.current[currentColumn.key]
-                ?? getColumnDefaultWidth(currentColumn);
+                ?? clampColumnWidth(getColumnDefaultWidth(currentColumn), currentColumn);
+            const measuredWidth = currentCell?.getBoundingClientRect().width;
 
             result[currentColumn.key] = clampColumnWidth(
-                currentCell?.getBoundingClientRect().width ?? fallbackWidth,
+                isColumnWidthFixed(currentColumn) ? fallbackWidth : measuredWidth ?? fallbackWidth,
                 currentColumn,
             );
 
             return result;
         }, {});
         const startWidth = baseSizing[columnId] ?? clampColumnWidth(cell.getBoundingClientRect().width, column);
+
+        liveColumnSizingRef.current = {...baseSizing};
+        applyColumnSizingPreview(tableRef.current, columns, baseSizing);
 
         resizeInteractionRef.current = {
             columnId,

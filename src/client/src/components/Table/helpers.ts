@@ -567,6 +567,10 @@ export const getColumnMinWidth = (column?: Column) => column?.minSize ?? DEFAULT
 
 export const getColumnMaxWidth = (column?: Column) => column?.maxSize ?? DEFAULT_COLUMN_MAX_SIZE;
 
+export const isColumnWidthFixed = (column?: Column) => {
+    return getColumnMinWidth(column) === getColumnMaxWidth(column);
+};
+
 export const clampColumnWidth = (width: number, column?: Column) => {
     return Math.min(getColumnMaxWidth(column), Math.max(getColumnMinWidth(column), Math.round(width)));
 };
@@ -582,7 +586,7 @@ const getResolvedColumnWidth = (column: Column, sizing: ColumnSizingState) => {
         return clampColumnWidth(explicitWidth, column);
     }
 
-    return getColumnDefaultWidth(column);
+    return clampColumnWidth(getColumnDefaultWidth(column), column);
 };
 
 export const applyColumnSizingPreview = (
