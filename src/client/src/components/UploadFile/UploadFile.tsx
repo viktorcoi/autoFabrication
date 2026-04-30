@@ -283,7 +283,7 @@ export const UploadFile = (props: DragAndDropFileProps) => {
                 height={20}
             />
             <div className={styles.fileInfo}>
-                <Text className={styles.fileName}>{name}</Text>
+                <Text>{name}</Text>
                 <Caption level={'2'} className={styles.fileSize}>
                     {formatBytes(size)}
                 </Caption>
