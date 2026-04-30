@@ -5,6 +5,16 @@ export const isSameFile = (file: File, compareFile: File) => (
     file.type === compareFile.type
 );
 
+const normalizeFileName = (name: string) => name.trim().toLowerCase();
+
+export const isSameSavedFile = (
+    file: File,
+    compareFile: { name: string; size: number },
+) => (
+    normalizeFileName(file.name) === normalizeFileName(compareFile.name) &&
+    file.size === compareFile.size
+);
+
 export const getFilesTotalSize = (files: File[]) => files.reduce((total, file) => total + file.size, 0);
 
 export const formatBytes = (bytes: number) => {

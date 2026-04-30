@@ -85,6 +85,10 @@
     background: var(--vkui--color_background_content);
 }
 
+.fileIcon {
+    flex-shrink: 0;
+}
+
 .fileInfo {
     min-width: 0;
     flex-grow: 1;
@@ -98,4 +102,8 @@
 
 .fileSize {
     color: var(--vkui--color_text_secondary);
+}
+
+.remove {
+    flex-shrink: 0;
 }

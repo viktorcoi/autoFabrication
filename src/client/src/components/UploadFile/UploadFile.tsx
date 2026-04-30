@@ -16,12 +16,13 @@ import {
     Icon24UploadOutline
 } from "@vkontakte/icons";
 import styles from "./UploadFile.module.scss";
-import {DragAndDropFileError, DragAndDropFileProps} from "@/components/UploadFile/types";
+import {DragAndDropFileError, DragAndDropFileProps, SavedUploadFile} from "@/components/UploadFile/types";
 import {
     formatBytes,
     getAcceptItems,
     getFilesTotalSize,
     isFileAccepted,
+    isSameSavedFile,
     isSameFile
 } from "@/components/UploadFile/helpers";
 
@@ -30,8 +31,10 @@ export const UploadFile = (props: DragAndDropFileProps) => {
     const {
         value,
         defaultValue = [],
+        savedFiles = [],
         onChange,
         onError,
+        onRemoveSavedFile,
         accept,
         maxFiles,
         maxSize,
@@ -61,7 +64,6 @@ export const UploadFile = (props: DragAndDropFileProps) => {
         ? Number.POSITIVE_INFINITY
         : Math.max(0, Math.floor(maxFiles));
     const inputMultiple = filesLimit !== 1;
-    const canOpenFileDialog = !disabled && (filesLimit === 1 || files.length < filesLimit);
     const maxSizeBytes = Number.isFinite(maxSize) && maxSize > 0
         ? maxSize * 1024 * 1024
         : null;
@@ -71,6 +73,16 @@ export const UploadFile = (props: DragAndDropFileProps) => {
         : null;
     const maxTotalSizeText = maxTotalSizeBytes === null ? null : formatBytes(maxTotalSizeBytes);
     const isMultipleFiles = Number.isFinite(filesLimit) ? filesLimit > 1 : true;
+    const savedFilesTotalSize = useMemo(
+        () => savedFiles.reduce((total, file) => total + file.size, 0),
+        [savedFiles]
+    );
+    const totalFilesCount = files.length + savedFiles.length;
+    const currentTotalSize = getFilesTotalSize(files) + savedFilesTotalSize;
+    const canReplaceSingleUnsavedFile = filesLimit === 1 && savedFiles.length === 0;
+    const hasFileSlots = !Number.isFinite(filesLimit) || totalFilesCount < filesLimit || canReplaceSingleUnsavedFile;
+    const hasTotalSizeCapacity = maxTotalSizeBytes === null || currentTotalSize < maxTotalSizeBytes || canReplaceSingleUnsavedFile;
+    const canOpenFileDialog = !disabled && hasFileSlots && hasTotalSizeCapacity;
 
     const defaultDescription = useMemo(() => {
         const limitParts: string[] = [];
@@ -112,6 +124,11 @@ export const UploadFile = (props: DragAndDropFileProps) => {
         message: `Файл "${file.name}" не добавлен: общий размер файлов больше ${maxTotalSizeText}`,
     });
 
+    const getNoAvailableTotalSizeError = (): DragAndDropFileError => ({
+        code: 'total-size-exceeded',
+        message: `Нельзя добавить больше файлов: общий размер файлов больше ${maxTotalSizeText}`,
+    });
+
     const emitError = (error: DragAndDropFileError) => {
         onError?.(error);
     };
@@ -128,12 +145,12 @@ export const UploadFile = (props: DragAndDropFileProps) => {
     const validateAndAddFiles = (incomingFiles: File[]) => {
         if (disabled || !incomingFiles.length) return;
 
-        const baseFiles = filesLimit === 1 ? [] : files;
+        const baseFiles = canReplaceSingleUnsavedFile ? [] : files;
         const availableSlots = Number.isFinite(filesLimit)
-            ? Math.max(0, filesLimit - baseFiles.length)
+            ? Math.max(0, filesLimit - (baseFiles.length + savedFiles.length))
             : Number.POSITIVE_INFINITY;
         const nextFiles: File[] = [];
-        const baseFilesTotalSize = getFilesTotalSize(baseFiles);
+        const baseFilesTotalSize = getFilesTotalSize(baseFiles) + savedFilesTotalSize;
         let nextFilesTotalSize = 0;
 
         incomingFiles.forEach(file => {
@@ -142,6 +159,15 @@ export const UploadFile = (props: DragAndDropFileProps) => {
                     code: 'file-duplicate',
                     file,
                     message: `Файл "${file.name}" уже добавлен`,
+                });
+                return;
+            }
+
+            if (savedFiles.some((savedFile) => isSameSavedFile(file, savedFile))) {
+                emitError({
+                    code: 'file-duplicate',
+                    file,
+                    message: `Файл "${file.name}" уже сохранён`,
                 });
                 return;
             }
@@ -189,8 +215,17 @@ export const UploadFile = (props: DragAndDropFileProps) => {
             return;
         }
 
-        if (!disabled && Number.isFinite(filesLimit)) {
+        if (disabled) {
+            return;
+        }
+
+        if (Number.isFinite(filesLimit) && !hasFileSlots) {
             emitMaxFilesError();
+            return;
+        }
+
+        if (maxTotalSizeBytes !== null && !hasTotalSizeCapacity) {
+            emitError(getNoAvailableTotalSizeError());
         }
     };
 
@@ -233,6 +268,45 @@ export const UploadFile = (props: DragAndDropFileProps) => {
     const removeFile = (index: number) => {
         updateFiles(files.filter((_, currentIndex) => currentIndex !== index));
     };
+
+    const renderFileItem = (
+        key: string,
+        name: string,
+        size: number,
+        onRemove?: () => void,
+    ) => (
+        <div key={key} className={styles.file}>
+            <Icon24DocumentOutline
+                fill={'var(--vkui--color_icon_secondary)'}
+                className={styles.fileIcon}
+                width={20}
+                height={20}
+            />
+            <div className={styles.fileInfo}>
+                <Text className={styles.fileName}>{name}</Text>
+                <Caption level={'2'} className={styles.fileSize}>
+                    {formatBytes(size)}
+                </Caption>
+            </div>
+            {onRemove && (
+                <Tooltip
+                    description={'Удалить'}
+                    usePortal={true}
+                    placement={'top'}
+                    disableTriggerOnFocus={true}
+                >
+                    <Button
+                        type={'button'}
+                        className={styles.remove}
+                        onClick={onRemove}
+                        mode={'tertiary'}
+                        rounded={true}
+                        after={<Icon16Clear width={12} height={12}/>}
+                    />
+                </Tooltip>
+            )}
+        </div>
+    );
 
     return (
         <div
@@ -285,42 +359,23 @@ export const UploadFile = (props: DragAndDropFileProps) => {
                 </div>
             </div>
 
-            {showFileList && files.length > 0 && (
+            {showFileList && (savedFiles.length > 0 || files.length > 0) && (
                 <div className={styles.list}>
-                    {files.map((file, index) => (
-                        <div
-                            key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
-                            className={styles.file}
-                        >
-                            <Icon24DocumentOutline
-                                fill={'var(--vkui--color_icon_secondary)'}
-                                className={styles.fileIcon}
-                                width={20}
-                                height={20}
-                            />
-                            <div className={styles.fileInfo}>
-                                <Text className={styles.fileName}>{file.name}</Text>
-                                <Caption level={'2'} className={styles.fileSize}>
-                                    {formatBytes(file.size)}
-                                </Caption>
-                            </div>
-                            {removable && !disabled && (
-                                <Tooltip
-                                    description={`Удалить`}
-                                    usePortal={true}
-                                    placement={"top"}
-                                    disableTriggerOnFocus={true}
-                                >
-                                    <Button
-                                        className={styles.remove}
-                                        onClick={() => removeFile(index)}
-                                        mode={'tertiary'}
-                                        rounded={true}
-                                        after={<Icon16Clear width={12} height={12}/>}
-                                    />
-                                </Tooltip>
-                            )}
-                        </div>
+                    {savedFiles.map((file: SavedUploadFile) => renderFileItem(
+                        `saved-${file.id}`,
+                        file.name,
+                        file.size,
+                        removable && !disabled && onRemoveSavedFile
+                            ? () => onRemoveSavedFile(file)
+                            : undefined,
+                    ))}
+                    {files.map((file, index) => renderFileItem(
+                        `${file.name}-${file.size}-${file.lastModified}-${index}`,
+                        file.name,
+                        file.size,
+                        removable && !disabled
+                            ? () => removeFile(index)
+                            : undefined,
                     ))}
                 </div>
             )}

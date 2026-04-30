@@ -433,6 +433,32 @@ const mapOperationFiles = (
 	size: file.size,
 }));
 
+const normalizeOperationFileName = (name: string) => name.trim().toLowerCase();
+
+const getOperationFileDuplicateKey = (file: { name: string; size: number }) =>
+	`${normalizeOperationFileName(file.name)}::${file.size}`;
+
+const assertUniqueOperationFiles = (
+	existingFiles: Array<{ name: string; size: number }>,
+	incomingFiles: Array<{ originalname: string; size: number }>,
+) => {
+	const existingKeys = new Set(existingFiles.map((file) => getOperationFileDuplicateKey(file)));
+	const incomingKeys = new Set<string>();
+
+	for (const file of incomingFiles) {
+		const duplicateKey = getOperationFileDuplicateKey({
+			name: file.originalname,
+			size: file.size,
+		});
+
+		if (existingKeys.has(duplicateKey) || incomingKeys.has(duplicateKey)) {
+			throw new AppError(400, `Файл "${file.originalname}" уже добавлен к операции`);
+		}
+
+		incomingKeys.add(duplicateKey);
+	}
+};
+
 const cleanupStoredFiles = async (absolutePaths: string[]) => {
 	await Promise.allSettled(absolutePaths.map((absolutePath) => removeStoredFile(absolutePath)));
 };
@@ -1039,6 +1065,7 @@ export const createOperation = async (
 ) => {
 	await ensureOperationNameIsUnique(data.name);
 	await getOperationGroupById(data.operationGroupId);
+	assertUniqueOperationFiles([], files);
 
 	const savedFiles = await saveOperationFiles(files);
 
@@ -1195,6 +1222,13 @@ export const updateOperation = async (
 	const totalFilesCount = remainingFiles.length + files.length;
 	const totalFilesSize = remainingFiles.reduce((result, file) => result + file.size, 0)
 		+ files.reduce((result, file) => result + file.size, 0);
+	assertUniqueOperationFiles(
+		remainingFiles.map((file) => ({
+			name: file.originalName,
+			size: file.size,
+		})),
+		files,
+	);
 
 	if (totalFilesCount > OPERATION_FILES_LIMIT) {
 		throw new AppError(400, "Можно хранить не более 10 файлов у одной операции");

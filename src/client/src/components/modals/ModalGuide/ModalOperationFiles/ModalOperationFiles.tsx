@@ -4,13 +4,13 @@ import {
     ModalPage,
     ModalPageHeader,
     Placeholder,
-    PlatformProvider,
-    Text
+    PlatformProvider, SimpleCell,
+    Text, Tooltip
 } from "@vkontakte/vkui";
-import {useState} from "react";
+import React, {useState} from "react";
 import {
     Icon16DownloadOutline,
-    Icon24DocumentOutline,
+    Icon24DocumentOutline, Icon24TrashSimpleOutline,
     Icon56FolderOutline
 } from "@vkontakte/icons";
 import {downloadOperationFile} from "@/apiService/apiGuide/helpers";
@@ -54,7 +54,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
             preventClose={loadingFileId !== null}
             header={(
                 <PlatformProvider value={'ios'}>
-                    <ModalPageHeader>{`Файлы: ${operationName}`}</ModalPageHeader>
+                    <ModalPageHeader>{`Файлы из "${operationName}"`}</ModalPageHeader>
                 </PlatformProvider>
             )}
             {...restProps}
@@ -70,29 +70,41 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
             ) : (
                 <div className={styles.list}>
                     {files.map((file) => (
-                        <div key={file.id} className={styles.file}>
-                            <Icon24DocumentOutline
-                                width={20}
-                                height={20}
-                                fill={'var(--vkui--color_icon_secondary)'}
-                            />
-                            <div className={styles.fileInfo}>
-                                <Text className={styles.fileName}>{file.name}</Text>
-                                <Caption level={'2'} className={styles.fileSize}>
+                        <SimpleCell
+                            key={file.id}
+                            className={styles.file}
+                            before={(
+                                <Icon24DocumentOutline
+                                    width={20}
+                                    height={20}
+                                    fill={'var(--vkui--color_icon_secondary)'}
+                                />
+                            )}
+                            after={(
+                                <Tooltip
+                                    description={`Скачать`}
+                                    usePortal={true}
+                                    placement={'top'}
+                                    disableTriggerOnFocus={true}
+                                >
+                                    <Button
+                                        mode={'secondary'}
+                                        size={'m'}
+                                        loading={loadingFileId === file.id}
+                                        disabled={loadingFileId !== null}
+                                        before={<Icon16DownloadOutline />}
+                                        onClick={() => handleDownload(file.id, file.name)}
+                                    />
+                                </Tooltip>
+                            )}
+                            subtitle={(
+                                <Caption level={'2'}>
                                     {formatBytes(file.size)}
                                 </Caption>
-                            </div>
-                            <Button
-                                mode={'secondary'}
-                                size={'m'}
-                                loading={loadingFileId === file.id}
-                                disabled={loadingFileId !== null}
-                                before={<Icon16DownloadOutline />}
-                                onClick={() => handleDownload(file.id, file.name)}
-                            >
-                                Скачать
-                            </Button>
-                        </div>
+                            )}
+                        >
+                           {file.name}
+                        </SimpleCell>
                     ))}
                 </div>
             )}

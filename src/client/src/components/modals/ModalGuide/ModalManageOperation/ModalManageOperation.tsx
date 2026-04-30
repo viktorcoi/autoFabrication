@@ -1,7 +1,6 @@
 import {
     Button,
     ButtonGroup,
-    Caption,
     CustomSelectOptionInterface,
     FormItem,
     Input,
@@ -10,23 +9,15 @@ import {
     PlatformProvider,
     Select,
     Spinner,
-    Text,
     Textarea
 } from "@vkontakte/vkui";
 import {SubmitEvent, useEffect, useMemo, useState} from "react";
-import {
-    Icon16Clear,
-    Icon16DownloadOutline,
-    Icon24DocumentOutline
-} from "@vkontakte/icons";
 import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useController, useSelectFilter} from "@/shared/hooks";
-import {downloadOperationFile} from "@/apiService/apiGuide/helpers";
 import {OperationFileItem, PathOperationOptions, PostOperationOptions} from "@/apiService/apiGuide/types";
 import UploadFile from "@/components/UploadFile/UploadFile";
-import {formatBytes} from "@/components/UploadFile/helpers";
 import {ModalManageOperationProps} from "@/components/modals/ModalGuide/ModalManageOperation/types";
 import styles from './ModalManageOperation.module.scss';
 
@@ -68,7 +59,6 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
     const [savedData, setSavedData] = useState<ManageOperationData>({...initialData});
     const [data, setData] = useState<ManageOperationData>({...initialData});
     const [operationGroups, setOperationGroups] = useState<CustomSelectOptionInterface[]>([]);
-    const [downloadingFileId, setDownloadingFileId] = useState<number | null>(null);
     const [loading, setLoading] = useState({
         get: true,
         send: false
@@ -111,33 +101,10 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
         }).finally(() => mergeState({get: false}, setLoading));
     }, [idOperation]);
 
-    const existingFilesTotalSize = useMemo(
-        () => data.existingFiles.reduce((result, file) => result + file.size, 0),
-        [data.existingFiles]
-    );
-
-    const availableFilesCount = Math.max(0, MAX_FILES - data.existingFiles.length);
-    const availableTotalSizeMb = Math.max(0, (MAX_TOTAL_SIZE_MB * 1024 * 1024 - existingFilesTotalSize) / (1024 * 1024));
-
     const removedFileIds = useMemo(
         () => getFileIds(savedData.existingFiles).filter((fileId) => !getFileIds(data.existingFiles).includes(fileId)),
         [data.existingFiles, savedData.existingFiles]
     );
-
-    const handleDownload = async (fileId: number, fileName: string) => {
-        setDownloadingFileId(fileId);
-
-        try {
-            await downloadOperationFile(fileId, fileName);
-        } catch (error) {
-            addSnackbar({
-                type: 'error',
-                text: error instanceof Error ? error.message : 'Не удалось скачать файл'
-            });
-        } finally {
-            setDownloadingFileId(null);
-        }
-    };
 
     const saveOperation = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -298,6 +265,27 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                         />
                     </FormItem>
                     <FormItem
+                        top={'Файлы'}
+                        noPadding={true}
+                    >
+                        <UploadFile
+                            value={data.files}
+                            savedFiles={data.existingFiles}
+                            disabled={loading.send}
+                            maxFiles={MAX_FILES}
+                            maxSize={MAX_FILE_SIZE_MB}
+                            maxTotalSize={MAX_TOTAL_SIZE_MB}
+                            onChange={(files) => mergeState({files}, setData)}
+                            onRemoveSavedFile={(file) => mergeState({
+                                existingFiles: data.existingFiles.filter((item) => item.id !== file.id)
+                            }, setData)}
+                            onError={(error) => addSnackbar({
+                                type: 'error',
+                                text: error.message,
+                            })}
+                        />
+                    </FormItem>
+                    <FormItem
                         top={'Описание'}
                         noPadding={true}
                     >
@@ -308,68 +296,6 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                             className={styles.textarea}
                             placeholder={'Введите описание'}
                         />
-                    </FormItem>
-                    <FormItem
-                        top={'Файлы'}
-                        noPadding={true}
-                    >
-                        <UploadFile
-                            value={data.files}
-                            disabled={loading.send || availableFilesCount === 0 || availableTotalSizeMb <= 0}
-                            maxFiles={availableFilesCount}
-                            maxSize={MAX_FILE_SIZE_MB}
-                            maxTotalSize={availableTotalSizeMb}
-                            onChange={(files) => mergeState({files}, setData)}
-                            onError={(error) => addSnackbar({
-                                type: 'error',
-                                text: error.message,
-                            })}
-                        />
-
-                        {data.existingFiles.length > 0 && (
-                            <div className={styles.existingFiles}>
-                                {data.existingFiles.map((file) => (
-                                    <div key={file.id} className={styles.file}>
-                                        <Icon24DocumentOutline
-                                            width={20}
-                                            height={20}
-                                            fill={'var(--vkui--color_icon_secondary)'}
-                                            className={styles.fileIcon}
-                                        />
-                                        <div className={styles.fileInfo}>
-                                            <Text className={styles.fileName}>{file.name}</Text>
-                                            <Caption level={'2'} className={styles.fileSize}>
-                                                {formatBytes(file.size)}
-                                            </Caption>
-                                        </div>
-                                        <div className={styles.fileActions}>
-                                            <Button
-                                                mode={'secondary'}
-                                                size={'s'}
-                                                loading={downloadingFileId === file.id}
-                                                disabled={loading.send || downloadingFileId !== null}
-                                                before={<Icon16DownloadOutline />}
-                                                onClick={() => handleDownload(file.id, file.name)}
-                                            >
-                                                Скачать
-                                            </Button>
-                                            <Button
-                                                mode={'secondary'}
-                                                appearance={'negative'}
-                                                size={'s'}
-                                                before={<Icon16Clear />}
-                                                disabled={loading.send}
-                                                onClick={() => mergeState({
-                                                    existingFiles: data.existingFiles.filter((item) => item.id !== file.id)
-                                                }, setData)}
-                                            >
-                                                Удалить
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </FormItem>
                 </form>
             )}

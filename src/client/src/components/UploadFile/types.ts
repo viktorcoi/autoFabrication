@@ -13,9 +13,16 @@ export type DragAndDropFileError = {
     message: string;
 };
 
+export type SavedUploadFile = {
+    id: number | string;
+    name: string;
+    size: number;
+};
+
 export interface DragAndDropFileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'defaultValue' | 'onChange' | 'onError'> {
     value?: File[];
     defaultValue?: File[];
+    savedFiles?: SavedUploadFile[];
     accept?: string | string[];
     maxFiles?: number;
     maxSize: number;
@@ -31,4 +38,5 @@ export interface DragAndDropFileProps extends Omit<HTMLAttributes<HTMLDivElement
     classDropzone?: string;
     onChange?(files: File[]): void;
     onError?(error: DragAndDropFileError): void;
+    onRemoveSavedFile?(file: SavedUploadFile): void;
 }
