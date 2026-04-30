@@ -4,7 +4,7 @@ import {
     Icon16SortArrowUp,
     Icon16SortOutline,
 } from '@vkontakte/icons';
-import {Text, classNames} from '@vkontakte/vkui';
+import {classNames} from '@vkontakte/vkui';
 import {getColumnWidthCssVarName, renderContent} from '../helpers';
 import styles from './TableHeader.module.scss';
 import type {TableHeaderProps} from './types';
@@ -80,15 +80,10 @@ const TableHeader = (props: TableHeaderProps) => {
                                             : (event) => beginColumnInteraction(columnId, event)
                                     }
                                 >
-                                    <Text
-                                        weight={'1'}
-                                        className={styles.text}
-                                    >
-                                        {renderContent(
-                                            flexRender(header.column.columnDef.header, header.getContext()),
-                                            styles.headerTitle,
-                                        )}
-                                    </Text>
+                                    {renderContent(
+                                        flexRender(header.column.columnDef.header, header.getContext()),
+                                        classNames(styles.text),
+                                    )}
                                     {canSort && header.column.getIsSorted() === 'asc' && (
                                         <Icon16SortArrowUp className={styles.sort} fill="var(--vkui--color_icon_tertiary)"/>
                                     )}

@@ -383,7 +383,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                         );
                                     } else if (columnType === 'date') {
                                         cellContent = (
-                                            <Text className={styles.text}>
+                                            <Text className={styles.text} title={formatDateCellValue(cellValue)}>
                                                 {formatDateCellValue(cellValue)}
                                             </Text>
                                         );
@@ -406,7 +406,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                             );
                                         } else {
                                             cellContent = (
-                                                <Text className={styles.text}>
+                                                <Text className={styles.text} title={cellTextValue}>
                                                     {cellTextValue}
                                                 </Text>
                                             );
@@ -427,11 +427,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                             />
                                         );
                                     } else {
-                                        cellContent = (
-                                            <Text className={styles.text}>
-                                                {renderContent(renderedCell, styles.cellText)}
-                                            </Text>
-                                        );
+                                        cellContent = renderContent(renderedCell, classNames(styles.text));
                                     }
 
                                     return (

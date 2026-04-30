@@ -1530,12 +1530,10 @@ const Table = (props: TableProps) => {
                         }}
                     >
                         <div className={classNames(headerStyles.headerInner, styles.dragGhostInner)}>
-                            <Text>
-                                {renderContent(
-                                    flexRender(dragGhostHeader.column.columnDef.header, dragGhostHeader.getContext()),
-                                    headerStyles.headerTitle,
-                                )}
-                            </Text>
+                            {renderContent(
+                                flexRender(dragGhostHeader.column.columnDef.header, dragGhostHeader.getContext()),
+                                headerStyles.headerTitle,
+                            )}
                             {dragGhostHeader.column.getCanSort() && dragGhostHeader.column.getIsSorted() === 'asc' && (
                                 <Icon16SortArrowUp fill="var(--vkui--color_icon_tertiary)"/>
                             )}

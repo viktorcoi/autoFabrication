@@ -21,6 +21,100 @@ export const DEFAULT_ROW_HEIGHT = 41;
 export const ROW_VIRTUAL_OVERSCAN = 8;
 export const TABLE_TOTAL_WIDTH_CSS_VAR = '--table-total-width';
 
+const getNodeTextContent = (content: React.ReactNode): string | undefined => {
+    if (content === null || content === undefined) {
+        return undefined;
+    }
+
+    if (
+        typeof content === 'string'
+        || typeof content === 'number'
+        || typeof content === 'bigint'
+        || typeof content === 'boolean'
+    ) {
+        return String(content);
+    }
+
+    if (Array.isArray(content)) {
+        const text = content
+            .map((item) => getNodeTextContent(item))
+            .filter((item): item is string => typeof item === 'string' && item.length > 0)
+            .join(' ')
+            .trim();
+
+        return text || undefined;
+    }
+
+    if (React.isValidElement<{children?: React.ReactNode}>(content)) {
+        return getNodeTextContent(content.props.children);
+    }
+
+    return undefined;
+};
+
+const assignRef = <T, >(ref: React.Ref<T> | undefined, value: T) => {
+    if (!ref) {
+        return;
+    }
+
+    if (typeof ref === 'function') {
+        ref(value);
+        return;
+    }
+
+    ref.current = value;
+};
+
+type AutoTitleTextProps = {
+    className?: string;
+    content: React.ReactNode;
+    title?: string;
+};
+
+const AutoTitleText = ({className, content, title}: AutoTitleTextProps) => {
+    const [rootElement, setRootElement] = React.useState<HTMLElement | null>(null);
+    const externalRootRef = React.isValidElement<{getRootRef?: React.Ref<HTMLElement>}>(content) && content.type === Text
+        ? content.props.getRootRef
+        : undefined;
+
+    const handleRootRef = React.useCallback((node: HTMLElement | null) => {
+        setRootElement(node);
+    }, []);
+
+    const handleTextRootRef = React.useCallback((node: HTMLElement | null) => {
+        setRootElement(node);
+        assignRef(externalRootRef, node);
+    }, [externalRootRef]);
+
+    React.useLayoutEffect(() => {
+        if (!rootElement) {
+            return;
+        }
+
+        const resolvedTitle = title?.trim() || rootElement.textContent?.replace(/\s+/g, ' ').trim() || '';
+
+        if (resolvedTitle) {
+            rootElement.setAttribute('title', resolvedTitle);
+        } else {
+            rootElement.removeAttribute('title');
+        }
+    }, [rootElement, title]);
+
+    if (React.isValidElement<{className?: string; title?: string; children?: React.ReactNode; getRootRef?: React.Ref<HTMLElement>}>(content) && content.type === Text) {
+        return React.cloneElement(content, {
+            className: classNames(className, content.props.className),
+            title: content.props.title ?? title,
+            getRootRef: handleTextRootRef,
+        });
+    }
+
+    return React.createElement(Text, {
+        className,
+        title,
+        getRootRef: handleRootRef,
+    }, content);
+};
+
 export const getMeasuredRowHeight = (element: Element | null | undefined) => {
     if (!element) {
         return DEFAULT_ROW_HEIGHT;
@@ -46,16 +140,18 @@ export const renderContent = (content: React.ReactNode, className?: string) => {
         || typeof content === 'bigint'
         || typeof content === 'boolean'
     ) {
-        return React.createElement(Text, {className}, String(content));
-    }
-
-    if (React.isValidElement<{className?: string}>(content) && content.type === Text) {
-        return React.cloneElement(content, {
-            className: classNames(className, content.props.className),
+        return React.createElement(AutoTitleText, {
+            className,
+            content: String(content),
+            title: String(content),
         });
     }
 
-    return React.createElement('div', {className}, content);
+    return React.createElement(AutoTitleText, {
+        className,
+        content,
+        title: getNodeTextContent(content),
+    });
 };
 
 export const getColumnType = (column?: Column): ColumnType => {

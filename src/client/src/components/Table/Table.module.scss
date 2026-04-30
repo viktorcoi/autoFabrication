@@ -71,6 +71,14 @@
     border-radius: var(--app-border-radius);
     background: var(--vkui--color_background_content--hover);
     pointer-events: none;
+    :global(.vkuiText__host) {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    :global(.vkuiIcon) {
+        min-width: 16px;
+    }
 }
 
 .dragGhostInner {
