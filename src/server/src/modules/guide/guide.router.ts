@@ -78,11 +78,11 @@ import {
 	updateTypeProductsTable,
 } from "./guide.service.js";
 
-const parseId = (value: string, entityName: string) => {
+const parseId = (value: string) => {
 	const id = Number.parseInt(value, 10);
 
 	if (!Number.isInteger(id) || id <= 0) {
-		throw new AppError(400, `Некорректный id ${entityName}`);
+		throw new AppError(400, `Некорректный id`);
 	}
 
 	return id;
@@ -141,6 +141,7 @@ const ensureOperationArchiveFilesExist = async (absolutePaths: string[]) => {
 
 const operationUpload = multer({
 	storage: multer.memoryStorage(),
+	defParamCharset: "utf8",
 	limits: {
 		fileSize: OPERATION_FILE_SIZE_LIMIT,
 		files: OPERATION_FILES_LIMIT,
@@ -190,7 +191,7 @@ guideRouter.get(
 	"/typeProducts/:id",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const typeProduct = await getTypeProductById(parseId(String(request.params.id), "типа изделия"));
+		const typeProduct = await getTypeProductById(parseId(String(request.params.id)));
 
 		response.json(typeProduct);
 	}),
@@ -224,7 +225,7 @@ guideRouter.patch(
 	requirePermission("/guide", "editing"),
 	asyncHandler(async (request, response) => {
 		const payload = validate(updateTypeProductSchema, request.body ?? {});
-		const typeProduct = await updateTypeProduct(parseId(String(request.params.id), "типа изделия"), payload);
+		const typeProduct = await updateTypeProduct(parseId(String(request.params.id)), payload);
 
 		response.json(typeProduct);
 	}),
@@ -270,7 +271,7 @@ guideRouter.get(
 	"/materialGroup/:id",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const materialGroup = await getMaterialGroupById(parseId(String(request.params.id), "группы материала"));
+		const materialGroup = await getMaterialGroupById(parseId(String(request.params.id)));
 
 		response.json(materialGroup);
 	}),
@@ -304,7 +305,7 @@ guideRouter.patch(
 	requirePermission("/guide", "editing"),
 	asyncHandler(async (request, response) => {
 		const payload = validate(updateMaterialGroupSchema, request.body ?? {});
-		const materialGroup = await updateMaterialGroup(parseId(String(request.params.id), "группы материала"), payload);
+		const materialGroup = await updateMaterialGroup(parseId(String(request.params.id)), payload);
 
 		response.json(materialGroup);
 	}),
@@ -350,7 +351,7 @@ guideRouter.get(
 	"/operationGroup/:id",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const operationGroup = await getOperationGroupById(parseId(String(request.params.id), "группы операций"));
+		const operationGroup = await getOperationGroupById(parseId(String(request.params.id)));
 
 		response.json(operationGroup);
 	}),
@@ -384,7 +385,7 @@ guideRouter.patch(
 	requirePermission("/guide", "editing"),
 	asyncHandler(async (request, response) => {
 		const payload = validate(updateOperationGroupSchema, request.body ?? {});
-		const operationGroup = await updateOperationGroup(parseId(String(request.params.id), "группы операций"), payload);
+		const operationGroup = await updateOperationGroup(parseId(String(request.params.id)), payload);
 
 		response.json(operationGroup);
 	}),
@@ -417,7 +418,7 @@ guideRouter.get(
 	"/material/:id",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const material = await getMaterialById(parseId(String(request.params.id), "материала"));
+		const material = await getMaterialById(parseId(String(request.params.id)));
 
 		response.json(material);
 	}),
@@ -451,7 +452,7 @@ guideRouter.patch(
 	requirePermission("/guide", "editing"),
 	asyncHandler(async (request, response) => {
 		const payload = validate(updateMaterialSchema, request.body ?? {});
-		const material = await updateMaterial(parseId(String(request.params.id), "материала"), payload);
+		const material = await updateMaterial(parseId(String(request.params.id)), payload);
 
 		response.json(material);
 	}),
@@ -484,7 +485,7 @@ guideRouter.get(
 	"/operation/files/:fileId/download",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response, next) => {
-		const operationFile = await getOperationFileDownloadInfo(parseId(String(request.params.fileId), "файла операции"));
+		const operationFile = await getOperationFileDownloadInfo(parseId(String(request.params.fileId)));
 		const absolutePath = getOperationFileAbsolutePath(operationFile.storagePath);
 
 		if (!absolutePath) {
@@ -508,7 +509,7 @@ guideRouter.get(
 	"/operation/:id/files/archive",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response, next) => {
-		const operation = await getOperationFilesArchiveInfo(parseId(String(request.params.id), "операции"));
+		const operation = await getOperationFilesArchiveInfo(parseId(String(request.params.id)));
 
 		if (!operation.files.length) {
 			throw new AppError(404, OPERATION_ARCHIVE_EMPTY_ERROR);
@@ -589,7 +590,7 @@ guideRouter.get(
 	"/operation/:id",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const operation = await getOperationById(parseId(String(request.params.id), "операции"));
+		const operation = await getOperationById(parseId(String(request.params.id)));
 
 		response.json(operation);
 	}),
@@ -632,7 +633,7 @@ guideRouter.patch(
 			throw new AppError(400, "Нужно передать хотя бы одно поле для обновления");
 		}
 
-		const operation = await updateOperation(parseId(String(request.params.id), "операции"), payload, files);
+		const operation = await updateOperation(parseId(String(request.params.id)), payload, files);
 
 		response.json(operation);
 	}),

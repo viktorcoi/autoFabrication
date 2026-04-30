@@ -41,7 +41,7 @@ export const tableColumns: Record<string, Column[]> = {
     operation: [
         {key: 'name', header: 'Название', minSize: 120},
         {key: 'operationGroup', header: 'Группа операций', minSize: 180},
-        {key: 'download', header: 'Файлы', type: 'download', size: 95, minSize: 95, maxSize: 95, resize: false, sortable: false},
+        {key: 'download', header: 'Файлы', type: 'download', size: 95, minSize: 95, maxSize: 95, resize: false},
         {key: 'description', header: 'Описание', minSize: 180},
     ]
 }

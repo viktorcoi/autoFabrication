@@ -1,31 +1,31 @@
 import axios from "axios";
-import {api} from "@/apiService/apiService";
-import {PathOperationOptions, PostOperationOptions} from "@/apiService/apiGuide/types";
+import { api } from "@/apiService/apiService";
+import { PathOperationOptions, PostOperationOptions } from "@/apiService/apiGuide/types";
 
 export const createOperationOptions = (options: PostOperationOptions | PathOperationOptions) => {
     const formData = new FormData();
 
-    if (typeof options.name === 'string') {
-        formData.append('name', options.name);
+    if (typeof options.name === "string") {
+        formData.append("name", options.name);
     }
 
-    if (typeof options.description === 'string') {
-        formData.append('description', options.description);
+    if (typeof options.description === "string") {
+        formData.append("description", options.description);
     }
 
-    if (typeof options.operationGroupId === 'number' && options.operationGroupId > 0) {
-        formData.append('operationGroupId', String(options.operationGroupId));
+    if (typeof options.operationGroupId === "number" && options.operationGroupId > 0) {
+        formData.append("operationGroupId", String(options.operationGroupId));
     }
 
-    if ('removedFileIds' in options && Array.isArray(options.removedFileIds)) {
+    if ("removedFileIds" in options && Array.isArray(options.removedFileIds)) {
         options.removedFileIds.forEach((fileId) => {
-            formData.append('removedFileIds', String(fileId));
+            formData.append("removedFileIds", String(fileId));
         });
     }
 
     if (Array.isArray(options.files)) {
         options.files.forEach((file) => {
-            formData.append('files', file);
+            formData.append("files", file);
         });
     }
 
@@ -34,7 +34,7 @@ export const createOperationOptions = (options: PostOperationOptions | PathOpera
 
 const triggerBlobDownload = (blob: Blob, fileName: string) => {
     const objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
 
     link.href = objectUrl;
     link.download = fileName;
@@ -48,9 +48,9 @@ const triggerBlobDownload = (blob: Blob, fileName: string) => {
 const sanitizeDownloadFileName = (value: string, fallback: string) => {
     const sanitized = value
         .trim()
-        .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
-        .replace(/\.+$/g, '')
-        .replace(/\s+/g, ' ')
+        .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_")
+        .replace(/\.+$/g, "")
+        .replace(/\s+/g, " ")
         .slice(0, 120);
 
     return sanitized || fallback;
@@ -70,7 +70,7 @@ const getBlobErrorMessage = async (data: unknown) => {
     try {
         const parsed = JSON.parse(text);
 
-        if (parsed && typeof parsed.message === 'string' && parsed.message.trim()) {
+        if (parsed && typeof parsed.message === "string" && parsed.message.trim()) {
             return parsed.message;
         }
     } catch {}
@@ -86,11 +86,11 @@ const getDownloadErrorMessage = async (error: unknown, fallback: string) => {
             return blobMessage;
         }
 
-        if (typeof error.response?.data === 'string' && error.response.data.trim()) {
+        if (typeof error.response?.data === "string" && error.response.data.trim()) {
             return error.response.data;
         }
 
-        if (typeof error.message === 'string' && error.message.trim()) {
+        if (typeof error.message === "string" && error.message.trim()) {
             return error.message;
         }
     }
@@ -119,12 +119,9 @@ const getDownloadFileNameFromContentDisposition = (value?: string) => {
 
 const getBlobResponse = async (url: string, fallbackErrorText: string) => {
     try {
-        return await api.get<Blob>(
-            url,
-            {
-                responseType: 'blob',
-            }
-        );
+        return await api.get<Blob>(url, {
+            responseType: "blob",
+        });
     } catch (error) {
         throw new Error(await getDownloadErrorMessage(error, fallbackErrorText));
     }
@@ -133,20 +130,22 @@ const getBlobResponse = async (url: string, fallbackErrorText: string) => {
 export const downloadOperationFile = async (fileId: number, fileName: string) => {
     const response = await getBlobResponse(
         `/guide/operation/files/${fileId}/download`,
-        'Не удалось скачать файл'
+        "Не удалось скачать файл",
     );
+    const fileNameFromHeader = getDownloadFileNameFromContentDisposition(response.headers["content-disposition"]);
+    const resolvedFileName = fileNameFromHeader || sanitizeDownloadFileName(fileName, "file");
 
-    triggerBlobDownload(response.data, fileName);
+    triggerBlobDownload(response.data, resolvedFileName);
 };
 
 export const downloadOperationFilesArchive = async (operationId: number, operationName: string) => {
     const response = await getBlobResponse(
         `/guide/operation/${operationId}/files/archive`,
-        'Не удалось скачать архив'
+        "Не удалось скачать архив",
     );
-    const fileNameFromHeader = getDownloadFileNameFromContentDisposition(response.headers['content-disposition']);
+    const fileNameFromHeader = getDownloadFileNameFromContentDisposition(response.headers["content-disposition"]);
     const archiveFileName = fileNameFromHeader
-        || `${sanitizeDownloadFileName(operationName, 'operation-files')}.zip`;
+        || `${sanitizeDownloadFileName(operationName, "operation-files")}.zip`;
 
     triggerBlobDownload(response.data, archiveFileName);
 };

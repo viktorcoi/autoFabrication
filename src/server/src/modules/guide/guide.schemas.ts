@@ -91,7 +91,7 @@ const operationGroupIdSchema = z.coerce
 	.positive("Некорректный id группы операций");
 
 const operationsTableSortingSchema = z.object({
-	id: z.enum(["name", "operationGroup", "description"]),
+	id: z.enum(["name", "operationGroup", "download", "description"]),
 	sort: z.enum(["asc", "desc"]),
 }).strict();
 

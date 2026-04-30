@@ -7,6 +7,7 @@ import {
 	OPERATION_FILES_LIMIT,
 	OPERATION_FILES_TOTAL_SIZE_LIMIT,
 	getOperationFileAbsolutePath,
+	normalizeOperationFileOriginalName,
 	saveOperationFiles,
 } from "../../shared/storage/operations.js";
 import type { RolePermissions } from "../roles/role.types.js";
@@ -440,11 +441,12 @@ const mapOperationFiles = (
 	files: Array<{ id: number; originalName: string; size: number }>,
 ) => files.map((file) => ({
 	id: file.id,
-	name: file.originalName,
+	name: normalizeOperationFileOriginalName(file.originalName),
 	size: file.size,
 }));
 
-const normalizeOperationFileName = (name: string) => name.trim().toLowerCase();
+const normalizeOperationFileName = (name: string) =>
+	normalizeOperationFileOriginalName(name).trim().toLowerCase();
 
 const getOperationFileDuplicateKey = (file: { name: string; size: number }) =>
 	`${normalizeOperationFileName(file.name)}::${file.size}`;
@@ -457,13 +459,14 @@ const assertUniqueOperationFiles = (
 	const incomingKeys = new Set<string>();
 
 	for (const file of incomingFiles) {
+		const normalizedFileName = normalizeOperationFileOriginalName(file.originalname);
 		const duplicateKey = getOperationFileDuplicateKey({
-			name: file.originalname,
+			name: normalizedFileName,
 			size: file.size,
 		});
 
 		if (existingKeys.has(duplicateKey) || incomingKeys.has(duplicateKey)) {
-			throw new AppError(400, `Файл "${file.originalname}" уже добавлен к операции`);
+			throw new AppError(400, `Файл "${normalizedFileName}" уже добавлен к операции`);
 		}
 
 		incomingKeys.add(duplicateKey);
@@ -680,6 +683,11 @@ const buildOperationsTableOrderBy = (
 		case "operationGroup":
 			return [
 				{ operationGroup: { name: sorting.sort } },
+				{ id: "asc" },
+			];
+		case "download":
+			return [
+				{ files: { _count: sorting.sort } },
 				{ id: "asc" },
 			];
 		default:
@@ -1013,7 +1021,10 @@ export const getOperationFileDownloadInfo = async (fileId: number) => {
 		throw new AppError(404, OPERATION_FILE_NOT_FOUND_ERROR);
 	}
 
-	return operationFile;
+	return {
+		...operationFile,
+		originalName: normalizeOperationFileOriginalName(operationFile.originalName),
+	};
 };
 
 export const getOperationFilesArchiveInfo = async (id: number) => {
@@ -1026,7 +1037,13 @@ export const getOperationFilesArchiveInfo = async (id: number) => {
 		throw new AppError(404, OPERATION_NOT_FOUND_ERROR);
 	}
 
-	return operation;
+	return {
+		...operation,
+		files: operation.files.map((file) => ({
+			...file,
+			originalName: normalizeOperationFileOriginalName(file.originalName),
+		})),
+	};
 };
 
 export const createTypeProduct = async (data: CreateTypeProductData) => {
