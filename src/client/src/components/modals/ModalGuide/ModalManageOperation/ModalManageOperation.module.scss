@@ -1,0 +1,52 @@
+.plug {
+    min-height: 220px;
+}
+
+.textarea {
+    min-height: 124px;
+}
+
+.existingFiles {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.file {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--vkui--color_background_secondary);
+}
+
+.fileIcon {
+    flex-shrink: 0;
+}
+
+.fileInfo {
+    min-width: 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fileName {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fileSize {
+    color: var(--vkui--color_text_secondary);
+}
+
+.fileActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

@@ -73,6 +73,28 @@ const materialsTableSortingSchema = z.object({
 	sort: z.enum(["asc", "desc"]),
 }).strict();
 
+const operationNameSchema = z
+	.string()
+	.trim()
+	.min(1, "Название операции обязательно")
+	.max(255, "Название операции слишком длинное");
+
+const operationDescriptionSchema = z
+	.string()
+	.trim()
+	.max(1000, "Описание операции слишком длинное")
+	.transform((value) => value.length > 0 ? value : null);
+
+const operationGroupIdSchema = z.coerce
+	.number()
+	.int()
+	.positive("Некорректный id группы операций");
+
+const operationsTableSortingSchema = z.object({
+	id: z.enum(["name", "operationGroup", "description"]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
 const parseTableSorting = (value: unknown) => {
 	if (value === null || value === undefined || value === "" || value === "null") {
 		return null;
@@ -93,6 +115,36 @@ const parseTableSorting = (value: unknown) => {
 	} catch {
 		return value;
 	}
+};
+
+const parseIdArray = (value: unknown) => {
+	if (value === undefined || value === null || value === "") {
+		return undefined;
+	}
+
+	if (Array.isArray(value)) {
+		return value;
+	}
+
+	if (typeof value !== "string") {
+		return value;
+	}
+
+	const normalizedValue = value.trim();
+
+	if (normalizedValue.length === 0) {
+		return undefined;
+	}
+
+	if (normalizedValue.startsWith("[")) {
+		try {
+			return JSON.parse(normalizedValue) as unknown;
+		} catch {
+			return value;
+		}
+	}
+
+	return [normalizedValue];
 };
 
 export const createTypeProductSchema = z.object({
@@ -333,6 +385,72 @@ export const getMaterialsTableSchema = z.object({
 		.transform((value) => value ?? null),
 });
 
+export const createOperationSchema = z.object({
+	operationGroupId: operationGroupIdSchema,
+	name: operationNameSchema,
+	description: operationDescriptionSchema.optional(),
+});
+
+export const updateOperationSchema = z
+	.object({
+		operationGroupId: operationGroupIdSchema.optional(),
+		name: operationNameSchema.optional(),
+		description: operationDescriptionSchema.optional(),
+		removedFileIds: z.preprocess(
+			parseIdArray,
+			z.array(
+				z.coerce
+					.number()
+					.int()
+					.positive("Некорректный id файла операции"),
+			).max(10, "Нельзя удалить больше 10 файлов за один запрос").optional(),
+		),
+	})
+	.strict();
+
+export const updateOperationsTableItemSchema = z
+	.object({
+		name: operationNameSchema.optional(),
+		description: operationDescriptionSchema.optional(),
+	})
+	.strict()
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нет данных для обновления",
+	);
+
+export const updateOperationsTableSchema = z
+	.record(
+		z.string().regex(/^[1-9]\d*$/, "Некорректный id операции"),
+		z.unknown(),
+	)
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нужно передать хотя бы одну строку для редактирования",
+	);
+
+export const deleteOperationIdsSchema = z
+	.array(
+		z.coerce
+			.number()
+			.int()
+			.positive("id операции должен быть положительным числом"),
+	)
+	.min(1, "Нужно выбрать хотя бы одну операцию");
+
+export const getOperationsTableSchema = z.object({
+	page: z.coerce.number().int().min(0).default(0),
+	rows: z.coerce.number().int().positive().max(100).default(20),
+	search: z.preprocess(
+		(value) => typeof value === "string" ? value.trim() : undefined,
+		z.string().optional(),
+	).transform((value) => value && value.length > 0 ? value : undefined),
+	sorting: z
+		.preprocess(parseTableSorting, operationsTableSortingSchema.nullable())
+		.optional()
+		.transform((value) => value ?? null),
+});
+
 export type GetTypeProductsTableQuery = z.infer<typeof getTypeProductsTableSchema>;
 export type UpdateTypeProductsTablePayload = z.infer<typeof updateTypeProductsTableSchema>;
 export type GetMaterialGroupsTableQuery = z.infer<typeof getMaterialGroupsTableSchema>;
@@ -341,3 +459,5 @@ export type GetOperationGroupsTableQuery = z.infer<typeof getOperationGroupsTabl
 export type UpdateOperationGroupsTablePayload = z.infer<typeof updateOperationGroupsTableSchema>;
 export type GetMaterialsTableQuery = z.infer<typeof getMaterialsTableSchema>;
 export type UpdateMaterialsTablePayload = z.infer<typeof updateMaterialsTableSchema>;
+export type GetOperationsTableQuery = z.infer<typeof getOperationsTableSchema>;
+export type UpdateOperationsTablePayload = z.infer<typeof updateOperationsTableSchema>;

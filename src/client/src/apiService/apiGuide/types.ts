@@ -65,6 +65,11 @@ export interface GetByIdOperationGroupResponse {
     updatedAt: string;
 }
 
+export interface GetOperationGroupsResponse {
+    id: number;
+    name: string;
+}
+
 export interface PostOperationGroupOptions {
     name: string;
     description: string;
@@ -117,3 +122,50 @@ export interface MaterialTableRow extends TableRow {
 }
 
 export type PatchMaterialTableOptions = Record<number, Partial<Pick<MaterialTableRow, "name" | "description">>>;
+
+export interface OperationFileItem {
+    id: number;
+    name: string;
+    size: number;
+}
+
+export interface GetByIdOperationResponse {
+    id: number;
+    name: string;
+    description: string;
+    operationGroupId: number;
+    createdAt: string;
+    updatedAt: string;
+    operationGroup: {
+        id: number;
+        name: string;
+        description: string;
+    };
+    files: OperationFileItem[];
+}
+
+export interface PostOperationOptions {
+    name: string;
+    description: string;
+    operationGroupId: number;
+    files: File[];
+}
+
+export interface PathOperationOptions {
+    name?: string;
+    description?: string;
+    operationGroupId?: number;
+    files?: File[];
+    removedFileIds?: number[];
+}
+
+export interface OperationTableRow extends TableRow {
+    id: number;
+    name: string;
+    description: string;
+    operationGroup: string;
+    download: string;
+    files: OperationFileItem[];
+}
+
+export type PatchOperationTableOptions = Record<number, Partial<Pick<OperationTableRow, "name" | "description">>>;

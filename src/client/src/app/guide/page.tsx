@@ -8,6 +8,7 @@ import TypeProducts from "@/sections/guide/TypeProducts";
 import MaterialGroup from "@/sections/guide/MaterialGroup";
 import Material from "@/sections/guide/Material";
 import OperationGroup from "@/sections/guide/OperationGroup";
+import Operation from "@/sections/guide/Operation";
 
 const sections = [
     {
@@ -75,6 +76,8 @@ const GuidePage = () => {
                     <Material onLoading={setLoading} />
                 ) : activeSection === 5 ? (
                     <OperationGroup onLoading={setLoading} />
+                ) : activeSection === 6 ? (
+                    <Operation onLoading={setLoading} />
                 ) : null}
             </div>
         </Container>

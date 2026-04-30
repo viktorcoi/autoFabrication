@@ -243,9 +243,9 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                             </Button>
                                         );
                                     } else if (columnType === 'download') {
-                                        cellContent = (
+                                        cellContent = !cellTextValue ? null : (
                                             <Tooltip
-                                                description={cellTextValue}
+                                                description={'Скачать файлы'}
                                                 usePortal={true}
                                                 placement="top"
                                                 disableTriggerOnFocus={true}
@@ -255,7 +255,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     size="s"
                                                     mode="tertiary"
                                                     className={styles.button}
-                                                    label={cellTextValue}
+                                                    label={'Скачать файлы'}
                                                     disabled={controlDisabled}
                                                     onMouseDown={(event) => event.stopPropagation()}
                                                     onClick={(event) => {

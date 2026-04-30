@@ -1,26 +1,39 @@
+import type { NextFunction, Request, Response } from "express";
 import { Router } from "express";
+import multer from "multer";
 import { AppError } from "../../shared/errors/app-error.js";
 import { asyncHandler } from "../../shared/http/async-handler.js";
 import { requireAuth } from "../../shared/http/auth.js";
 import { requirePermission } from "../../shared/http/permissions.js";
 import { validate } from "../../shared/http/validate.js";
 import {
+	OPERATION_FILES_LIMIT,
+	OPERATION_FILE_SIZE_LIMIT,
+	assertOperationFilesTotalSize,
+	getOperationFileAbsolutePath,
+} from "../../shared/storage/operations.js";
+import {
 	createMaterialGroupSchema,
 	createMaterialSchema,
+	createOperationSchema,
 	createOperationGroupSchema,
 	createTypeProductSchema,
 	deleteMaterialGroupIdsSchema,
 	deleteMaterialIdsSchema,
+	deleteOperationIdsSchema,
 	deleteOperationGroupIdsSchema,
 	deleteTypeProductIdsSchema,
 	getMaterialGroupsTableSchema,
 	getMaterialsTableSchema,
+	getOperationsTableSchema,
 	getOperationGroupsTableSchema,
 	getTypeProductsTableSchema,
 	updateMaterialGroupSchema,
 	updateMaterialGroupsTableSchema,
 	updateMaterialSchema,
 	updateMaterialsTableSchema,
+	updateOperationSchema,
+	updateOperationsTableSchema,
 	updateOperationGroupSchema,
 	updateOperationGroupsTableSchema,
 	updateTypeProductSchema,
@@ -29,25 +42,33 @@ import {
 import {
 	createMaterial,
 	createMaterialGroup,
+	createOperation,
 	createOperationGroup,
 	createTypeProduct,
 	deleteMaterialGroups,
 	deleteMaterials,
+	deleteOperations,
 	deleteOperationGroups,
 	deleteTypeProducts,
 	getMaterialById,
 	getMaterialGroupById,
 	getMaterialGroupsTable,
 	getMaterialsTable,
+	getOperationById,
+	getOperationFileDownloadInfo,
+	getOperationsTable,
 	getOperationGroupById,
 	getOperationGroupsTable,
 	getTypeProductById,
 	getTypeProductsTable,
 	listMaterialGroups,
+	listOperationGroups,
 	updateMaterial,
 	updateMaterialGroup,
 	updateMaterialGroupsTable,
 	updateMaterialsTable,
+	updateOperation,
+	updateOperationsTable,
 	updateOperationGroup,
 	updateOperationGroupsTable,
 	updateTypeProduct,
@@ -65,6 +86,42 @@ const parseId = (value: string, entityName: string) => {
 };
 
 export const guideRouter = Router();
+
+const operationUpload = multer({
+	storage: multer.memoryStorage(),
+	limits: {
+		fileSize: OPERATION_FILE_SIZE_LIMIT,
+		files: OPERATION_FILES_LIMIT,
+	},
+});
+
+const parseOperationUpload = (request: Request, response: Response, next: NextFunction) => {
+	operationUpload.array("files", OPERATION_FILES_LIMIT)(request, response, (error) => {
+		if (!error) {
+			const files = Array.isArray(request.files) ? request.files : [];
+			assertOperationFilesTotalSize(files);
+			next();
+			return;
+		}
+
+		if (error instanceof multer.MulterError) {
+			if (error.code === "LIMIT_FILE_SIZE") {
+				next(new AppError(413, "Размер файла не должен превышать 100 MB"));
+				return;
+			}
+
+			if (error.code === "LIMIT_FILE_COUNT") {
+				next(new AppError(400, "Можно загрузить не более 10 файлов"));
+				return;
+			}
+
+			next(new AppError(400, "Не удалось загрузить файлы операции"));
+			return;
+		}
+
+		next(error);
+	});
+};
 
 guideRouter.get(
 	"/typeProducts/table",
@@ -225,6 +282,19 @@ guideRouter.get(
 );
 
 guideRouter.get(
+	"/operationGroup",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const searchValue = typeof request.query.search === "string"
+			? request.query.search.trim()
+			: "";
+		const operationGroups = await listOperationGroups(searchValue || undefined);
+
+		response.json(operationGroups);
+	}),
+);
+
+guideRouter.get(
 	"/operationGroup/:id",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
@@ -342,6 +412,106 @@ guideRouter.delete(
 		const auth = requireAuth(request, response);
 		const payload = validate(deleteMaterialIdsSchema, request.body ?? []);
 		const result = await deleteMaterials(payload, auth.userId);
+
+		response.json(result);
+	}),
+);
+
+guideRouter.get(
+	"/operation/table",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const query = validate(getOperationsTableSchema, request.query);
+		const table = await getOperationsTable(query);
+
+		response.json(table);
+	}),
+);
+
+guideRouter.get(
+	"/operation/files/:fileId/download",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response, next) => {
+		const operationFile = await getOperationFileDownloadInfo(parseId(String(request.params.fileId), "файла операции"));
+		const absolutePath = getOperationFileAbsolutePath(operationFile.storagePath);
+
+		if (!absolutePath) {
+			throw new AppError(500, "Не удалось получить путь к файлу операции");
+		}
+
+		response.download(absolutePath, operationFile.originalName, (error) => {
+			if (error && !response.headersSent) {
+				if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") {
+					next(new AppError(404, "Файл операции не найден"));
+					return;
+				}
+
+				next(error);
+			}
+		});
+	}),
+);
+
+guideRouter.get(
+	"/operation/:id",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const operation = await getOperationById(parseId(String(request.params.id), "операции"));
+
+		response.json(operation);
+	}),
+);
+
+guideRouter.post(
+	"/operation",
+	requirePermission("/guide", "adding"),
+	parseOperationUpload,
+	asyncHandler(async (request, response) => {
+		const payload = validate(createOperationSchema, request.body ?? {});
+		const files = Array.isArray(request.files) ? request.files : [];
+		const operation = await createOperation(payload, files);
+
+		response.status(201).json(operation);
+	}),
+);
+
+guideRouter.patch(
+	"/operation/table",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(updateOperationsTableSchema, request.body ?? {});
+		const result = await updateOperationsTable(payload, auth.userId);
+
+		response.json(result);
+	}),
+);
+
+guideRouter.patch(
+	"/operation/:id",
+	requirePermission("/guide", "editing"),
+	parseOperationUpload,
+	asyncHandler(async (request, response) => {
+		const payload = validate(updateOperationSchema, request.body ?? {});
+		const files = Array.isArray(request.files) ? request.files : [];
+
+		if (Object.keys(payload).length === 0 && files.length === 0) {
+			throw new AppError(400, "Нужно передать хотя бы одно поле для обновления");
+		}
+
+		const operation = await updateOperation(parseId(String(request.params.id), "операции"), payload, files);
+
+		response.json(operation);
+	}),
+);
+
+guideRouter.delete(
+	"/operation",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(deleteOperationIdsSchema, request.body ?? []);
+		const result = await deleteOperations(payload, auth.userId);
 
 		response.json(result);
 	}),

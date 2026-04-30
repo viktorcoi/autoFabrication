@@ -9,26 +9,33 @@ import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiSer
 import {
     GetByIdMaterialGroupResponse,
     GetByIdMaterialResponse,
+    GetByIdOperationResponse,
     GetByIdOperationGroupResponse,
     GetByIdTypeProductsResponse,
     GetMaterialGroupsResponse,
+    GetOperationGroupsResponse,
     MaterialGroupTableRow,
     MaterialTableRow,
+    OperationTableRow,
     OperationGroupTableRow,
     PatchMaterialGroupTableOptions,
     PatchMaterialTableOptions,
+    PatchOperationTableOptions,
     PatchOperationGroupTableOptions,
     PatchTypeProductsTableOptions,
     PathMaterialGroupOptions,
     PathMaterialOptions,
+    PathOperationOptions,
     PathOperationGroupOptions,
     PathTypeProductsOptions,
     PostMaterialGroupOptions,
     PostMaterialOptions,
+    PostOperationOptions,
     PostOperationGroupOptions,
     PostTypeProductsOptions,
     TypeProductsTableRow
 } from "@/apiService/apiGuide/types";
+import {createOperationOptions} from "@/apiService/apiGuide/helpers";
 
 export const ApiGuide = {
     materialGroup: {
@@ -138,6 +145,18 @@ export const ApiGuide = {
     },
 
     operationGroup: {
+        get: async (options: ApiServiceOptions = {}): Promise<ApiServiceResponse<GetOperationGroupsResponse[]>> => {
+            return await api.get("/guide/operationGroup", {
+                signal: options.controller?.signal,
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && Array.isArray(response.data),
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
         getById: async (options: ApiServiceOptions<{
             id: number
         }>): Promise<ApiServiceResponse<GetByIdOperationGroupResponse>> => {
@@ -218,6 +237,100 @@ export const ApiGuide = {
                 options: PatchOperationGroupTableOptions;
             }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
                 return await api.patch("/guide/operationGroup/table",
+                    options.options,
+                    { signal: options.controller?.signal }
+                ).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+        }
+    },
+
+    operation: {
+        getById: async (options: ApiServiceOptions<{
+            id: number
+        }>): Promise<ApiServiceResponse<GetByIdOperationResponse>> => {
+            return await api.get(`/guide/operation/${options.id}`, {
+                signal: options.controller?.signal
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        post: async (options: ApiServiceOptions<{
+            options: PostOperationOptions;
+        }>): Promise<ApiServiceResponse<GetByIdOperationResponse>> => {
+            return await api.post("/guide/operation",
+                createOperationOptions(options.options),
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 201 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        patch: async (options: ApiServiceOptions<{
+            id: number,
+            options: PathOperationOptions;
+        }>): Promise<ApiServiceResponse<GetByIdOperationResponse>> => {
+            return await api.patch(`/guide/operation/${options.id}`,
+                createOperationOptions(options.options),
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        delete: async (options: ApiServiceOptions<{
+            ids: number[];
+        }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+            return await api.delete("/guide/operation", {
+                signal: options.controller?.signal,
+                data: options.ids,
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        table: {
+            get: async (options: ApiServiceOptions<{
+                options?: GetTableOptions;
+            }>): Promise<ApiServiceResponse<GetTableResponse<OperationTableRow[]>>> => {
+                return await api.get("/guide/operation/table", {
+                    signal: options.controller?.signal,
+                    params: buildTableOptions(options.options),
+                }).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+
+            patch: async (options: ApiServiceOptions<{
+                options: PatchOperationTableOptions;
+            }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+                return await api.patch("/guide/operation/table",
                     options.options,
                     { signal: options.controller?.signal }
                 ).then((response) => {

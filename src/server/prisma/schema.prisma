@@ -59,6 +59,7 @@ model operationGroup {
 	description String?
 	createdAt   DateTime @default(now())
 	updatedAt   DateTime @updatedAt
+	operations  operation[]
 }
 
 model material {
@@ -71,4 +72,30 @@ model material {
 	materialGroup   materialGroup @relation(fields: [materialGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
 	@@index([materialGroupId])
+}
+
+model operation {
+	id               Int            @id @default(autoincrement())
+	name             String         @unique
+	description      String?
+	operationGroupId Int
+	createdAt        DateTime       @default(now())
+	updatedAt        DateTime       @updatedAt
+	operationGroup   operationGroup @relation(fields: [operationGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+	files            operationFile[]
+
+	@@index([operationGroupId])
+}
+
+model operationFile {
+	id           Int       @id @default(autoincrement())
+	operationId  Int
+	originalName String    @map("originalName")
+	size         Int
+	mimeType     String?   @map("mimeType")
+	storagePath  String    @map("storagePath")
+	createdAt    DateTime  @default(now())
+	operation    operation @relation(fields: [operationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+	@@index([operationId])
 }

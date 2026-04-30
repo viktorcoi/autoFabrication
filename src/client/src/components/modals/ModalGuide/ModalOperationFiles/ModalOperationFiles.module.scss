@@ -1,0 +1,41 @@
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 0 0;
+}
+
+.file {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--vkui--color_background_secondary);
+}
+
+.fileInfo {
+    min-width: 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fileName {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fileSize {
+    color: var(--vkui--color_text_secondary);
+}
+
+.empty {
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

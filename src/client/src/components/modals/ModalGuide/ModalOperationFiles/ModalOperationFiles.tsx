@@ -1,0 +1,103 @@
+import {
+    Button,
+    Caption,
+    ModalPage,
+    ModalPageHeader,
+    Placeholder,
+    PlatformProvider,
+    Text
+} from "@vkontakte/vkui";
+import {useState} from "react";
+import {
+    Icon16DownloadOutline,
+    Icon24DocumentOutline,
+    Icon56FolderOutline
+} from "@vkontakte/icons";
+import {downloadOperationFile} from "@/apiService/apiGuide/helpers";
+import {useSnackbarStore} from "@/store/snackbar/snackbar";
+import {formatBytes} from "@/components/UploadFile/helpers";
+import {ModalOperationFilesProps} from "@/components/modals/ModalGuide/ModalOperationFiles/types";
+import styles from './ModalOperationFiles.module.scss';
+
+const ModalOperationFiles = (props: ModalOperationFilesProps) => {
+
+    const {
+        operationName,
+        files,
+        onClose = () => {},
+        ...restProps
+    } = props;
+
+    const addSnackbar = useSnackbarStore(state => state.addSnackbar);
+
+    const [loadingFileId, setLoadingFileId] = useState<number | null>(null);
+
+    const handleDownload = async (fileId: number, fileName: string) => {
+        setLoadingFileId(fileId);
+
+        try {
+            await downloadOperationFile(fileId, fileName);
+        } catch (error) {
+            addSnackbar({
+                type: 'error',
+                text: error instanceof Error ? error.message : 'Не удалось скачать файл'
+            });
+        } finally {
+            setLoadingFileId(null);
+        }
+    };
+
+    return (
+        <ModalPage
+            onClose={onClose}
+            hideCloseButton={loadingFileId !== null}
+            preventClose={loadingFileId !== null}
+            header={(
+                <PlatformProvider value={'ios'}>
+                    <ModalPageHeader>{`Файлы: ${operationName}`}</ModalPageHeader>
+                </PlatformProvider>
+            )}
+            {...restProps}
+        >
+            {files.length === 0 ? (
+                <Placeholder
+                    className={styles.empty}
+                    icon={<Icon56FolderOutline />}
+                    title={'Файлы отсутствуют'}
+                >
+                    <Text>У этой операции нет загруженных файлов</Text>
+                </Placeholder>
+            ) : (
+                <div className={styles.list}>
+                    {files.map((file) => (
+                        <div key={file.id} className={styles.file}>
+                            <Icon24DocumentOutline
+                                width={20}
+                                height={20}
+                                fill={'var(--vkui--color_icon_secondary)'}
+                            />
+                            <div className={styles.fileInfo}>
+                                <Text className={styles.fileName}>{file.name}</Text>
+                                <Caption level={'2'} className={styles.fileSize}>
+                                    {formatBytes(file.size)}
+                                </Caption>
+                            </div>
+                            <Button
+                                mode={'secondary'}
+                                size={'m'}
+                                loading={loadingFileId === file.id}
+                                disabled={loadingFileId !== null}
+                                before={<Icon16DownloadOutline />}
+                                onClick={() => handleDownload(file.id, file.name)}
+                            >
+                                Скачать
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </ModalPage>
+    )
+};
+
+export default ModalOperationFiles;
