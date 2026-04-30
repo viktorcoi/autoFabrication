@@ -119,6 +119,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
                 <div className={styles.list}>
                     {files.map((file) => (
                         <SimpleCell
+                            multiline={true}
                             key={file.id}
                             className={styles.file}
                             before={(
