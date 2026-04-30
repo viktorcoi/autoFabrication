@@ -42,8 +42,11 @@ body {
 	.vkuiButton__content {
 		color: var(--vkui--color_text_accent);
 	}
+	.vkuiBasic__contentText {
+		-webkit-line-clamp: unset;
+		-webkit-box-orient: vertical;
+	}
 }
-
 .search { margin-left: auto; width: 250px }
 
 .island {

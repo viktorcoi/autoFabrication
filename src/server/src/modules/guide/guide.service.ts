@@ -687,7 +687,7 @@ const buildOperationsTableOrderBy = (
 			];
 		case "download":
 			return [
-				{ files: { _count: sorting.sort } },
+				{ files: { _count: sorting.sort === "asc" ? "desc" : "asc" } },
 				{ id: "asc" },
 			];
 		default:
