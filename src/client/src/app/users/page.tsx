@@ -9,7 +9,7 @@ import {
     Icon24TrashSimpleOutline
 } from "@vkontakte/icons";
 import Container from "@/components/Container/Container";
-import React, {ReactNode, useEffect, useMemo, useState} from "react";
+import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import {useController, useSearch} from "@/shared/hooks";
 import {mergeState} from "@/shared/helpers";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
@@ -66,6 +66,8 @@ const UsersPage = () => {
     const [modals, setModals] = useState<OpenModalsType<
         'modal-manage-user' | 'modal-remove-user' | 'modal-create-user' | 'modal-change-password' | 'modal-change-login' | 'modal-multi-remove-user'
     >>({id: null, show: false, data: null});
+
+    const actionSheetRef = useRef(null);
 
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const showErrors = useShowErrors(state => state);
@@ -221,46 +223,59 @@ const UsersPage = () => {
             };
 
             mergeState({actionSheet:
-                <ActionSheet
-                    placement={'bottom-end'}
-                    popupOffsetDistance={8}
-                    toggleRef={e.target as HTMLElement}
-                    onClosed={() => mergeState({actionSheet: null}, setTableManage)}
-                >
-                    {access.editing && (
-                        <>
+                <>
+                    <div
+                        ref={actionSheetRef}
+                        style={{
+                            position: 'fixed',
+                            left: `${e.x}px`,
+                            top: `${e.y}px`,
+                            width: 1,
+                            height: 1,
+                            pointerEvents: 'none',
+                        }}
+                    />
+                    <ActionSheet
+                        placement={'bottom-end'}
+                        popupOffsetDistance={8}
+                        toggleRef={actionSheetRef}
+                        onClosed={() => mergeState({actionSheet: null}, setTableManage)}
+                    >
+                        {access.editing && (
+                            <>
+                                <ActionSheetItem
+                                    onClick={() => setModals({id: 'modal-manage-user', show: true, data: e.row.id})}
+                                    before={<Icon24PenOutline width={20} height={20}/>}
+                                >
+                                    Редактировать
+                                </ActionSheetItem>
+                                <ActionSheetItem
+                                    onClick={() => setModals({id: 'modal-change-login', show: true, data})}
+                                    before={<Icon20MentionOutline width={20} height={20}/>}
+                                >
+                                    Изменить логин
+                                </ActionSheetItem>
+                            </>
+                        )}
+                        {access.resetPassword && (
                             <ActionSheetItem
-                                onClick={() => setModals({id: 'modal-manage-user', show: true, data: e.row.id})}
-                                before={<Icon24PenOutline width={20} height={20}/>}
+                                onClick={() => setModals({id: 'modal-change-password', show: true, data})}
+                                before={<Icon20KeyOutline width={20} height={20}/>}
                             >
-                                Редактировать
+                                Сбросить пароль
                             </ActionSheetItem>
+                        )}
+                        {(!e.row.isAdmin && access.removing) && (
                             <ActionSheetItem
-                                onClick={() => setModals({id: 'modal-change-login', show: true, data})}
-                                before={<Icon20MentionOutline width={20} height={20}/>}
+                                onClick={() => setModals({id: 'modal-remove-user', show: true, data})}
+                                mode={'destructive'}
+                                before={<Icon24TrashSimpleOutline width={20} height={20}/>}
                             >
-                                Изменить логин
+                                Удалить
                             </ActionSheetItem>
-                        </>
-                    )}
-                    {access.resetPassword && (
-                        <ActionSheetItem
-                            onClick={() => setModals({id: 'modal-change-password', show: true, data})}
-                            before={<Icon20KeyOutline width={20} height={20}/>}
-                        >
-                            Сбросить пароль
-                        </ActionSheetItem>
-                    )}
-                    {(!e.row.isAdmin && access.removing) && (
-                        <ActionSheetItem
-                            onClick={() => setModals({id: 'modal-remove-user', show: true, data})}
-                            mode={'destructive'}
-                            before={<Icon24TrashSimpleOutline width={20} height={20}/>}
-                        >
-                            Удалить
-                        </ActionSheetItem>
-                    )}
-                </ActionSheet>,
+                        )}
+                    </ActionSheet>
+                </>
             }, setTableManage);
         }
     };

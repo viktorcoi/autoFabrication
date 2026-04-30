@@ -83,6 +83,25 @@ const TableBody = React.memo((props: TableBodyProps) => {
     const visibleColumnCount = visibleRows[0]?.getVisibleCells().length ?? columnMap.size;
     const rowActionsDisabled = loading || Boolean(disabled) || editing || openAvatar;
     const controlDisabled = loading || Boolean(disabled) || editing || openAvatar;
+    const getMousePoint = (event: {clientX: number; clientY: number}) => ({
+        x: event.clientX,
+        y: event.clientY,
+    });
+    const getChangePoint = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const nativeEvent = event.nativeEvent;
+
+        if (nativeEvent instanceof MouseEvent) {
+            return {
+                x: nativeEvent.clientX,
+                y: nativeEvent.clientY,
+            };
+        }
+
+        return {
+            x: undefined,
+            y: undefined,
+        };
+    };
 
     return (
         <tbody>
@@ -164,6 +183,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                         type: 'rowClick',
                                         row: row.original,
                                         target: event.target,
+                                        ...getMousePoint(event),
                                     });
                                 }}
                                 onDoubleClick={(event) => {
@@ -175,6 +195,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                         type: 'rowDoubleClick',
                                         row: row.original,
                                         target: event.target,
+                                        ...getMousePoint(event),
                                     });
                                 }}
                             >
@@ -221,6 +242,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                         value: cellValue,
                                                         event,
                                                         target: event.target,
+                                                        ...getMousePoint(event),
                                                     });
                                                 }}
                                                 onDoubleClick={(event) => {
@@ -236,6 +258,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                         value: cellValue,
                                                         event,
                                                         target: event.target,
+                                                        ...getMousePoint(event),
                                                     });
                                                 }}
                                             >
@@ -271,6 +294,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                             value: cellValue,
                                                             event,
                                                             target: event.target,
+                                                            ...getMousePoint(event),
                                                         });
                                                     }}
                                                     onDoubleClick={(event) => {
@@ -286,6 +310,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                             value: cellValue,
                                                             event,
                                                             target: event.target,
+                                                            ...getMousePoint(event),
                                                         });
                                                     }}
                                                     after={<Icon16DownloadOutline />}
@@ -324,6 +349,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                             event,
                                                             target: event.target,
                                                             nextValue: event.target.checked,
+                                                            ...getChangePoint(event),
                                                         });
                                                     }}
                                                 />
@@ -462,6 +488,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     value: cellValue,
                                                     event,
                                                     target: event.target,
+                                                    ...getMousePoint(event),
                                                 });
                                             }}
                                             onDoubleClick={(event) => {
@@ -481,6 +508,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     value: cellValue,
                                                     event,
                                                     target: event.target,
+                                                    ...getMousePoint(event),
                                                 });
                                             }}
                                             onContextMenu={(event) => {
@@ -506,6 +534,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                     column: columnId,
                                                     value: cellValue,
                                                     target: event.target,
+                                                    ...getMousePoint(event),
                                                 });
                                             }}
                                         >

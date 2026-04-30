@@ -1,6 +1,6 @@
 import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Search, Tooltip} from "@vkontakte/vkui";
 import Table from "@/components/Table/Table";
-import React, {ReactNode, useEffect, useMemo, useState} from "react";
+import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import {useController, useSearch} from "@/shared/hooks";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useShowErrors} from "@/store/showErrors/showErrors";
@@ -58,6 +58,8 @@ const Material = (
     const [modals, setModals] = useState<OpenModalsType<
         'modal-manage-material' | 'modal-remove-material' | 'modal-multi-remove-material'
     >>({id: null, show: false, data: null});
+
+    const actionSheetRef = useRef(null);
 
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const showErrors = useShowErrors(state => state);
@@ -205,10 +207,22 @@ const Material = (
             if (!access.editing && !access.removing) return;
 
             mergeState({actionSheet:
+                <>
+                    <div
+                        ref={actionSheetRef}
+                        style={{
+                            position: 'fixed',
+                            left: `${e.x}px`,
+                            top: `${e.y}px`,
+                            width: 1,
+                            height: 1,
+                            pointerEvents: 'none',
+                        }}
+                    />
                     <ActionSheet
                         placement={'bottom-end'}
                         popupOffsetDistance={8}
-                        toggleRef={e.target as HTMLElement}
+                        toggleRef={actionSheetRef}
                         onClosed={() => mergeState({actionSheet: null}, setTableManage)}
                     >
                         {access.editing && (
@@ -231,7 +245,8 @@ const Material = (
                                 Удалить
                             </ActionSheetItem>
                         )}
-                    </ActionSheet>,
+                    </ActionSheet>
+                </>
             }, setTableManage);
         }
     };

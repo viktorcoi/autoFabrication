@@ -167,6 +167,8 @@ const Table = (props: TableProps) => {
         value: unknown;
         event: React.MouseEvent<HTMLElement>;
         target: EventTarget | null;
+        x?: number;
+        y?: number;
     }) => {
         onEventRef.current({
             type: 'cellClick',
@@ -175,6 +177,8 @@ const Table = (props: TableProps) => {
             value: params.value,
             event: params.event,
             target: params.target,
+            x: params.x,
+            y: params.y,
         });
     };
 
@@ -184,6 +188,8 @@ const Table = (props: TableProps) => {
         value: unknown;
         event: React.MouseEvent<HTMLElement>;
         target: EventTarget | null;
+        x?: number;
+        y?: number;
     }) => {
         onEventRef.current({
             type: 'cellDoubleClick',
@@ -192,6 +198,8 @@ const Table = (props: TableProps) => {
             value: params.value,
             event: params.event,
             target: params.target,
+            x: params.x,
+            y: params.y,
         });
     };
 
@@ -203,6 +211,8 @@ const Table = (props: TableProps) => {
             value: unknown;
             event: React.MouseEvent<HTMLElement>;
             target: EventTarget | null;
+            x?: number;
+            y?: number;
         },
     ) => {
         onEventRef.current({
@@ -212,6 +222,8 @@ const Table = (props: TableProps) => {
             value: params.value,
             event: params.event,
             target: params.target,
+            x: params.x,
+            y: params.y,
         });
     };
 
@@ -222,6 +234,8 @@ const Table = (props: TableProps) => {
         nextValue: unknown;
         event: React.ChangeEvent<HTMLInputElement>;
         target: EventTarget | null;
+        x?: number;
+        y?: number;
     }) => {
         onEventRef.current({
             type: 'boolean',
@@ -231,6 +245,8 @@ const Table = (props: TableProps) => {
             nextValue: params.nextValue,
             event: params.event,
             target: params.target,
+            x: params.x,
+            y: params.y,
         });
     };
 

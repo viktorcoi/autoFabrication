@@ -31,6 +31,8 @@ export type TableDraftChanges = Record<number, Record<string, string>>;
 
 type TableEventMeta = {
     target: EventTarget | null;
+    x?: number;
+    y?: number;
 };
 
 export type TableSorting = {
@@ -50,6 +52,8 @@ export type CellMouseEventParams = {
     value: unknown;
     event: ReactMouseEvent<HTMLElement>;
     target: EventTarget | null;
+    x?: number;
+    y?: number;
 };
 
 export type BooleanChangeEventParams = {
@@ -59,6 +63,8 @@ export type BooleanChangeEventParams = {
     nextValue: unknown;
     event: ReactChangeEvent<HTMLInputElement>;
     target: EventTarget | null;
+    x?: number;
+    y?: number;
 };
 
 export type TableEvent =
