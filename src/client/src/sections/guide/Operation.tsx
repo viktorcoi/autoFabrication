@@ -211,6 +211,7 @@ const Operation = (
                 id: 'modal-operation-files',
                 show: true,
                 data: {
+                    id: row.id,
                     name: row.name,
                     files: row.files,
                 }
@@ -284,6 +285,7 @@ const Operation = (
                 />
             ) : 'modal-operation-files' === modals.id ? (
                 <ModalOperationFiles
+                    operationId={modals.data?.id ?? 0}
                     operationName={modals.data?.name ?? ''}
                     files={modals.data?.files ?? []}
                     open={modals.show}

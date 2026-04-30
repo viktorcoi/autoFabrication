@@ -1,5 +1,7 @@
+import { access } from "node:fs/promises";
 import type { NextFunction, Request, Response } from "express";
 import { Router } from "express";
+import archiver from "archiver";
 import multer from "multer";
 import { AppError } from "../../shared/errors/app-error.js";
 import { asyncHandler } from "../../shared/http/async-handler.js";
@@ -56,6 +58,7 @@ import {
 	getMaterialsTable,
 	getOperationById,
 	getOperationFileDownloadInfo,
+	getOperationFilesArchiveInfo,
 	getOperationsTable,
 	getOperationGroupById,
 	getOperationGroupsTable,
@@ -86,6 +89,55 @@ const parseId = (value: string, entityName: string) => {
 };
 
 export const guideRouter = Router();
+
+const OPERATION_FILE_NOT_FOUND_ERROR = "Файл операции не найден";
+const OPERATION_ARCHIVE_EMPTY_ERROR = "У операции нет загруженных файлов";
+const OPERATION_ARCHIVE_NAME_FALLBACK = "operation-files";
+const OPERATION_ARCHIVE_ENTRY_FALLBACK = "file";
+
+const sanitizeArchiveEntryName = (value: string, fallback: string) => {
+	const sanitized = value
+		.trim()
+		.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_")
+		.replace(/\.+$/g, "")
+		.replace(/\s+/g, " ")
+		.slice(0, 120);
+
+	return sanitized || fallback;
+};
+
+const getUniqueArchiveEntryName = (fileName: string, usedNames: Set<string>) => {
+	const sanitizedFileName = sanitizeArchiveEntryName(fileName, OPERATION_ARCHIVE_ENTRY_FALLBACK);
+	const dotIndex = sanitizedFileName.lastIndexOf(".");
+	const hasExtension = dotIndex > 0;
+	const baseName = hasExtension ? sanitizedFileName.slice(0, dotIndex) : sanitizedFileName;
+	const extension = hasExtension ? sanitizedFileName.slice(dotIndex) : "";
+	let candidate = sanitizedFileName;
+	let suffix = 1;
+
+	while (usedNames.has(candidate)) {
+		candidate = `${baseName} (${suffix})${extension}`;
+		suffix += 1;
+	}
+
+	usedNames.add(candidate);
+
+	return candidate;
+};
+
+const ensureOperationArchiveFilesExist = async (absolutePaths: string[]) => {
+	for (const absolutePath of absolutePaths) {
+		try {
+			await access(absolutePath);
+		} catch (error) {
+			if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") {
+				throw new AppError(404, OPERATION_FILE_NOT_FOUND_ERROR);
+			}
+
+			throw error;
+		}
+	}
+};
 
 const operationUpload = multer({
 	storage: multer.memoryStorage(),
@@ -449,6 +501,87 @@ guideRouter.get(
 				next(error);
 			}
 		});
+	}),
+);
+
+guideRouter.get(
+	"/operation/:id/files/archive",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response, next) => {
+		const operation = await getOperationFilesArchiveInfo(parseId(String(request.params.id), "операции"));
+
+		if (!operation.files.length) {
+			throw new AppError(404, OPERATION_ARCHIVE_EMPTY_ERROR);
+		}
+
+		const archiveFiles = operation.files.map((file) => {
+			const absolutePath = getOperationFileAbsolutePath(file.storagePath);
+
+			if (!absolutePath) {
+				throw new AppError(500, "Не удалось получить путь к файлу операции");
+			}
+
+			return {
+				absolutePath,
+				originalName: file.originalName,
+			};
+		});
+
+		await ensureOperationArchiveFilesExist(archiveFiles.map((file) => file.absolutePath));
+
+		const archive = archiver("zip", {
+			zlib: {
+				level: 9,
+			},
+		});
+		const archiveName = `${sanitizeArchiveEntryName(operation.name, OPERATION_ARCHIVE_NAME_FALLBACK)}.zip`;
+		const usedNames = new Set<string>();
+
+		response.attachment(archiveName);
+
+		archive.on("warning", (error: Error & { code?: string }) => {
+			if (error.code === "ENOENT") {
+				if (!response.headersSent) {
+					next(new AppError(404, OPERATION_FILE_NOT_FOUND_ERROR));
+					return;
+				}
+
+				response.destroy(error as Error);
+				return;
+			}
+
+			if (!response.headersSent) {
+				next(error);
+				return;
+			}
+
+			response.destroy(error as Error);
+		});
+
+		archive.on("error", (error: Error) => {
+			if (!response.headersSent) {
+				next(error);
+				return;
+			}
+
+			response.destroy(error);
+		});
+
+		response.on("close", () => {
+			if (!response.writableEnded) {
+				archive.abort();
+			}
+		});
+
+		archive.pipe(response);
+
+		for (const file of archiveFiles) {
+			archive.file(file.absolutePath, {
+				name: getUniqueArchiveEntryName(file.originalName, usedNames),
+			});
+		}
+
+		void archive.finalize();
 	}),
 );
 

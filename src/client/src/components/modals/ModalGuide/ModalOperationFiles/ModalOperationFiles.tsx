@@ -1,27 +1,35 @@
 import {
     Button,
-    Caption, Headline,
+    Caption,
     ModalPage,
     ModalPageHeader,
     Placeholder,
-    PlatformProvider, SimpleCell, Subhead,
-    Text, Title, Tooltip
+    PlatformProvider,
+    SimpleCell,
+    Text,
+    Tooltip
 } from "@vkontakte/vkui";
-import React, {useState} from "react";
+import {useState} from "react";
 import {
     Icon16DownloadOutline,
-    Icon24DocumentOutline, Icon24TrashSimpleOutline,
+    Icon24DocumentOutline,
     Icon56FolderOutline
 } from "@vkontakte/icons";
-import {downloadOperationFile} from "@/apiService/apiGuide/helpers";
+import {
+    downloadOperationFile,
+    downloadOperationFilesArchive
+} from "@/apiService/apiGuide/helpers";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {formatBytes} from "@/components/UploadFile/helpers";
 import {ModalOperationFilesProps} from "@/components/modals/ModalGuide/ModalOperationFiles/types";
 import styles from './ModalOperationFiles.module.scss';
 
+const DOWNLOAD_ALL_ID = 0;
+
 const ModalOperationFiles = (props: ModalOperationFilesProps) => {
 
     const {
+        operationId,
         operationName,
         files,
         onClose = () => {},
@@ -31,6 +39,26 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
 
     const [loadingFileId, setLoadingFileId] = useState<number | null>(null);
+
+    const handleDownloadAll = async () => {
+        setLoadingFileId(DOWNLOAD_ALL_ID);
+
+        try {
+            await downloadOperationFilesArchive(operationId, operationName);
+
+            addSnackbar({
+                type: 'success',
+                text: `Скачивание архива из "${operationName}" запущено`
+            });
+        } catch (error) {
+            addSnackbar({
+                type: 'error',
+                text: error instanceof Error ? error.message : 'Не удалось скачать файлы'
+            });
+        } finally {
+            setLoadingFileId(null);
+        }
+    };
 
     const handleDownload = async (fileId: number, fileName: string) => {
         setLoadingFileId(fileId);
@@ -57,7 +85,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
                     <ModalPageHeader
                         after={(
                             <Tooltip
-                                description={`Скачать все`}
+                                description={'Скачать все'}
                                 usePortal={true}
                                 placement={'top'}
                                 disableTriggerOnFocus={true}
@@ -65,10 +93,10 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
                                 <Button
                                     mode={'secondary'}
                                     size={'m'}
-                                    // loading={loadingFileId === file.id}
-                                    disabled={loadingFileId !== null}
+                                    loading={loadingFileId === DOWNLOAD_ALL_ID}
+                                    disabled={loadingFileId !== null || files.length === 0}
                                     before={<Icon16DownloadOutline />}
-                                    // onClick={() => handleDownload(file.id, file.name)}
+                                    onClick={handleDownloadAll}
                                 />
                             </Tooltip>
                         )}
@@ -102,7 +130,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
                             )}
                             after={(
                                 <Tooltip
-                                    description={`Скачать`}
+                                    description={'Скачать'}
                                     usePortal={true}
                                     placement={'top'}
                                     disableTriggerOnFocus={true}
@@ -123,7 +151,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
                                 </Caption>
                             )}
                         >
-                           {file.name}
+                            {file.name}
                         </SimpleCell>
                     ))}
                 </div>

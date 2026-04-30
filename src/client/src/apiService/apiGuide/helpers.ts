@@ -1,3 +1,4 @@
+import axios from "axios";
 import {api} from "@/apiService/apiService";
 import {PathOperationOptions, PostOperationOptions} from "@/apiService/apiGuide/types";
 
@@ -31,28 +32,7 @@ export const createOperationOptions = (options: PostOperationOptions | PathOpera
     return formData;
 };
 
-export const downloadOperationFile = async (fileId: number, fileName: string) => {
-    const response = await fetch(api.getUri({
-        url: `/guide/operation/files/${fileId}/download`
-    }), {
-        credentials: 'include',
-    });
-
-    if (!response.ok) {
-        let message = 'Не удалось скачать файл';
-
-        try {
-            const data = await response.json();
-
-            if (data && typeof data.message === 'string' && data.message.trim()) {
-                message = data.message;
-            }
-        } catch {}
-
-        throw new Error(message);
-    }
-
-    const blob = await response.blob();
+const triggerBlobDownload = (blob: Blob, fileName: string) => {
     const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
 
@@ -63,4 +43,110 @@ export const downloadOperationFile = async (fileId: number, fileName: string) =>
     link.remove();
 
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+};
+
+const sanitizeDownloadFileName = (value: string, fallback: string) => {
+    const sanitized = value
+        .trim()
+        .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
+        .replace(/\.+$/g, '')
+        .replace(/\s+/g, ' ')
+        .slice(0, 120);
+
+    return sanitized || fallback;
+};
+
+const getBlobErrorMessage = async (data: unknown) => {
+    if (!(data instanceof Blob)) {
+        return null;
+    }
+
+    const text = (await data.text()).trim();
+
+    if (!text) {
+        return null;
+    }
+
+    try {
+        const parsed = JSON.parse(text);
+
+        if (parsed && typeof parsed.message === 'string' && parsed.message.trim()) {
+            return parsed.message;
+        }
+    } catch {}
+
+    return text;
+};
+
+const getDownloadErrorMessage = async (error: unknown, fallback: string) => {
+    if (axios.isAxiosError(error)) {
+        const blobMessage = await getBlobErrorMessage(error.response?.data);
+
+        if (blobMessage) {
+            return blobMessage;
+        }
+
+        if (typeof error.response?.data === 'string' && error.response.data.trim()) {
+            return error.response.data;
+        }
+
+        if (typeof error.message === 'string' && error.message.trim()) {
+            return error.message;
+        }
+    }
+
+    return fallback;
+};
+
+const getDownloadFileNameFromContentDisposition = (value?: string) => {
+    if (!value) {
+        return null;
+    }
+
+    const utf8Match = value.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+
+    if (utf8Match?.[1]) {
+        try {
+            return decodeURIComponent(utf8Match[1]);
+        } catch {}
+    }
+
+    const plainMatch = value.match(/filename\s*=\s*"([^"]+)"|filename\s*=\s*([^;]+)/i);
+    const fileName = plainMatch?.[1] ?? plainMatch?.[2];
+
+    return fileName?.trim() || null;
+};
+
+const getBlobResponse = async (url: string, fallbackErrorText: string) => {
+    try {
+        return await api.get<Blob>(
+            url,
+            {
+                responseType: 'blob',
+            }
+        );
+    } catch (error) {
+        throw new Error(await getDownloadErrorMessage(error, fallbackErrorText));
+    }
+};
+
+export const downloadOperationFile = async (fileId: number, fileName: string) => {
+    const response = await getBlobResponse(
+        `/guide/operation/files/${fileId}/download`,
+        'Не удалось скачать файл'
+    );
+
+    triggerBlobDownload(response.data, fileName);
+};
+
+export const downloadOperationFilesArchive = async (operationId: number, operationName: string) => {
+    const response = await getBlobResponse(
+        `/guide/operation/${operationId}/files/archive`,
+        'Не удалось скачать архив'
+    );
+    const fileNameFromHeader = getDownloadFileNameFromContentDisposition(response.headers['content-disposition']);
+    const archiveFileName = fileNameFromHeader
+        || `${sanitizeDownloadFileName(operationName, 'operation-files')}.zip`;
+
+    triggerBlobDownload(response.data, archiveFileName);
 };

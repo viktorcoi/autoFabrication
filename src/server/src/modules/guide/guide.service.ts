@@ -171,6 +171,17 @@ const operationUpdateSelect = {
 	},
 } satisfies Prisma.operationSelect;
 
+const operationArchiveSelect = {
+	id: true,
+	name: true,
+	files: {
+		select: operationFilesStorageSelect,
+		orderBy: {
+			id: "asc",
+		},
+	},
+} satisfies Prisma.operationSelect;
+
 const operationFileDownloadSelect = {
 	id: true,
 	originalName: true,
@@ -1003,6 +1014,19 @@ export const getOperationFileDownloadInfo = async (fileId: number) => {
 	}
 
 	return operationFile;
+};
+
+export const getOperationFilesArchiveInfo = async (id: number) => {
+	const operation = await prisma.operation.findUnique({
+		where: { id },
+		select: operationArchiveSelect,
+	});
+
+	if (!operation) {
+		throw new AppError(404, OPERATION_NOT_FOUND_ERROR);
+	}
+
+	return operation;
 };
 
 export const createTypeProduct = async (data: CreateTypeProductData) => {
