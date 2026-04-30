@@ -5,6 +5,7 @@ const apiProxyBaseUrl = process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_
 const nextConfig: NextConfig = {
 	reactStrictMode: false,
 	experimental: {
+		proxyClientMaxBodySize: "600mb",
 		webpackMemoryOptimizations: true,
 	},
 	async rewrites() {

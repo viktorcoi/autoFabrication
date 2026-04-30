@@ -1,11 +1,11 @@
 import {
     Button,
-    Caption,
+    Caption, Headline,
     ModalPage,
     ModalPageHeader,
     Placeholder,
-    PlatformProvider, SimpleCell,
-    Text, Tooltip
+    PlatformProvider, SimpleCell, Subhead,
+    Text, Title, Tooltip
 } from "@vkontakte/vkui";
 import React, {useState} from "react";
 import {
@@ -54,7 +54,27 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
             preventClose={loadingFileId !== null}
             header={(
                 <PlatformProvider value={'ios'}>
-                    <ModalPageHeader>{`Файлы из "${operationName}"`}</ModalPageHeader>
+                    <ModalPageHeader
+                        after={(
+                            <Tooltip
+                                description={`Скачать все`}
+                                usePortal={true}
+                                placement={'top'}
+                                disableTriggerOnFocus={true}
+                            >
+                                <Button
+                                    mode={'secondary'}
+                                    size={'m'}
+                                    // loading={loadingFileId === file.id}
+                                    disabled={loadingFileId !== null}
+                                    before={<Icon16DownloadOutline />}
+                                    // onClick={() => handleDownload(file.id, file.name)}
+                                />
+                            </Tooltip>
+                        )}
+                    >
+                        {`Файлы из "${operationName}"`}
+                    </ModalPageHeader>
                 </PlatformProvider>
             )}
             {...restProps}

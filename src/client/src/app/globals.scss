@@ -103,3 +103,13 @@ body {
 	z-index: 11;
 	transition: opacity .3s;
 }
+
+.vkuiModalPageHeader__host .vkuiPanelHeader__in {
+	white-space: unset;
+	height: auto;
+	.vkuiPanelHeader__contentIn {
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 20px;
+	}
+}
