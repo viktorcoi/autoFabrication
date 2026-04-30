@@ -94,3 +94,17 @@
 .sort {
     min-width: 16px;
 }
+
+.thead {
+    position: relative;
+    &:after {
+        content: '';
+        display: block;
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        inset: 0 0 0 0;
+        width: calc(100vw - 300px - calc(var(--app-distance-empty) * 3));
+        border-bottom: 1px solid var(--vkui--color_separator_primary);
+    }
+}

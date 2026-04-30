@@ -1,5 +1,6 @@
 .bodyRow {
     cursor: pointer;
+    position: relative;
 
     &--odd {
         background: var(--vkui--color_background);
@@ -15,6 +16,18 @@
 
     &--editing {
         cursor: default;
+    }
+
+    &:after {
+        content: '';
+        display: block;
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        inset: 0 0 0 0;
+        width: calc(100vw - 300px - calc(var(--app-distance-empty) * 3));
+        background-color: inherit;
+        pointer-events: none;
     }
 }
 
@@ -33,6 +46,7 @@
     vertical-align: middle;
     text-align: left;
     border-right: 1px solid var(--vkui--color_separator_primary);
+    z-index: 1;
 
     &--editing {
         padding: 6px 7px;

@@ -206,43 +206,58 @@ const TypeProducts = (
             console.log('AA')
             if (!access.editing && !access.removing) return;
 
+
+
             mergeState({
                 actionSheet:
-                    <ActionSheet
-                        placement={'bottom-end'}
-                        popupOffsetDistance={8}
-                        toggleRef={e.target as HTMLElement}
-                        onClosed={() => mergeState({actionSheet: null}, setTableManage)}
-                    >
-                        {access.editing && (
-                            <>
+                    <>
+                        {/*<div*/}
+                        {/*    ref={headerContextToggleRef}*/}
+                        {/*    style={{*/}
+                        {/*        position: 'fixed',*/}
+                        {/*        left: `${headerContextPoint.x}px`,*/}
+                        {/*        top: `${headerContextPoint.y}px`,*/}
+                        {/*        width: 1,*/}
+                        {/*        height: 1,*/}
+                        {/*        pointerEvents: 'none',*/}
+                        {/*    }}*/}
+                        {/*/>*/}
+                        <ActionSheet
+                            placement={'bottom-end'}
+                            popupOffsetDistance={8}
+                            toggleRef={e.target as HTMLElement}
+                            onClosed={() => mergeState({actionSheet: null}, setTableManage)}
+                        >
+                            {access.editing && (
+                                <>
+                                    <ActionSheetItem
+                                        onClick={() => setModals({
+                                            id: 'modal-manage-type-product',
+                                            show: true,
+                                            data: e.row.id
+                                        })}
+                                        before={<Icon24PenOutline width={20} height={20}/>}
+                                    >
+                                        Редактировать
+                                    </ActionSheetItem>
+                                </>
+                            )}
+                            {(!e.row.isAdmin && access.removing) && (
                                 <ActionSheetItem
                                     onClick={() => setModals({
-                                        id: 'modal-manage-type-product',
-                                        show: true,
-                                        data: e.row.id
+                                        id: 'modal-remove-type-product', show: true, data: {
+                                            id: e.row.id,
+                                            name: e.row.name
+                                        }
                                     })}
-                                    before={<Icon24PenOutline width={20} height={20}/>}
+                                    mode={'destructive'}
+                                    before={<Icon24TrashSimpleOutline width={20} height={20}/>}
                                 >
-                                    Редактировать
+                                    Удалить
                                 </ActionSheetItem>
-                            </>
-                        )}
-                        {(!e.row.isAdmin && access.removing) && (
-                            <ActionSheetItem
-                                onClick={() => setModals({
-                                    id: 'modal-remove-type-product', show: true, data: {
-                                        id: e.row.id,
-                                        name: e.row.name
-                                    }
-                                })}
-                                mode={'destructive'}
-                                before={<Icon24TrashSimpleOutline width={20} height={20}/>}
-                            >
-                                Удалить
-                            </ActionSheetItem>
-                        )}
-                    </ActionSheet>,
+                            )}
+                        </ActionSheet>,
+                    </>
             }, setTableManage);
         }
     };

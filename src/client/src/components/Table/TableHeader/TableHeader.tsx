@@ -26,7 +26,7 @@ const TableHeader = (props: TableHeaderProps) => {
     const headerDisabled = loading || disabled;
 
     return (
-        <thead>
+        <thead className={styles.thead}>
             {headerGroups.map((headerGroup) => (
                 <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
