@@ -3,6 +3,7 @@ import type {MouseEvent, RefObject} from 'react';
 import type {Column, TableRow} from '../types';
 
 export type TableHeaderProps = {
+    editing?: boolean;
     disabled?: boolean;
     loading: boolean;
     headerGroups: HeaderGroup<TableRow>[];

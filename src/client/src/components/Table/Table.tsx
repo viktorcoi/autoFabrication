@@ -40,7 +40,7 @@ import {
     getColumnDefaultWidth,
     getColumnMaxWidth,
     getColumnMinWidth,
-    isColumnWidthFixed,
+    isColumnWidthLocked,
     getDefaultRowId,
     getMeasuredRowHeight,
     getRange,
@@ -264,7 +264,7 @@ const Table = (props: TableProps) => {
             size: clampColumnWidth(getColumnDefaultWidth(column), column),
             minSize: getColumnMinWidth(column),
             maxSize: getColumnMaxWidth(column),
-            enableResizing: column.resize !== false && !isColumnWidthFixed(column),
+            enableResizing: !isColumnWidthLocked(column),
             enableSorting: column.sortable !== false,
             cell: (info) => {
                 if (column.render) {
@@ -1267,14 +1267,14 @@ const Table = (props: TableProps) => {
     };
 
     const beginColumnResize = (columnId: string, event: React.MouseEvent<HTMLDivElement>) => {
-        if (editing || disabled || loading || event.button !== 0 || dragInteractionRef.current || resizeActiveRef.current) {
+        if (disabled || loading || event.button !== 0 || dragInteractionRef.current || resizeActiveRef.current) {
             return;
         }
 
         const cell = headerCellRefsRef.current[columnId];
         const column = columnMap.get(columnId);
 
-        if (!cell || !column || column.resize === false || isColumnWidthFixed(column)) {
+        if (!cell || !column || isColumnWidthLocked(column)) {
             return;
         }
 
@@ -1286,7 +1286,7 @@ const Table = (props: TableProps) => {
             const measuredWidth = currentCell?.getBoundingClientRect().width;
 
             result[currentColumn.key] = clampColumnWidth(
-                isColumnWidthFixed(currentColumn) ? fallbackWidth : measuredWidth ?? fallbackWidth,
+                isColumnWidthLocked(currentColumn) ? fallbackWidth : measuredWidth ?? fallbackWidth,
                 currentColumn,
             );
 
@@ -1470,7 +1470,8 @@ const Table = (props: TableProps) => {
                         style={{width: `var(${TABLE_TOTAL_WIDTH_CSS_VAR}, ${table.getTotalSize()}px)`}}
                     >
                         <TableHeader
-                            disabled={disabled || editing}
+                            editing={editing}
+                            disabled={disabled}
                             loading={loading}
                             headerGroups={table.getHeaderGroups()}
                             columnMap={columnMap}

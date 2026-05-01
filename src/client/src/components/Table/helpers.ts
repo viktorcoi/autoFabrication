@@ -68,10 +68,10 @@ const assignRef = <T, >(ref: React.Ref<T> | undefined, value: T) => {
 type AutoTitleTextProps = {
     className?: string;
     content: React.ReactNode;
-    title?: string;
+    fromHeader: boolean;
 };
 
-const AutoTitleText = ({className, content, title}: AutoTitleTextProps) => {
+const AutoTitleText = ({className, content, fromHeader}: AutoTitleTextProps) => {
     const [rootElement, setRootElement] = React.useState<HTMLElement | null>(null);
     const externalRootRef = React.isValidElement<{getRootRef?: React.Ref<HTMLElement>}>(content) && content.type === Text
         ? content.props.getRootRef
@@ -87,30 +87,29 @@ const AutoTitleText = ({className, content, title}: AutoTitleTextProps) => {
     }, [externalRootRef]);
 
     React.useLayoutEffect(() => {
-        if (!rootElement) {
+        if (!rootElement || fromHeader) {
             return;
         }
 
-        const resolvedTitle = title?.trim() || rootElement.textContent?.replace(/\s+/g, ' ').trim() || '';
+        const resolvedTitle = rootElement.textContent?.replace(/\s+/g, ' ').trim() || '';
 
         if (resolvedTitle) {
             rootElement.setAttribute('title', resolvedTitle);
         } else {
             rootElement.removeAttribute('title');
         }
-    }, [rootElement, title]);
+    }, [rootElement]);
 
     if (React.isValidElement<{className?: string; title?: string; children?: React.ReactNode; getRootRef?: React.Ref<HTMLElement>}>(content) && content.type === Text) {
         return React.cloneElement(content, {
             className: classNames(className, content.props.className),
-            title: content.props.title ?? title,
+            title: fromHeader ? undefined : content.props.title,
             getRootRef: handleTextRootRef,
         });
     }
 
     return React.createElement(Text, {
         className,
-        title,
         getRootRef: handleRootRef,
     }, content);
 };
@@ -129,7 +128,7 @@ export const getMeasuredRowHeight = (element: Element | null | undefined) => {
     return Number(height.toFixed(2));
 };
 
-export const renderContent = (content: React.ReactNode, className?: string) => {
+export const renderContent = (content: React.ReactNode, className?: string, fromHeader: boolean = false) => {
     if (content === null || content === undefined) {
         return React.createElement(Text, {className});
     }
@@ -143,14 +142,14 @@ export const renderContent = (content: React.ReactNode, className?: string) => {
         return React.createElement(AutoTitleText, {
             className,
             content: String(content),
-            title: String(content),
+            fromHeader,
         });
     }
 
     return React.createElement(AutoTitleText, {
         className,
         content,
-        title: getNodeTextContent(content),
+        fromHeader,
     });
 };
 
@@ -563,15 +562,37 @@ export const isInteractiveTarget = (target: EventTarget | null) => {
 
 export const getColumnDefaultWidth = (column?: Column) => column?.size ?? DEFAULT_COLUMN_SIZE;
 
-export const getColumnMinWidth = (column?: Column) => column?.minSize ?? DEFAULT_COLUMN_MIN_SIZE;
-
-export const getColumnMaxWidth = (column?: Column) => column?.maxSize ?? DEFAULT_COLUMN_MAX_SIZE;
+export const getColumnLockedWidth = (column?: Column) => Math.round(getColumnDefaultWidth(column));
 
 export const isColumnWidthFixed = (column?: Column) => {
-    return getColumnMinWidth(column) === getColumnMaxWidth(column);
+    return column?.minSize === column?.maxSize && typeof column?.minSize === 'number';
+};
+
+export const isColumnWidthLocked = (column?: Column) => {
+    return column?.resize === false || isColumnWidthFixed(column);
+};
+
+export const getColumnMinWidth = (column?: Column) => {
+    if (column?.resize === false) {
+        return getColumnLockedWidth(column);
+    }
+
+    return column?.minSize ?? DEFAULT_COLUMN_MIN_SIZE;
+};
+
+export const getColumnMaxWidth = (column?: Column) => {
+    if (column?.resize === false) {
+        return getColumnLockedWidth(column);
+    }
+
+    return column?.maxSize ?? DEFAULT_COLUMN_MAX_SIZE;
 };
 
 export const clampColumnWidth = (width: number, column?: Column) => {
+    if (column?.resize === false) {
+        return getColumnLockedWidth(column);
+    }
+
     return Math.min(getColumnMaxWidth(column), Math.max(getColumnMinWidth(column), Math.round(width)));
 };
 
@@ -580,6 +601,10 @@ export const getColumnWidthCssVarName = (columnId: string) => {
 };
 
 const getResolvedColumnWidth = (column: Column, sizing: ColumnSizingState) => {
+    if (column.resize === false) {
+        return getColumnLockedWidth(column);
+    }
+
     const explicitWidth = sizing[column.key];
 
     if (typeof explicitWidth === 'number') {

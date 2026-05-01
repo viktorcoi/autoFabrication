@@ -185,7 +185,7 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
                                 disableTriggerOnFocus={true}
                             >
                                 <IconButton
-                                    label={"Сменить тему"}
+                                    label={"Сгенерировать пароль"}
                                     onClick={() => mergeState({password: autogeneratePassword()}, setData)}
                                 >
                                     <Icon20RefreshOutline/>

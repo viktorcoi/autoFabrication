@@ -198,7 +198,11 @@ const RolesPage = () => {
                                             <Counter size={'s'}>{r._count.users}</Counter>
                                         )}
                                         {(access.editing || access.removing) && (
-                                            <IconButton
+                                            <Button
+                                                after={<Icon24MoreVertical fill={'var(--vkui--color_icon_primary)'} width={24} height={24}/>}
+                                                mode={'tertiary'}
+                                                rounded={true}
+                                                size={'m'}
                                                 disabled={r.isAdmin}
                                                 className={classNames(
                                                     styles.menu,
@@ -209,9 +213,7 @@ const RolesPage = () => {
                                                     e.stopPropagation();
                                                     openMenu(r, e.currentTarget);
                                                 }}
-                                            >
-                                                <Icon24MoreVertical fill={'var(--vkui--color_icon_primary)'} width={24} height={24}/>
-                                            </IconButton>
+                                            />
                                         )}
                                     </>
                                 }

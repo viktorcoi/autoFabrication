@@ -138,7 +138,7 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
                                 disableTriggerOnFocus={true}
                             >
                                 <IconButton
-                                    label={"Сменить тему"}
+                                    label={"Сгенерировать пароль"}
                                     onClick={() => setPassword(autogeneratePassword())}
                                 >
                                     <Icon20RefreshOutline/>

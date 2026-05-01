@@ -131,7 +131,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
                             )}
                             after={(
                                 <Tooltip
-                                    description={'Скчать'}
+                                    description={'Скачать'}
                                     usePortal={true}
                                     placement={'top'}
                                     disableTriggerOnFocus={true}

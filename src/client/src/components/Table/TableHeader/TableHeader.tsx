@@ -12,6 +12,7 @@ import type {TableHeaderProps} from './types';
 const TableHeader = (props: TableHeaderProps) => {
     const {
         disabled,
+        editing,
         loading,
         headerGroups,
         columnMap,
@@ -55,7 +56,7 @@ const TableHeader = (props: TableHeaderProps) => {
                                 )}
                                 style={{width: `var(${getColumnWidthCssVarName(columnId)}, ${header.getSize()}px)`}}
                                 onContextMenu={(event) => {
-                                    if (headerDisabled) {
+                                    if (headerDisabled || editing) {
                                         return;
                                     }
 
@@ -69,20 +70,21 @@ const TableHeader = (props: TableHeaderProps) => {
                                 <div
                                     className={classNames(
                                         styles.headerInner,
-                                        (headerDisabled || !hasPrimaryInteraction) && styles['headerInner--static'],
-                                        !headerDisabled && canDrag && !canSort && styles['headerInner--draggable'],
+                                        (headerDisabled || editing || !hasPrimaryInteraction) && styles['headerInner--static'],
+                                        !headerDisabled && !editing && canDrag && !canSort && styles['headerInner--draggable'],
                                         isDragging && styles['headerInner--dragging'],
-                                        headerDisabled && 'disabled',
+                                        (headerDisabled || editing) && 'disabled',
                                     )}
                                     onMouseDown={
-                                        headerDisabled || !hasPrimaryInteraction
+                                        headerDisabled || editing || !hasPrimaryInteraction
                                             ? undefined
                                             : (event) => beginColumnInteraction(columnId, event)
                                     }
                                 >
                                     {renderContent(
                                         flexRender(header.column.columnDef.header, header.getContext()),
-                                        classNames(styles.text),
+                                        styles.text,
+                                        true
                                     )}
                                     {canSort && header.column.getIsSorted() === 'asc' && (
                                         <Icon16SortArrowUp className={styles.sort} fill="var(--vkui--color_icon_tertiary)"/>
