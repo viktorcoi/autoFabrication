@@ -147,6 +147,8 @@ export type TableSettings = Array<{
     };
 }>;
 
+export type TableRows = Record<string, number>;
+
 export type DragGhostState = {
     columnId: string;
     width: number;

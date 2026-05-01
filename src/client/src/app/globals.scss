@@ -11,7 +11,10 @@ html.vkui--vkCom--dark {
 :root {
 	--app-border-radius: 12px;
 	--app-distance-empty: 20px;
-	--app-default-padding: 12px
+	--app-default-padding: 12px;
+	--app-width-nav: 300px;
+	--app-width-scroll: 8px;
+	--app-table-width: calc(100vw - var(--app-width-nav) - var(--app-width-scroll) - calc(var(--app-distance-empty) * 3));
 }
 
 * { box-sizing: border-box }
@@ -72,8 +75,8 @@ body {
 	max-height: 100%;
 	overflow: auto;
 	&::-webkit-scrollbar {
-		width: 8px;
-		height: 8px;
+		width: var(--app-width-scroll);
+		height: var(--app-width-scroll);
 	}
 	&::-webkit-scrollbar-track {
 		background: transparent;
@@ -115,4 +118,31 @@ body {
 		font-weight: 500;
 		line-height: 20px;
 	}
+}
+
+.TableHeader {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: var(--vkui--color_background_content);
+	&:after {
+		content: '';
+		display: block;
+		position: absolute;
+		inset: 0 0 0 0;
+		width: var(--app-table-width);
+		background-color: inherit;
+		border-bottom: 1px solid var(--vkui--color_separator_primary);
+	}
+}
+
+
+.TableBodyRow:after {
+	content: '';
+	display: block;
+	position: absolute;
+	inset: 0 0 0 0;
+	width: var(--app-table-width);
+	background-color: inherit;
+	pointer-events: none;
 }

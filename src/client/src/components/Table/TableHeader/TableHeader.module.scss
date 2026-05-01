@@ -1,11 +1,9 @@
 .headerCell {
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 3;
     padding: 0;
     vertical-align: middle;
     text-align: left;
-    background: var(--vkui--color_background_content);
     border-right: 1px solid var(--vkui--color_separator_primary);
     border-bottom: 1px solid var(--vkui--color_separator_primary);
 
@@ -94,18 +92,4 @@
 
 .sort {
     min-width: 16px;
-}
-
-.thead {
-    position: relative;
-    &:after {
-        content: '';
-        display: block;
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        inset: 0 0 0 0;
-        width: calc(100vw - 300px - calc(var(--app-distance-empty) * 3));
-        border-bottom: 1px solid var(--vkui--color_separator_primary);
-    }
 }

@@ -5,6 +5,9 @@
         border-top: unset;
         border-bottom: 1px solid var(--vkui--color_separator_primary);
     }
+    :global(.TableHeader):after, :global(.TableBodyRow):after {
+        width: calc(700px - var(--app-width-scroll));
+    }
     :global(.vkuiModalPageContent__host) {
         overflow: hidden;
         display: flex;

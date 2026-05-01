@@ -7,6 +7,7 @@ import type {
     ColumnType,
     PaginationItem,
     TableDraftChanges,
+    TableRows,
     TableRow,
     TableSettings,
     TableSorting,
@@ -20,6 +21,7 @@ export const DEFAULT_COLUMN_MAX_SIZE = 520;
 export const DEFAULT_ROW_HEIGHT = 41;
 export const ROW_VIRTUAL_OVERSCAN = 8;
 export const TABLE_TOTAL_WIDTH_CSS_VAR = '--table-total-width';
+export const TABLE_ROWS_STORAGE_KEY = 'tableRows';
 
 const getNodeTextContent = (content: React.ReactNode): string | undefined => {
     if (content === null || content === undefined) {
@@ -392,6 +394,51 @@ export const removeStoredSettings = (settingsKey: string) => {
 
     try {
         window.localStorage.removeItem(settingsKey);
+    } catch {
+        // Ignore storage errors.
+    }
+};
+
+const normalizeTableRows = (value: unknown): TableRows => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return {};
+    }
+
+    return Object.entries(value).reduce<TableRows>((result, [key, rows]) => {
+        if (typeof rows !== 'number' || !Number.isFinite(rows) || rows <= 0) {
+            return result;
+        }
+
+        result[key] = Math.round(rows);
+        return result;
+    }, {});
+};
+
+export const getStoredTableRows = () => {
+    if (typeof window === 'undefined') {
+        return {};
+    }
+
+    try {
+        return normalizeTableRows(safeJsonParse<unknown>(window.localStorage.getItem(TABLE_ROWS_STORAGE_KEY), {}));
+    } catch {
+        return {};
+    }
+};
+
+export const saveStoredTableRows = (componentName: string, rows: number) => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    if (!componentName || !Number.isFinite(rows) || rows <= 0) {
+        return;
+    }
+
+    try {
+        const currentRows = getStoredTableRows();
+        currentRows[componentName] = Math.round(rows);
+        window.localStorage.setItem(TABLE_ROWS_STORAGE_KEY, JSON.stringify(currentRows));
     } catch {
         // Ignore storage errors.
     }

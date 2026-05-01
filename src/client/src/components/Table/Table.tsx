@@ -46,6 +46,7 @@ import {
     getRange,
     getStorageId,
     getStoredSettings,
+    getStoredTableRows,
     isCellRequired,
     isEmptyCellValue,
     isInteractiveTarget,
@@ -56,6 +57,7 @@ import {
     renderContent,
     restoreColumnOrderFromDefaults,
     saveStoredSettings,
+    saveStoredTableRows,
     sortingStateToTableSorting,
     TABLE_TOTAL_WIDTH_CSS_VAR,
     tableSortingToSortingState,
@@ -514,6 +516,26 @@ const Table = (props: TableProps) => {
         liveColumnSizingRef.current = {...columnSizing};
         applyColumnSizingPreview(tableRef.current, columns, columnSizing);
     }, [columnSizing, columns]);
+
+    useEffect(() => {
+        const storedTableRows = getStoredTableRows();
+        const nextRows = storedTableRows[componentName];
+
+        if (
+            typeof nextRows !== 'number'
+            || !Number.isFinite(nextRows)
+            || nextRows <= 0
+            || nextRows === safeRows
+        ) {
+            return;
+        }
+
+        onEventRef.current({
+            type: 'rowsChange',
+            rows: nextRows,
+            target: null,
+        });
+    }, [componentName, safeRows]);
 
     useEffect(() => {
         const storedSettings = getStoredSettings(settingsKey);
@@ -1638,6 +1660,7 @@ const Table = (props: TableProps) => {
                     onCancelEdit={cancelEditing}
                     onSaveEdit={saveEditing}
                     onRowsChange={(nextRows, target) => {
+                        saveStoredTableRows(componentName, nextRows);
                         onEventRef.current({
                             type: 'rowsChange',
                             rows: nextRows,

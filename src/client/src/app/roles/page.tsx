@@ -9,7 +9,6 @@ import {
     Button,
     classNames,
     Counter,
-    IconButton,
     Placeholder,
     Search,
     SimpleCell,

@@ -55,13 +55,17 @@ const ModalMultiRemove = (props: ModalMultiRemoveProps) => {
                 if (result.error.length) {
                     snackbar.onActionClick = () => {
                         showErrors.open(data, result);
-                        onClose('cancel');
+                        if (result.error.length === data.length) {
+                            onClose('cancel');
+                        }
                     }
                     snackbar.action = 'Подробнее';
                 }
 
+                if (result.error.length !== data.length) {
+                    onClose('updated-data');
+                }
                 addSnackbar(snackbar);
-                onClose('updated-data');
             }
         }).finally(() => {
             setLoading(false);

@@ -9,7 +9,6 @@
     flex-direction: column;
     gap: 8px;
     padding: var(--app-default-padding);
-    width: 300px;
-    min-width: 300px;
+    min-width: var(--app-width-nav);
     height: fit-content;
 }

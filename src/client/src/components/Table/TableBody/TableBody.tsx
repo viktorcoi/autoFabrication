@@ -154,6 +154,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                 }}
                                 style={rowHeight ? {height: `${rowHeight}px`} : undefined}
                                 className={classNames(
+                                    'TableBodyRow',
                                     styles.bodyRow,
                                     virtualRow.index % 2 === 0 && styles['bodyRow--odd'],
                                     isSelectedRow && styles['bodyRow--selected'],

@@ -4,6 +4,10 @@
     flex-direction: column;
     gap: var(--app-distance-empty);
     max-width: calc(100% - 300px - var(--app-distance-empty));
+
+    :global(.TableHeader):after, :global(.TableBodyRow):after {
+        width: calc(var(--app-table-width) - var(--app-width-nav) - var(--app-distance-empty));
+    }
 }
 
 .header {

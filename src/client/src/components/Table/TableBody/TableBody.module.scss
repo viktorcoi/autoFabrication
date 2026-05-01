@@ -17,18 +17,6 @@
     &--editing {
         cursor: default;
     }
-
-    &:after {
-        content: '';
-        display: block;
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        inset: 0 0 0 0;
-        width: calc(100vw - 300px - calc(var(--app-distance-empty) * 3));
-        background-color: inherit;
-        pointer-events: none;
-    }
 }
 
 .bodySpacer {
