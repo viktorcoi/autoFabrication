@@ -6,8 +6,8 @@ import { AppError } from "../errors/app-error.js";
 import { removeStoredFile } from "./avatars.js";
 
 export const OPERATION_FILE_SIZE_LIMIT = 100 * 1024 * 1024;
-export const OPERATION_FILES_LIMIT = 10;
-export const OPERATION_FILES_TOTAL_SIZE_LIMIT = 500 * 1024 * 1024;
+export const OPERATION_FILES_LIMIT = 20;
+export const OPERATION_FILES_TOTAL_SIZE_LIMIT = 200 * 1024 * 1024;
 
 const OPERATION_STORAGE_DIR_NAME = "operations";
 const OPERATION_STORAGE_DIR = path.join(env.UPLOAD_DIR, OPERATION_STORAGE_DIR_NAME);
@@ -60,7 +60,7 @@ export const assertOperationFilesTotalSize = (files: Express.Multer.File[]) => {
 	const totalSize = files.reduce((result, file) => result + file.size, 0);
 
 	if (totalSize > OPERATION_FILES_TOTAL_SIZE_LIMIT) {
-		throw new AppError(413, "Общий размер файлов не должен превышать 500 MB");
+		throw new AppError(413, "Общий размер файлов не должен превышать 200 MB");
 	}
 };
 

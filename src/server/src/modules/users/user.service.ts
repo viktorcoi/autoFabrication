@@ -110,8 +110,8 @@ const DELETE_SELF_ERROR = "Нельзя удалить самого себя";
 const DELETE_USER_GOD_ERROR = "Первого пользователя нельзя удалить";
 const DELETE_USER_IN_USE_ERROR = "Этот пользователь используется и не может быть удален";
 
-const UPDATE_USER_NO_RIGHTS_ERROR = "\u0423 \u0432\u0430\u0441 \u043d\u0435\u0442 \u043f\u0440\u0430\u0432 \u0434\u043b\u044f \u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f";
-const UPDATE_USER_SUCCESS_DESCRIPTION = "\u041e\u0442\u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e";
+const UPDATE_USER_NO_RIGHTS_ERROR = "У вас нет прав для редактирования";
+const UPDATE_USER_SUCCESS_DESCRIPTION = "Отредактировано";
 const getUniqueIds = (ids: number[]) => {
 	const uniqueIds = new Set<number>();
 
@@ -488,7 +488,7 @@ export const updateUsersTable = async (
 		},
 	});
 	if (!actor) {
-		throw new AppError(404, "\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d");
+		throw new AppError(404, "Пользователь не найден");
 	}
 	const permissions = actor.role.permissions as RolePermissions;
 	const ids = Object.keys(payload).map((id) => Number(id));
@@ -511,7 +511,7 @@ export const updateUsersTable = async (
 		if (!parsedItem.success) {
 			result.error.push({
 				id,
-				description: getValidationErrorMessage(parsedItem.error.issues) || "\u041d\u0435\u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u0435 \u0434\u0430\u043d\u043d\u044b\u0435",
+				description: getValidationErrorMessage(parsedItem.error.issues) || "Некорректные данные",
 			});
 			continue;
 		}

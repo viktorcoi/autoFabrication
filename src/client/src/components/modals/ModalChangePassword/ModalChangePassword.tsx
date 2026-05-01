@@ -127,6 +127,7 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
                         defaultShow={true}
                         disabled={loading}
                         value={password}
+                        maxLength={15}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder={'Введите новый пароль'}
                         status={!password.trim() ? 'error' : 'default'}

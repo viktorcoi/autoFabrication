@@ -21,10 +21,6 @@ import UploadFile from "@/components/UploadFile/UploadFile";
 import {ModalManageOperationProps} from "@/components/modals/ModalGuide/ModalManageOperation/types";
 import styles from './ModalManageOperation.module.scss';
 
-const MAX_FILES = 10;
-const MAX_FILE_SIZE_MB = 100;
-const MAX_TOTAL_SIZE_MB = 500;
-
 type ManageOperationData = {
     operationGroupId: number;
     name: string;
@@ -257,6 +253,7 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                         noPadding={true}
                     >
                         <Input
+                            maxLength={30}
                             disabled={loading.send}
                             value={data.name}
                             onChange={(e) => mergeState({name: e.target.value}, setData)}
@@ -272,10 +269,10 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                             value={data.files}
                             savedFiles={data.existingFiles}
                             disabled={loading.send}
-                            maxFiles={MAX_FILES}
-                            maxSize={MAX_FILE_SIZE_MB}
-                            accept={['.zip', '.rar', '.7zip', 'image/png', 'image/jpeg', 'image/webp', '.docx', '.doc', '.dotx', '.xls', '.pptx', '.pdf']}
-                            maxTotalSize={MAX_TOTAL_SIZE_MB}
+                            // maxFiles={20}
+                            maxSize={150}
+                            accept={['.zip', '.rar', '.7zip', 'image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp','.docx', '.doc', '.dotx', '.xls', '.xlsx', '.ppt', '.pptx', '.pdf']}
+                            // maxTotalSize={200}
                             onChange={(files) => mergeState({files}, setData)}
                             onRemoveSavedFile={(file) => mergeState({
                                 existingFiles: data.existingFiles.filter((item) => item.id !== file.id)
@@ -287,8 +284,10 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                         />
                     </FormItem>
                     <FormItem
+                        className={'count-symbols'}
                         top={'Описание'}
                         noPadding={true}
+                        bottom={`${data.description.length} из 255`}
                     >
                         <Textarea
                             disabled={loading.send}
@@ -296,6 +295,7 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                             onChange={(e) => mergeState({description: e.target.value}, setData)}
                             className={styles.textarea}
                             placeholder={'Введите описание'}
+                            maxLength={255}
                         />
                     </FormItem>
                 </form>

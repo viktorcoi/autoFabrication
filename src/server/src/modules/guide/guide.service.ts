@@ -1272,11 +1272,11 @@ export const updateOperation = async (
 	);
 
 	if (totalFilesCount > OPERATION_FILES_LIMIT) {
-		throw new AppError(400, "Можно хранить не более 10 файлов у одной операции");
+		throw new AppError(400, "Можно хранить не более 20 файлов у одной операции");
 	}
 
 	if (totalFilesSize > OPERATION_FILES_TOTAL_SIZE_LIMIT) {
-		throw new AppError(413, "Общий размер файлов операции не должен превышать 500 MB");
+		throw new AppError(413, "Общий размер файлов операции не должен превышать 200 MB");
 	}
 
 	const savedFiles = await saveOperationFiles(files);

@@ -206,11 +206,14 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
                             onChange={(e) => mergeState({name: e.target.value}, setData)}
                             placeholder={'Введите название'}
                             status={!data.name.trim() ? 'error' : 'default'}
+                            maxLength={30}
                         />
                     </FormItem>
                     <FormItem
+                        className={'count-symbols'}
                         top={'Описание'}
                         noPadding={true}
+                        bottom={`${data.description.length} из 255`}
                     >
                         <Textarea
                             disabled={loading.send}
@@ -218,6 +221,7 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
                             onChange={(e) => mergeState({description: e.target.value}, setData)}
                             className={styles.textarea}
                             placeholder={'Введите описание'}
+                            maxLength={255}
                         />
                     </FormItem>
                 </form>

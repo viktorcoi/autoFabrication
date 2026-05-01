@@ -164,6 +164,7 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
                         onChange={(e) => mergeState({login: e.target.value}, setData)}
                         placeholder={'Введите логин'}
                         status={!data.login.trim() ? 'error' : 'default'}
+                        maxLength={35}
                     />
                 </FormItem>
                 <FormItem
@@ -177,6 +178,7 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
                         onChange={(e) => mergeState({password: e.target.value}, setData)}
                         placeholder={'Введите пароль'}
                         status={!data.password.trim() ? 'error' : 'default'}
+                        maxLength={15}
                         after={(
                             <Tooltip
                                 description={`Сгенерировать пароль`}

@@ -7,31 +7,35 @@ const loginSchema = z
 	.string()
 	.trim()
 	.min(5, "Логин должен содержать не менее 5 латинских символов.")
+	.max(35, 'Логин должен быть не более 35 символов')
 	.regex(LOGIN_PATTERN, "Логин может содержать только латинские буквы, цифры и специальные символы.");
 
-const passwordSchema = z.string().min(6, "Пароль должен содержать не менее 6 символов.");
+const passwordSchema = z
+	.string()
+	.min(6, "Пароль должен содержать не менее 6 символов.")
+	.max(15, 'Пароль должен быть не более 15 символов');
 
 const firstNameSchema = z
 	.string()
 	.trim()
-	.min(1, "\u0418\u043c\u044f \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e")
-	.max(255, "\u0418\u043c\u044f \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u0434\u043b\u0438\u043d\u043d\u043e\u0435")
-	.regex(PERSON_NAME_PATTERN, "\u0418\u043c\u044f \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0434\u0435\u0440\u0436\u0430\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u0431\u0443\u043a\u0432\u044b.");
+	.min(1, "Имя обязательно")
+	.max(20, "Имя слишком длинное")
+	.regex(PERSON_NAME_PATTERN, "Имя может содержать только буквы.");
 
 const lastNameSchema = z
 	.string()
 	.trim()
-	.min(1, "\u0424\u0430\u043c\u0438\u043b\u0438\u044f \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u0430")
-	.max(255, "\u0424\u0430\u043c\u0438\u043b\u0438\u044f \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u0434\u043b\u0438\u043d\u043d\u0430\u044f")
-	.regex(PERSON_NAME_PATTERN, "\u0424\u0430\u043c\u0438\u043b\u0438\u044f \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0434\u0435\u0440\u0436\u0430\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u0431\u0443\u043a\u0432\u044b.");
+	.min(1, "Фамилия обязательна")
+	.max(20, "Фамилия слишком длинная")
+	.regex(PERSON_NAME_PATTERN, "Фамилия может содержать только буквы.");
 
 const middleNameSchema = z
 	.string()
 	.trim()
-	.max(255, "\u041e\u0442\u0447\u0435\u0441\u0442\u0432\u043e \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u0434\u043b\u0438\u043d\u043d\u043e\u0435")
+	.max(20, "Отчество слишком длинное")
 	.refine(
 		(value) => value === "" || PERSON_NAME_PATTERN.test(value),
-		"\u041e\u0442\u0447\u0435\u0441\u0442\u0432\u043e \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0434\u0435\u0440\u0436\u0430\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u0431\u0443\u043a\u0432\u044b.",
+		"Отчество может содержать только буквы.",
 	);
 
 const userTableSortingSchema = z.object({

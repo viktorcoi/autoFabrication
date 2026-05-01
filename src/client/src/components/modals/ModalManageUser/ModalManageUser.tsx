@@ -319,6 +319,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                         noPadding={true}
                     >
                         <Input
+                            maxLength={20}
                             disabled={loading.send}
                             value={data.lastName}
                             onChange={(e) => mergeState({lastName: getOnlyLettersValue(e.target.value)}, setData)}
@@ -331,6 +332,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                         noPadding={true}
                     >
                         <Input
+                            maxLength={20}
                             disabled={loading.send}
                             value={data.firstName}
                             onChange={(e) => mergeState({firstName: getOnlyLettersValue(e.target.value)}, setData)}
@@ -343,6 +345,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                         noPadding={true}
                     >
                         <Input
+                            maxLength={20}
                             disabled={loading.send}
                             value={data.middleName}
                             onChange={(e) => mergeState({middleName: getOnlyLettersValue(e.target.value)}, setData)}

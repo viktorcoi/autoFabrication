@@ -160,6 +160,7 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
                         noPadding={true}
                     >
                         <Input
+                            maxLength={35}
                             slotProps={{ input: { getRootRef: inputRef } }}
                             disabled={loading.send}
                             value={login}

@@ -136,7 +136,6 @@ body {
 	}
 }
 
-
 .TableBodyRow:after {
 	content: '';
 	display: block;
@@ -145,4 +144,9 @@ body {
 	width: var(--app-table-width);
 	background-color: inherit;
 	pointer-events: none;
+}
+
+.count-symbols .vkuiFormItem__bottom {
+	margin-left: auto;
+	width: fit-content;
 }

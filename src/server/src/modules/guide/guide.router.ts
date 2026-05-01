@@ -164,7 +164,7 @@ const parseOperationUpload = (request: Request, response: Response, next: NextFu
 			}
 
 			if (error.code === "LIMIT_FILE_COUNT") {
-				next(new AppError(400, "Можно загрузить не более 10 файлов"));
+				next(new AppError(400, "Можно загрузить не более 20 файлов"));
 				return;
 			}
 

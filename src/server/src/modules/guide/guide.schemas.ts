@@ -4,12 +4,12 @@ const typeProductNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название типа изделия обязательно")
-	.max(255, "Название типа изделия слишком длинное");
+	.max(30, "Название типа изделия слишком длинное");
 
 const typeProductDescriptionSchema = z
 	.string()
 	.trim()
-	.max(1000, "Описание типа изделия слишком длинное")
+	.max(255, "Описание типа изделия слишком длинное")
 	.transform((value) => value.length > 0 ? value : null);
 
 const typeProductsTableSortingSchema = z.object({
@@ -21,12 +21,12 @@ const materialGroupNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название группы материала обязательно")
-	.max(255, "Название группы материала слишком длинное");
+	.max(30, "Название группы материала слишком длинное");
 
 const materialGroupDescriptionSchema = z
 	.string()
 	.trim()
-	.max(1000, "Описание группы материала слишком длинное")
+	.max(255, "Описание группы материала слишком длинное")
 	.transform((value) => value.length > 0 ? value : null);
 
 const materialGroupsTableSortingSchema = z.object({
@@ -38,12 +38,12 @@ const operationGroupNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название группы операций обязательно")
-	.max(255, "Название группы операций слишком длинное");
+	.max(30, "Название группы операций слишком длинное");
 
 const operationGroupDescriptionSchema = z
 	.string()
 	.trim()
-	.max(1000, "Описание группы операций слишком длинное")
+	.max(255, "Описание группы операций слишком длинное")
 	.transform((value) => value.length > 0 ? value : null);
 
 const operationGroupsTableSortingSchema = z.object({
@@ -55,12 +55,12 @@ const materialNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название материала обязательно")
-	.max(255, "Название материала слишком длинное");
+	.max(30, "Название материала слишком длинное");
 
 const materialDescriptionSchema = z
 	.string()
 	.trim()
-	.max(1000, "Описание материала слишком длинное")
+	.max(30, "Описание материала слишком длинное")
 	.transform((value) => value.length > 0 ? value : null);
 
 const materialGroupIdSchema = z.coerce
@@ -77,12 +77,12 @@ const operationNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название операции обязательно")
-	.max(255, "Название операции слишком длинное");
+	.max(30, "Название операции слишком длинное");
 
 const operationDescriptionSchema = z
 	.string()
 	.trim()
-	.max(1000, "Описание операции слишком длинное")
+	.max(255, "Описание операции слишком длинное")
 	.transform((value) => value.length > 0 ? value : null);
 
 const operationGroupIdSchema = z.coerce
