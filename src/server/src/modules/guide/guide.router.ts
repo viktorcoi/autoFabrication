@@ -151,9 +151,13 @@ const operationUpload = multer({
 const parseOperationUpload = (request: Request, response: Response, next: NextFunction) => {
 	operationUpload.array("files", OPERATION_FILES_LIMIT)(request, response, (error) => {
 		if (!error) {
-			const files = Array.isArray(request.files) ? request.files : [];
-			assertOperationFilesTotalSize(files);
-			next();
+			try {
+				const files = Array.isArray(request.files) ? request.files : [];
+				assertOperationFilesTotalSize(files);
+				next();
+			} catch (uploadError) {
+				next(uploadError);
+			}
 			return;
 		}
 
