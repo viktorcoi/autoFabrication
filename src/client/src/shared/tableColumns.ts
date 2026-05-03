@@ -28,6 +28,13 @@ export const tableColumns: Record<string, Column[]> = {
         {key: 'description', header: 'Описание', minSize: 115, size: 700, maxSize: 3065},
     ],
 
+    blank: [
+        {key: 'name', header: 'Название', minSize: 110, size: 250, maxSize: 385},
+        {key: 'material', header: 'Материал', minSize: 140, size: 220, maxSize: 385},
+        {key: 'materialGroup', header: 'Группа материалов', minSize: 175, size: 220, maxSize: 385},
+        {key: 'description', header: 'Описание', minSize: 115, size: 500, maxSize: 3065},
+    ],
+
     materialGroup: [
         {key: 'name', header: 'Название', minSize: 110, size: 250, maxSize: 385},
         {key: 'description', header: 'Описание', minSize: 115, size: 800, maxSize: 3065},

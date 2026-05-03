@@ -73,6 +73,28 @@ const materialsTableSortingSchema = z.object({
 	sort: z.enum(["asc", "desc"]),
 }).strict();
 
+const blankNameSchema = z
+	.string()
+	.trim()
+	.min(1, "Название заготовки обязательно")
+	.max(30, "Название заготовки слишком длинное");
+
+const blankDescriptionSchema = z
+	.string()
+	.trim()
+	.max(255, "Описание заготовки слишком длинное")
+	.transform((value) => value.length > 0 ? value : null);
+
+const materialIdSchema = z.coerce
+	.number()
+	.int()
+	.positive("Некорректный id материала");
+
+const blanksTableSortingSchema = z.object({
+	id: z.enum(["name", "material", "materialGroup", "description"]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
 const operationNameSchema = z
 	.string()
 	.trim()
@@ -385,6 +407,70 @@ export const getMaterialsTableSchema = z.object({
 		.transform((value) => value ?? null),
 });
 
+export const createBlankSchema = z.object({
+	materialId: materialIdSchema,
+	name: blankNameSchema,
+	description: blankDescriptionSchema.optional(),
+});
+
+export const updateBlankSchema = z
+	.object({
+		materialId: materialIdSchema.optional(),
+		name: blankNameSchema.optional(),
+		description: blankDescriptionSchema.optional(),
+	})
+	.refine(
+		(value) => (
+			value.materialId !== undefined
+			|| value.name !== undefined
+			|| value.description !== undefined
+		),
+		"Нужно передать хотя бы одно поле для обновления",
+	);
+
+export const updateBlanksTableItemSchema = z
+	.object({
+		name: blankNameSchema.optional(),
+		description: blankDescriptionSchema.optional(),
+	})
+	.strict()
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нет данных для обновления",
+	);
+
+export const updateBlanksTableSchema = z
+	.record(
+		z.string().regex(/^[1-9]\d*$/, "Некорректный id заготовки"),
+		z.unknown(),
+	)
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нужно передать хотя бы одну строку для редактирования",
+	);
+
+export const deleteBlankIdsSchema = z
+	.array(
+		z.coerce
+			.number()
+			.int()
+			.positive("id заготовки должен быть положительным числом"),
+	)
+	.min(1, "Нужно выбрать хотя бы одну заготовку");
+
+export const getBlanksTableSchema = z.object({
+	page: z.coerce.number().int().min(0).default(0),
+	rows: z.coerce.number().int().positive().max(100).default(20),
+	search: z.preprocess(
+		(value) => typeof value === "string" ? value.trim() : undefined,
+		z.string().optional(),
+	).transform((value) => value && value.length > 0 ? value : undefined),
+	sorting: z
+		.preprocess(parseTableSorting, blanksTableSortingSchema.nullable())
+		.optional()
+		.transform((value) => value ?? null),
+});
+
 export const createOperationSchema = z.object({
 	operationGroupId: operationGroupIdSchema,
 	name: operationNameSchema,
@@ -459,5 +545,7 @@ export type GetOperationGroupsTableQuery = z.infer<typeof getOperationGroupsTabl
 export type UpdateOperationGroupsTablePayload = z.infer<typeof updateOperationGroupsTableSchema>;
 export type GetMaterialsTableQuery = z.infer<typeof getMaterialsTableSchema>;
 export type UpdateMaterialsTablePayload = z.infer<typeof updateMaterialsTableSchema>;
+export type GetBlanksTableQuery = z.infer<typeof getBlanksTableSchema>;
+export type UpdateBlanksTablePayload = z.infer<typeof updateBlanksTableSchema>;
 export type GetOperationsTableQuery = z.infer<typeof getOperationsTableSchema>;
 export type UpdateOperationsTablePayload = z.infer<typeof updateOperationsTableSchema>;

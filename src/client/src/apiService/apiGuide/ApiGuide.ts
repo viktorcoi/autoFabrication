@@ -8,26 +8,32 @@ import {
 import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {
     GetByIdMaterialGroupResponse,
+    GetByIdBlankResponse,
     GetByIdMaterialResponse,
     GetByIdOperationResponse,
     GetByIdOperationGroupResponse,
     GetByIdTypeProductsResponse,
+    GetMaterialsResponse,
     GetMaterialGroupsResponse,
     GetOperationGroupsResponse,
+    BlankTableRow,
     MaterialGroupTableRow,
     MaterialTableRow,
     OperationTableRow,
     OperationGroupTableRow,
+    PatchBlankTableOptions,
     PatchMaterialGroupTableOptions,
     PatchMaterialTableOptions,
     PatchOperationTableOptions,
     PatchOperationGroupTableOptions,
     PatchTypeProductsTableOptions,
     PathMaterialGroupOptions,
+    PathBlankOptions,
     PathMaterialOptions,
     PathOperationOptions,
     PathOperationGroupOptions,
     PathTypeProductsOptions,
+    PostBlankOptions,
     PostMaterialGroupOptions,
     PostMaterialOptions,
     PostOperationOptions,
@@ -345,6 +351,18 @@ export const ApiGuide = {
     },
 
     material: {
+        get: async (options: ApiServiceOptions = {}): Promise<ApiServiceResponse<GetMaterialsResponse[]>> => {
+            return await api.get("/guide/material", {
+                signal: options.controller?.signal,
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && Array.isArray(response.data),
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
         getById: async (options: ApiServiceOptions<{
             id: number
         }>): Promise<ApiServiceResponse<GetByIdMaterialResponse>> => {
@@ -425,6 +443,100 @@ export const ApiGuide = {
                 options: PatchMaterialTableOptions;
             }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
                 return await api.patch("/guide/material/table",
+                    options.options,
+                    { signal: options.controller?.signal }
+                ).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+        }
+    },
+
+    blank: {
+        getById: async (options: ApiServiceOptions<{
+            id: number
+        }>): Promise<ApiServiceResponse<GetByIdBlankResponse>> => {
+            return await api.get(`/guide/blank/${options.id}`, {
+                signal: options.controller?.signal
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        post: async (options: ApiServiceOptions<{
+            options: PostBlankOptions;
+        }>): Promise<ApiServiceResponse<GetByIdBlankResponse>> => {
+            return await api.post("/guide/blank",
+                {...options.options},
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 201 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        patch: async (options: ApiServiceOptions<{
+            id: number,
+            options: PathBlankOptions;
+        }>): Promise<ApiServiceResponse<GetByIdBlankResponse>> => {
+            return await api.patch(`/guide/blank/${options.id}`,
+                {...options.options},
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        delete: async (options: ApiServiceOptions<{
+            ids: number[];
+        }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+            return await api.delete("/guide/blank", {
+                signal: options.controller?.signal,
+                data: options.ids,
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        table: {
+            get: async (options: ApiServiceOptions<{
+                options?: GetTableOptions;
+            }>): Promise<ApiServiceResponse<GetTableResponse<BlankTableRow[]>>> => {
+                return await api.get("/guide/blank/table", {
+                    signal: options.controller?.signal,
+                    params: buildTableOptions(options.options),
+                }).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+
+            patch: async (options: ApiServiceOptions<{
+                options: PatchBlankTableOptions;
+            }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+                return await api.patch("/guide/blank/table",
                     options.options,
                     { signal: options.controller?.signal }
                 ).then((response) => {

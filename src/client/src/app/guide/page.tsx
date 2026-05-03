@@ -7,6 +7,7 @@ import {useState} from "react";
 import TypeProducts from "@/sections/guide/TypeProducts";
 import MaterialGroup from "@/sections/guide/MaterialGroup";
 import Material from "@/sections/guide/Material";
+import Blank from "@/sections/guide/Blank";
 import OperationGroup from "@/sections/guide/OperationGroup";
 import Operation from "@/sections/guide/Operation";
 
@@ -74,6 +75,8 @@ const GuidePage = () => {
                     <MaterialGroup onLoading={setLoading} />
                 ) : activeSection === 3 ? (
                     <Material onLoading={setLoading} />
+                ) : activeSection === 4 ? (
+                    <Blank onLoading={setLoading} />
                 ) : activeSection === 5 ? (
                     <OperationGroup onLoading={setLoading} />
                 ) : activeSection === 6 ? (

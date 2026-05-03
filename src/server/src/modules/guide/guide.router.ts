@@ -15,21 +15,26 @@ import {
 	getOperationFileAbsolutePath,
 } from "../../shared/storage/operations.js";
 import {
+	createBlankSchema,
 	createMaterialGroupSchema,
 	createMaterialSchema,
 	createOperationSchema,
 	createOperationGroupSchema,
 	createTypeProductSchema,
+	deleteBlankIdsSchema,
 	deleteMaterialGroupIdsSchema,
 	deleteMaterialIdsSchema,
 	deleteOperationIdsSchema,
 	deleteOperationGroupIdsSchema,
 	deleteTypeProductIdsSchema,
+	getBlanksTableSchema,
 	getMaterialGroupsTableSchema,
 	getMaterialsTableSchema,
 	getOperationsTableSchema,
 	getOperationGroupsTableSchema,
 	getTypeProductsTableSchema,
+	updateBlankSchema,
+	updateBlanksTableSchema,
 	updateMaterialGroupSchema,
 	updateMaterialGroupsTableSchema,
 	updateMaterialSchema,
@@ -42,16 +47,20 @@ import {
 	updateTypeProductsTableSchema,
 } from "./guide.schemas.js";
 import {
+	createBlank,
 	createMaterial,
 	createMaterialGroup,
 	createOperation,
 	createOperationGroup,
 	createTypeProduct,
+	deleteBlanks,
 	deleteMaterialGroups,
 	deleteMaterials,
 	deleteOperations,
 	deleteOperationGroups,
 	deleteTypeProducts,
+	getBlankById,
+	getBlanksTable,
 	getMaterialById,
 	getMaterialGroupById,
 	getMaterialGroupsTable,
@@ -64,8 +73,11 @@ import {
 	getOperationGroupsTable,
 	getTypeProductById,
 	getTypeProductsTable,
+	listMaterials,
 	listMaterialGroups,
 	listOperationGroups,
+	updateBlank,
+	updateBlanksTable,
 	updateMaterial,
 	updateMaterialGroup,
 	updateMaterialGroupsTable,
@@ -419,6 +431,19 @@ guideRouter.get(
 );
 
 guideRouter.get(
+	"/material",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const searchValue = typeof request.query.search === "string"
+			? request.query.search.trim()
+			: "";
+		const materials = await listMaterials(searchValue || undefined);
+
+		response.json(materials);
+	}),
+);
+
+guideRouter.get(
 	"/material/:id",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
@@ -469,6 +494,73 @@ guideRouter.delete(
 		const auth = requireAuth(request, response);
 		const payload = validate(deleteMaterialIdsSchema, request.body ?? []);
 		const result = await deleteMaterials(payload, auth.userId);
+
+		response.json(result);
+	}),
+);
+
+guideRouter.get(
+	"/blank/table",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const query = validate(getBlanksTableSchema, request.query);
+		const table = await getBlanksTable(query);
+
+		response.json(table);
+	}),
+);
+
+guideRouter.get(
+	"/blank/:id",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const blank = await getBlankById(parseId(String(request.params.id)));
+
+		response.json(blank);
+	}),
+);
+
+guideRouter.post(
+	"/blank",
+	requirePermission("/guide", "adding"),
+	asyncHandler(async (request, response) => {
+		const payload = validate(createBlankSchema, request.body ?? {});
+		const blank = await createBlank(payload);
+
+		response.status(201).json(blank);
+	}),
+);
+
+guideRouter.patch(
+	"/blank/table",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(updateBlanksTableSchema, request.body ?? {});
+		const result = await updateBlanksTable(payload, auth.userId);
+
+		response.json(result);
+	}),
+);
+
+guideRouter.patch(
+	"/blank/:id",
+	requirePermission("/guide", "editing"),
+	asyncHandler(async (request, response) => {
+		const payload = validate(updateBlankSchema, request.body ?? {});
+		const blank = await updateBlank(parseId(String(request.params.id)), payload);
+
+		response.json(blank);
+	}),
+);
+
+guideRouter.delete(
+	"/blank",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(deleteBlankIdsSchema, request.body ?? []);
+		const result = await deleteBlanks(payload, auth.userId);
 
 		response.json(result);
 	}),

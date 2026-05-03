@@ -12,6 +12,7 @@ import {
 } from "../../shared/storage/operations.js";
 import type { RolePermissions } from "../roles/role.types.js";
 import {
+	updateBlanksTableItemSchema,
 	updateMaterialGroupsTableItemSchema,
 	updateMaterialsTableItemSchema,
 	updateOperationsTableItemSchema,
@@ -19,11 +20,13 @@ import {
 	updateTypeProductsTableItemSchema,
 } from "./guide.schemas.js";
 import type {
+	GetBlanksTableQuery,
 	GetMaterialGroupsTableQuery,
 	GetMaterialsTableQuery,
 	GetOperationsTableQuery,
 	GetOperationGroupsTableQuery,
 	GetTypeProductsTableQuery,
+	UpdateBlanksTablePayload,
 	UpdateMaterialGroupsTablePayload,
 	UpdateMaterialsTablePayload,
 	UpdateOperationsTablePayload,
@@ -104,6 +107,51 @@ const materialTableSelect = {
 		},
 	},
 } satisfies Prisma.materialSelect;
+
+const materialListSelect = {
+	id: true,
+	name: true,
+} satisfies Prisma.materialSelect;
+
+const blankSelect = {
+	id: true,
+	name: true,
+	description: true,
+	materialId: true,
+	createdAt: true,
+	updatedAt: true,
+	material: {
+		select: {
+			id: true,
+			name: true,
+			description: true,
+			materialGroupId: true,
+			materialGroup: {
+				select: {
+					id: true,
+					name: true,
+					description: true,
+				},
+			},
+		},
+	},
+} satisfies Prisma.blankSelect;
+
+const blankTableSelect = {
+	id: true,
+	name: true,
+	description: true,
+	material: {
+		select: {
+			name: true,
+			materialGroup: {
+				select: {
+					name: true,
+				},
+			},
+		},
+	},
+} satisfies Prisma.blankSelect;
 
 const operationGroupListSelect = {
 	id: true,
@@ -214,6 +262,14 @@ const MATERIAL_TABLE_FIELD_TO_MODEL_FIELD = {
 	description: "description",
 } as const;
 
+const BLANK_TABLE_FIELD_TO_MODEL_FIELD = {
+	id: "id",
+	name: "name",
+	material: "materialId",
+	materialGroup: "materialGroup",
+	description: "description",
+} as const;
+
 const OPERATION_TABLE_FIELD_TO_MODEL_FIELD = {
 	id: "id",
 	name: "name",
@@ -231,6 +287,9 @@ const OPERATION_GROUP_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", 
 const MATERIAL_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
 const MATERIAL_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
 const MATERIAL_READONLY_TABLE_FIELDS = new Set<string>(["materialGroup"]);
+const BLANK_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
+const BLANK_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
+const BLANK_READONLY_TABLE_FIELDS = new Set<string>(["material", "materialGroup"]);
 const OPERATION_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
 const OPERATION_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
 const OPERATION_READONLY_TABLE_FIELDS = new Set<string>(["operationGroup", "download"]);
@@ -296,6 +355,25 @@ const materialTableMeta = Object.freeze({
 	),
 });
 
+const blankTableMeta = Object.freeze({
+	isConst: Object.freeze(
+		Object.entries(BLANK_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([columnId, modelField]) => (
+				BLANK_SYSTEM_MODEL_FIELDS.has(modelField) || BLANK_READONLY_TABLE_FIELDS.has(columnId)
+			))
+			.map(([columnId]) => columnId),
+	),
+	isRequired: Object.freeze(
+		Object.entries(BLANK_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([columnId, modelField]) => (
+				!BLANK_OPTIONAL_MODEL_FIELDS.has(modelField)
+				&& !BLANK_SYSTEM_MODEL_FIELDS.has(modelField)
+				&& !BLANK_READONLY_TABLE_FIELDS.has(columnId)
+			))
+			.map(([columnId]) => columnId),
+	),
+});
+
 const operationTableMeta = Object.freeze({
 	isConst: Object.freeze(
 		Object.entries(OPERATION_TABLE_FIELD_TO_MODEL_FIELD)
@@ -344,6 +422,14 @@ type CreateMaterialData = {
 
 type UpdateMaterialData = Partial<CreateMaterialData>;
 
+type CreateBlankData = {
+	name: string;
+	description?: string | null;
+	materialId: number;
+};
+
+type UpdateBlankData = Partial<CreateBlankData>;
+
 type CreateOperationData = {
 	name: string;
 	description?: string | null;
@@ -391,6 +477,13 @@ const UPDATE_MATERIAL_NO_RIGHTS_ERROR = "У вас нет прав для ред
 const UPDATE_MATERIAL_SUCCESS_DESCRIPTION = "Отредактировано";
 const DELETE_MATERIAL_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
 const DELETE_MATERIAL_IN_USE_ERROR = "Этот материал используется и не может быть удален";
+
+const BLANK_NOT_FOUND_ERROR = "Заготовка не найдена";
+const BLANK_DUPLICATE_ERROR = "Заготовка с таким названием уже существует";
+const UPDATE_BLANK_NO_RIGHTS_ERROR = "У вас нет прав для редактирования";
+const UPDATE_BLANK_SUCCESS_DESCRIPTION = "Отредактировано";
+const DELETE_BLANK_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
+const DELETE_BLANK_IN_USE_ERROR = "Эта заготовка используется и не может быть удалена";
 
 const OPERATION_NOT_FOUND_ERROR = "Операция не найдена";
 const OPERATION_DUPLICATE_ERROR = "Операция с таким названием уже существует";
@@ -579,6 +672,53 @@ const buildMaterialsTableWhere = (search?: string): Prisma.materialWhereInput | 
 	};
 };
 
+const buildBlanksTableWhere = (search?: string): Prisma.blankWhereInput | undefined => {
+	if (!search) {
+		return undefined;
+	}
+
+	return {
+		OR: [
+			{
+				name: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+			{
+				description: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+			{
+				material: {
+					is: {
+						name: {
+							contains: search,
+							mode: "insensitive",
+						},
+					},
+				},
+			},
+			{
+				material: {
+					is: {
+						materialGroup: {
+							is: {
+								name: {
+									contains: search,
+									mode: "insensitive",
+								},
+							},
+						},
+					},
+				},
+			},
+		],
+	};
+};
+
 const buildOperationsTableWhere = (search?: string): Prisma.operationWhereInput | undefined => {
 	if (!search) {
 		return undefined;
@@ -672,6 +812,32 @@ const buildMaterialsTableOrderBy = (
 	}
 };
 
+const buildBlanksTableOrderBy = (
+	sorting: GetBlanksTableQuery["sorting"],
+): Prisma.blankOrderByWithRelationInput[] => {
+	if (!sorting) {
+		return [{ id: "asc" }];
+	}
+
+	switch (sorting.id) {
+		case "material":
+			return [
+				{ material: { name: sorting.sort } },
+				{ id: "asc" },
+			];
+		case "materialGroup":
+			return [
+				{ material: { materialGroup: { name: sorting.sort } } },
+				{ id: "asc" },
+			];
+		default:
+			return [
+				{ [sorting.id]: sorting.sort } as Prisma.blankOrderByWithRelationInput,
+				{ id: "asc" },
+			];
+	}
+};
+
 const buildOperationsTableOrderBy = (
 	sorting: GetOperationsTableQuery["sorting"],
 ): Prisma.operationOrderByWithRelationInput[] => {
@@ -742,6 +908,17 @@ const ensureMaterialNameIsUnique = async (name: string, excludedId?: number) => 
 	}
 };
 
+const ensureBlankNameIsUnique = async (name: string, excludedId?: number) => {
+	const existingBlank = await prisma.blank.findUnique({
+		where: { name },
+		select: { id: true },
+	});
+
+	if (existingBlank && existingBlank.id !== excludedId) {
+		throw new AppError(409, BLANK_DUPLICATE_ERROR);
+	}
+};
+
 const ensureOperationNameIsUnique = async (name: string, excludedId?: number) => {
 	const existingOperation = await prisma.operation.findUnique({
 		where: { name },
@@ -783,6 +960,22 @@ export const listMaterialGroups = async (search?: string) =>
 				}
 			: undefined,
 		select: materialGroupListSelect,
+		orderBy: {
+			id: "asc",
+		},
+	});
+
+export const listMaterials = async (search?: string) =>
+	prisma.material.findMany({
+		where: search
+			? {
+					name: {
+						contains: search,
+						mode: "insensitive",
+					},
+				}
+			: undefined,
+		select: materialListSelect,
 		orderBy: {
 			id: "asc",
 		},
@@ -913,6 +1106,35 @@ export const getMaterialsTable = async (query: GetMaterialsTableQuery) => {
 	};
 };
 
+export const getBlanksTable = async (query: GetBlanksTableQuery) => {
+	const where = buildBlanksTableWhere(query.search);
+	const orderBy = buildBlanksTableOrderBy(query.sorting);
+	const skip = query.page * query.rows;
+	const [total, blanks] = await prisma.$transaction([
+		prisma.blank.count({ where }),
+		prisma.blank.findMany({
+			where,
+			select: blankTableSelect,
+			orderBy,
+			skip,
+			take: query.rows,
+		}),
+	]);
+
+	return {
+		total,
+		data: blanks.map((blank) => ({
+			id: blank.id,
+			name: blank.name,
+			material: blank.material.name,
+			materialGroup: blank.material.materialGroup.name,
+			...(blank.description ? { description: blank.description } : {}),
+			isConst: [...blankTableMeta.isConst],
+			isRequired: [...blankTableMeta.isRequired],
+		})),
+	};
+};
+
 export const getOperationsTable = async (query: GetOperationsTableQuery) => {
 	const where = buildOperationsTableWhere(query.search);
 	const orderBy = buildOperationsTableOrderBy(query.sorting);
@@ -993,6 +1215,19 @@ export const getMaterialById = async (id: number) => {
 	}
 
 	return material;
+};
+
+export const getBlankById = async (id: number) => {
+	const blank = await prisma.blank.findUnique({
+		where: { id },
+		select: blankSelect,
+	});
+
+	if (!blank) {
+		throw new AppError(404, BLANK_NOT_FOUND_ERROR);
+	}
+
+	return blank;
 };
 
 export const getOperationById = async (id: number) => {
@@ -1097,6 +1332,24 @@ export const createMaterial = async (data: CreateMaterialData) => {
 			},
 		},
 		select: materialSelect,
+	});
+};
+
+export const createBlank = async (data: CreateBlankData) => {
+	await ensureBlankNameIsUnique(data.name);
+	await getMaterialById(data.materialId);
+
+	return prisma.blank.create({
+		data: {
+			name: data.name,
+			description: data.description,
+			material: {
+				connect: {
+					id: data.materialId,
+				},
+			},
+		},
+		select: blankSelect,
 	});
 };
 
@@ -1224,6 +1477,36 @@ export const updateMaterial = async (id: number, data: UpdateMaterialData) => {
 				: {}),
 		},
 		select: materialSelect,
+	});
+};
+
+export const updateBlank = async (id: number, data: UpdateBlankData) => {
+	await getBlankById(id);
+
+	if (typeof data.name === "string") {
+		await ensureBlankNameIsUnique(data.name, id);
+	}
+
+	if (typeof data.materialId === "number") {
+		await getMaterialById(data.materialId);
+	}
+
+	return prisma.blank.update({
+		where: { id },
+		data: {
+			name: data.name,
+			description: data.description,
+			...(typeof data.materialId === "number"
+				? {
+						material: {
+							connect: {
+								id: data.materialId,
+							},
+						},
+					}
+				: {}),
+		},
+		select: blankSelect,
 	});
 };
 
@@ -1549,6 +1832,62 @@ export const updateMaterialsTable = async (
 			result.success.push({
 				id,
 				description: UPDATE_MATERIAL_SUCCESS_DESCRIPTION,
+			});
+		} catch (error) {
+			if (error instanceof AppError) {
+				result.error.push({
+					id,
+					description: error.message,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const updateBlanksTable = async (
+	payload: UpdateBlanksTablePayload,
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const permissions = await getGuidePermissions(actorId);
+	const ids = Object.keys(payload).map((id) => Number(id));
+
+	if (!hasPermission(permissions, "/guide", "editing")) {
+		return {
+			success: [],
+			error: ids.map((id) => ({
+				id,
+				description: UPDATE_BLANK_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const [rawId, rawItem] of Object.entries(payload)) {
+		const id = Number(rawId);
+		const parsedItem = updateBlanksTableItemSchema.safeParse(rawItem);
+
+		if (!parsedItem.success) {
+			result.error.push({
+				id,
+				description: getValidationErrorMessage(parsedItem.error.issues) || "Некорректные данные",
+			});
+			continue;
+		}
+
+		try {
+			await updateBlank(id, parsedItem.data);
+			result.success.push({
+				id,
+				description: UPDATE_BLANK_SUCCESS_DESCRIPTION,
 			});
 		} catch (error) {
 			if (error instanceof AppError) {
@@ -1911,6 +2250,81 @@ export const deleteMaterials = async (
 				result.error.push({
 					id,
 					description: MATERIAL_NOT_FOUND_ERROR,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const deleteBlanks = async (
+	ids: number[],
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const uniqueIds = getUniqueIds(ids);
+	const permissions = await getGuidePermissions(actorId);
+
+	if (!hasPermission(permissions, "/guide", "removing")) {
+		return {
+			success: [],
+			error: uniqueIds.map((id) => ({
+				id,
+				description: DELETE_BLANK_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const existingBlanks = await prisma.blank.findMany({
+		where: {
+			id: {
+				in: uniqueIds,
+			},
+		},
+		select: {
+			id: true,
+		},
+	});
+	const blanksById = new Map(existingBlanks.map((blank) => [blank.id, blank]));
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const id of uniqueIds) {
+		if (!blanksById.has(id)) {
+			result.error.push({
+				id,
+				description: BLANK_NOT_FOUND_ERROR,
+			});
+			continue;
+		}
+
+		try {
+			await prisma.blank.delete({
+				where: { id },
+				select: { id: true },
+			});
+			result.success.push({
+				id,
+				description: "Удалено",
+			});
+		} catch (error) {
+			if (isPrismaDeleteConstraintError(error)) {
+				result.error.push({
+					id,
+					description: DELETE_BLANK_IN_USE_ERROR,
+				});
+				continue;
+			}
+
+			if (isPrismaRecordNotFoundError(error)) {
+				result.error.push({
+					id,
+					description: BLANK_NOT_FOUND_ERROR,
 				});
 				continue;
 			}

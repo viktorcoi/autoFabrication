@@ -5,6 +5,11 @@ export interface GetMaterialGroupsResponse {
     name: string;
 }
 
+export interface GetMaterialsResponse {
+    id: number;
+    name: string;
+}
+
 export interface GetByIdTypeProductsResponse {
     id: number;
     name: string;
@@ -122,6 +127,48 @@ export interface MaterialTableRow extends TableRow {
 }
 
 export type PatchMaterialTableOptions = Record<number, Partial<Pick<MaterialTableRow, "name" | "description">>>;
+
+export interface GetByIdBlankResponse {
+    id: number;
+    name: string;
+    description: string;
+    materialId: number;
+    createdAt: string;
+    updatedAt: string;
+    material: {
+        id: number;
+        name: string;
+        description: string;
+        materialGroupId: number;
+        materialGroup: {
+            id: number;
+            name: string;
+            description: string;
+        };
+    };
+}
+
+export interface PostBlankOptions {
+    name: string;
+    description: string;
+    materialId: number;
+}
+
+export interface PathBlankOptions {
+    name: string;
+    description: string;
+    materialId: number;
+}
+
+export interface BlankTableRow extends TableRow {
+    id: number;
+    name: string;
+    description: string;
+    material: string;
+    materialGroup: string;
+}
+
+export type PatchBlankTableOptions = Record<number, Partial<Pick<BlankTableRow, "name" | "description">>>;
 
 export interface OperationFileItem {
     id: number;
