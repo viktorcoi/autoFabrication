@@ -1,7 +1,7 @@
 import {
     Avatar,
     Button,
-    ButtonGroup,
+    ButtonGroup, classNames,
     CustomSelectOptionInterface,
     DateInput,
     FormItem,
@@ -305,6 +305,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                             options={roles}
                             searchable={true}
                             disabled={loading.send}
+                            className={classNames(loading.send && 'disabled')}
                             value={data.roleId}
                             onChange={(e) => mergeState({roleId: Number(e.target.value)}, setData)}
                             placeholder={'Выберите роль пользователя'}

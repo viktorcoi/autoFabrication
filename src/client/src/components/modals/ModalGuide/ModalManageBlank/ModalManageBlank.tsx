@@ -1,6 +1,6 @@
 import {
     Button,
-    ButtonGroup,
+    ButtonGroup, classNames,
     CustomSelectOptionInterface,
     FormItem,
     Input,
@@ -187,6 +187,7 @@ const ModalManageBlank = (props: ModalManageBlankProps) => {
                             options={materials}
                             searchable={true}
                             disabled={loading.send}
+                            className={classNames(loading.send && 'disabled')}
                             value={data.materialId}
                             onChange={(e) => mergeState({materialId: Number(e.target.value)}, setData)}
                             placeholder={'Выберите материал'}

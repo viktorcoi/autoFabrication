@@ -69,6 +69,8 @@ body {
 .modalFooter {
 	border-top: 1px solid var(--vkui--color_separator_primary);
 	padding: var(--app-default-padding);
+	display: flex;
+	justify-content: space-between;
 }
 
 .scroll {
@@ -100,7 +102,9 @@ body {
 }
 
 .disabled {
-	opacity: var(--vkui--opacity_disable) !important;
+	&:not(.vkuiCustomSelect__host) {
+		opacity: var(--vkui--opacity_disable) !important;
+	}
 	pointer-events: none !important;
 }
 

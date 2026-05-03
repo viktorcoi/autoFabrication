@@ -12,23 +12,27 @@ import {
     GetByIdMaterialResponse,
     GetByIdOperationResponse,
     GetByIdOperationGroupResponse,
+    GetByIdWorkResponse,
     GetByIdWorkGroupResponse,
     GetByIdTypeProductsResponse,
     GetMaterialsResponse,
     GetMaterialGroupsResponse,
     GetOperationsResponse,
     GetOperationGroupsResponse,
+    GetWorkGroupsResponse,
     BlankTableRow,
     MaterialGroupTableRow,
     MaterialTableRow,
     OperationTableRow,
     OperationGroupTableRow,
+    WorkTableRow,
     WorkGroupTableRow,
     PatchBlankTableOptions,
     PatchMaterialGroupTableOptions,
     PatchMaterialTableOptions,
     PatchOperationTableOptions,
     PatchOperationGroupTableOptions,
+    PatchWorkTableOptions,
     PatchWorkGroupTableOptions,
     PatchTypeProductsTableOptions,
     PathMaterialGroupOptions,
@@ -36,6 +40,7 @@ import {
     PathMaterialOptions,
     PathOperationOptions,
     PathOperationGroupOptions,
+    PathWorkOptions,
     PathWorkGroupOptions,
     PathTypeProductsOptions,
     PostBlankOptions,
@@ -43,12 +48,14 @@ import {
     PostMaterialOptions,
     PostOperationOptions,
     PostOperationGroupOptions,
+    PostWorkOptions,
     PostWorkGroupOptions,
     PostTypeProductsOptions,
     TypeProductsTableRow,
+    GetWorksTableFilters,
     GetWorkGroupsTableFilters,
 } from "@/apiService/apiGuide/types";
-import {createOperationOptions} from "@/apiService/apiGuide/helpers";
+import {createOperationOptions, createWorkOptions} from "@/apiService/apiGuide/helpers";
 
 export const ApiGuide = {
     materialGroup: {
@@ -581,6 +588,33 @@ export const ApiGuide = {
     },
 
     workGroup: {
+        get: async (options: ApiServiceOptions<{
+            options?: {
+                search?: string;
+                operationGroupId?: number;
+                operationId?: number;
+            };
+        }> = {}): Promise<ApiServiceResponse<GetWorkGroupsResponse[]>> => {
+            return await api.get("/guide/workGroup", {
+                signal: options.controller?.signal,
+                params: {
+                    ...(options.options?.search?.trim() ? { search: options.options.search } : undefined),
+                    ...(typeof options.options?.operationGroupId === "number" && options.options.operationGroupId > 0
+                        ? { operationGroupId: options.options.operationGroupId }
+                        : undefined),
+                    ...(typeof options.options?.operationId === "number" && options.options.operationId > 0
+                        ? { operationId: options.options.operationId }
+                        : undefined),
+                },
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && Array.isArray(response.data),
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
         getById: async (options: ApiServiceOptions<{
             id: number
         }>): Promise<ApiServiceResponse<GetByIdWorkGroupResponse>> => {
@@ -643,7 +677,7 @@ export const ApiGuide = {
 
         table: {
             get: async (options: ApiServiceOptions<{
-                options?: GetTableOptions<GetWorkGroupsTableFilters>;
+                options?: GetTableOptions<Partial<GetWorkGroupsTableFilters>>;
             }>): Promise<ApiServiceResponse<GetTableResponse<WorkGroupTableRow[]>>> => {
                 return await api.get("/guide/workGroup/table", {
                     signal: options.controller?.signal,
@@ -661,6 +695,100 @@ export const ApiGuide = {
                 options: PatchWorkGroupTableOptions;
             }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
                 return await api.patch("/guide/workGroup/table",
+                    options.options,
+                    { signal: options.controller?.signal }
+                ).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+        }
+    },
+
+    work: {
+        getById: async (options: ApiServiceOptions<{
+            id: number
+        }>): Promise<ApiServiceResponse<GetByIdWorkResponse>> => {
+            return await api.get(`/guide/work/${options.id}`, {
+                signal: options.controller?.signal
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        post: async (options: ApiServiceOptions<{
+            options: PostWorkOptions;
+        }>): Promise<ApiServiceResponse<GetByIdWorkResponse>> => {
+            return await api.post("/guide/work",
+                createWorkOptions(options.options),
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 201 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        patch: async (options: ApiServiceOptions<{
+            id: number,
+            options: PathWorkOptions;
+        }>): Promise<ApiServiceResponse<GetByIdWorkResponse>> => {
+            return await api.patch(`/guide/work/${options.id}`,
+                createWorkOptions(options.options),
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        delete: async (options: ApiServiceOptions<{
+            ids: number[];
+        }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+            return await api.delete("/guide/work", {
+                signal: options.controller?.signal,
+                data: options.ids,
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        table: {
+            get: async (options: ApiServiceOptions<{
+                options?: GetTableOptions<Partial<GetWorksTableFilters>>;
+            }>): Promise<ApiServiceResponse<GetTableResponse<WorkTableRow[]>>> => {
+                return await api.get("/guide/work/table", {
+                    signal: options.controller?.signal,
+                    params: buildTableOptions(options.options),
+                }).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+
+            patch: async (options: ApiServiceOptions<{
+                options: PatchWorkTableOptions;
+            }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+                return await api.patch("/guide/work/table",
                     options.options,
                     { signal: options.controller?.signal }
                 ).then((response) => {

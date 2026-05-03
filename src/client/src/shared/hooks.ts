@@ -1,4 +1,4 @@
-import {ChangeEvent, useCallback, useEffect, useRef, useState} from "react";
+import {ChangeEvent, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {CustomSelectOptionInterface, filterFnForSelect} from "@vkontakte/vkui";
 import {useAppStore} from "@/store/app/app";
 
@@ -117,4 +117,19 @@ export const useController = (
         cancelRef,
         createController,
     };
+};
+
+export const useFilersCount = (
+    filters: Record<string, number>,
+) => {
+
+    return useMemo(() => {
+        let count = 0;
+
+        Object.values(filters).forEach((filter) => {
+            if (filter > 0) count++;
+        });
+
+        return count;
+    }, [filters]);
 };

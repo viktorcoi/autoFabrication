@@ -4,7 +4,7 @@ import {ModalPageCloseReasonType} from "@/components/modals/types";
 
 export interface ModalMultiRemoveProps extends Omit<ModalCardProps, 'onClose'> {
     data: { id: number, name: string }[];
-    url: '/users' | '/typeProducts' | '/materialGroup' | '/operationGroup' | '/material' | '/blank' | '/workGroup' | '/operation';
+    url: '/users' | '/typeProducts' | '/materialGroup' | '/operationGroup' | '/material' | '/blank' | '/workGroup' | '/operation' | '/work';
     onClose(reason: ModalPageCloseReasonType, event?:  React.UIEvent<HTMLElement>): void;
     onLoading(v: boolean): void;
 }

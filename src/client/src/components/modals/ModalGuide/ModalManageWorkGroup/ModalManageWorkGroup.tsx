@@ -1,6 +1,6 @@
 import {
     Button,
-    ButtonGroup,
+    ButtonGroup, classNames,
     CustomSelectOptionInterface,
     FormItem,
     Input,
@@ -187,6 +187,7 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
                             options={operations}
                             searchable={true}
                             disabled={loading.send}
+                            className={classNames(loading.send && 'disabled')}
                             value={data.operationId}
                             onChange={(e) => mergeState({operationId: Number(e.target.value)}, setData)}
                             placeholder={'Выберите операцию'}

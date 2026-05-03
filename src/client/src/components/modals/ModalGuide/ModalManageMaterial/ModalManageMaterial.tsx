@@ -1,6 +1,6 @@
 import {
     Button,
-    ButtonGroup,
+    ButtonGroup, classNames,
     CustomSelectOptionInterface,
     FormItem,
     Input,
@@ -187,6 +187,7 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
                             options={materialGroups}
                             searchable={true}
                             disabled={loading.send}
+                            className={classNames(loading.send && 'disabled')}
                             value={data.materialGroupId}
                             onChange={(e) => mergeState({materialGroupId: Number(e.target.value)}, setData)}
                             placeholder={'Выберите группу материалов'}

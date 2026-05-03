@@ -80,6 +80,11 @@ export interface GetOperationsResponse {
     name: string;
 }
 
+export interface GetWorkGroupsResponse {
+    id: number;
+    name: string;
+}
+
 export interface PostOperationGroupOptions {
     name: string;
     description: string;
@@ -218,8 +223,8 @@ export interface WorkGroupTableRow extends TableRow {
 export type PatchWorkGroupTableOptions = Record<number, Partial<Pick<WorkGroupTableRow, "name" | "description">>>;
 
 export type GetWorkGroupsTableFilters = {
-    operationGroupId?: number;
-    operationId?: number;
+    operationGroupId: number;
+    operationId: number;
 };
 
 export interface OperationFileItem {
@@ -268,3 +273,78 @@ export interface OperationTableRow extends TableRow {
 }
 
 export type PatchOperationTableOptions = Record<number, Partial<Pick<OperationTableRow, "name" | "description">>>;
+
+export interface WorkFileItem {
+    id: number;
+    name: string;
+    size: number;
+}
+
+export interface GetByIdWorkResponse {
+    id: number;
+    name: string;
+    description: string;
+    workGroupId: number;
+    tpz: number;
+    tsht: number;
+    createdAt: string;
+    updatedAt: string;
+    workGroup: {
+        id: number;
+        name: string;
+        description: string;
+        operationId: number;
+        operation: {
+            id: number;
+            name: string;
+            description: string;
+            operationGroupId: number;
+            operationGroup: {
+                id: number;
+                name: string;
+                description: string;
+            };
+        };
+    };
+    files: WorkFileItem[];
+}
+
+export interface PostWorkOptions {
+    name: string;
+    description: string;
+    workGroupId: number;
+    tpz: number;
+    tsht: number;
+    files: File[];
+}
+
+export interface PathWorkOptions {
+    name?: string;
+    description?: string;
+    workGroupId?: number;
+    tpz?: number;
+    tsht?: number;
+    files?: File[];
+    removedFileIds?: number[];
+}
+
+export interface WorkTableRow extends TableRow {
+    id: number;
+    name: string;
+    workGroup: string;
+    operation: string;
+    operationGroup: string;
+    tpz: number;
+    tsht: number;
+    download: string;
+    description: string;
+    files: WorkFileItem[];
+}
+
+export type PatchWorkTableOptions = Record<number, Partial<Pick<WorkTableRow, "name" | "tpz" | "tsht" | "description">>>;
+
+export type GetWorksTableFilters = {
+    operationGroupId: number;
+    operationId: number;
+    workGroupId: number;
+};

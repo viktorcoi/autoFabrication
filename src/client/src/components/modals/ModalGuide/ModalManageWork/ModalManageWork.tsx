@@ -16,33 +16,62 @@ import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useController, useSelectFilter} from "@/shared/hooks";
-import {OperationFileItem, PathOperationOptions, PostOperationOptions} from "@/apiService/apiGuide/types";
+import {ModalManageWorkProps} from "@/components/modals/ModalGuide/ModalManageWork/types";
+import {PathWorkOptions, PostWorkOptions, WorkFileItem} from "@/apiService/apiGuide/types";
 import UploadFile from "@/components/UploadFile/UploadFile";
-import {ModalManageOperationProps} from "@/components/modals/ModalGuide/ModalManageOperation/types";
-import styles from './ModalManageOperation.module.scss';
+import styles from './ModalManageWork.module.scss';
 
-type ManageOperationData = {
-    operationGroupId: number;
+type ManageWorkData = {
+    workGroupId: number;
     name: string;
+    tpz: string;
+    tsht: string;
     description: string;
     files: File[];
-    existingFiles: OperationFileItem[];
+    existingFiles: WorkFileItem[];
 };
 
-const initialData: ManageOperationData = {
-    operationGroupId: 0,
+const initialData: ManageWorkData = {
+    workGroupId: 0,
     name: "",
+    tpz: "",
+    tsht: "",
     description: "",
     files: [],
     existingFiles: [],
 };
 
-const getFileIds = (files: OperationFileItem[]) => files.map((file) => file.id).sort((a, b) => a - b);
+const getFileIds = (files: WorkFileItem[]) => files.map((file) => file.id).sort((a, b) => a - b);
 
-const ModalManageOperation = (props: ModalManageOperationProps) => {
+const parseTimeInput = (value: string) => {
+    const normalized = value.trim().replace(',', '.');
+
+    if (!normalized.length) {
+        return null;
+    }
+
+    if (!/^\d+(?:\.\d)?$/.test(normalized)) {
+        return null;
+    }
+
+    const parsed = Number(normalized);
+
+    if (!Number.isFinite(parsed) || parsed < 0) {
+        return null;
+    }
+
+    return {
+        normalized,
+        value: parsed,
+    };
+};
+
+const formatTimeValue = (value: number) => value.toFixed(1);
+
+const ModalManageWork = (props: ModalManageWorkProps) => {
 
     const {
-        idOperation,
+        idWork,
         preventClose,
         onLoading,
         onClose = () => {},
@@ -52,9 +81,9 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const selectFilter = useSelectFilter();
 
-    const [savedData, setSavedData] = useState<ManageOperationData>({...initialData});
-    const [data, setData] = useState<ManageOperationData>({...initialData});
-    const [operationGroups, setOperationGroups] = useState<CustomSelectOptionInterface[]>([]);
+    const [savedData, setSavedData] = useState<ManageWorkData>({...initialData});
+    const [data, setData] = useState<ManageWorkData>({...initialData});
+    const [workGroups, setWorkGroups] = useState<CustomSelectOptionInterface[]>([]);
     const [loading, setLoading] = useState({
         get: true,
         send: false
@@ -65,24 +94,26 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
     useEffect(() => {
         const controller = createController();
 
-        ApiService.guide.operationGroup.get({
+        ApiService.guide.workGroup.get({
             controller
         }).then(async ({status, data}) => {
             if (status === 'success') {
-                setOperationGroups(data.map(({id, name}) => ({
+                setWorkGroups(data.map(({id, name}) => ({
                     value: id,
                     label: name,
                 })));
 
-                if (idOperation !== null) {
-                    await ApiService.guide.operation.getById({
-                        id: idOperation,
+                if (idWork !== null) {
+                    await ApiService.guide.work.getById({
+                        id: idWork,
                         controller
                     }).then(({status, data}) => {
                         if (status === 'success') {
-                            const init: ManageOperationData = {
-                                operationGroupId: data.operationGroupId,
+                            const init: ManageWorkData = {
+                                workGroupId: data.workGroupId,
                                 name: data.name,
+                                tpz: formatTimeValue(data.tpz),
+                                tsht: formatTimeValue(data.tsht),
                                 description: data.description ?? '',
                                 files: [],
                                 existingFiles: data.files,
@@ -95,29 +126,36 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                 }
             } else onClose('error')
         }).finally(() => mergeState({get: false}, setLoading));
-    }, [idOperation]);
+    }, [idWork]);
 
     const removedFileIds = useMemo(
         () => getFileIds(savedData.existingFiles).filter((fileId) => !getFileIds(data.existingFiles).includes(fileId)),
         [data.existingFiles, savedData.existingFiles]
     );
 
-    const saveOperation = async (e: SubmitEvent<HTMLFormElement>) => {
+    const parsedTpz = useMemo(() => parseTimeInput(data.tpz), [data.tpz]);
+    const parsedTsht = useMemo(() => parseTimeInput(data.tsht), [data.tsht]);
+    const savedTpz = useMemo(() => parseTimeInput(savedData.tpz), [savedData.tpz]);
+    const savedTsht = useMemo(() => parseTimeInput(savedData.tsht), [savedData.tsht]);
+
+    const saveWork = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (disabledSave || loading.send) return;
+        if (disabledSave || loading.send || !parsedTpz || !parsedTsht) return;
 
         mergeState({send: true}, setLoading);
         onLoading(true);
 
         try {
-            if (idOperation === null) {
-                const { status } = await ApiService.guide.operation.post({
+            if (idWork === null) {
+                const { status } = await ApiService.guide.work.post({
                     options: {
-                        operationGroupId: data.operationGroupId,
+                        workGroupId: data.workGroupId,
                         name: data.name.trim(),
+                        tpz: parsedTpz.value,
+                        tsht: parsedTsht.value,
                         description: data.description.trim(),
                         files: data.files,
-                    } satisfies PostOperationOptions
+                    } satisfies PostWorkOptions
                 });
 
                 if (status === 'success') {
@@ -128,14 +166,22 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                     onClose('updated-data');
                 }
             } else {
-                const options: PathOperationOptions = {};
+                const options: PathWorkOptions = {};
 
-                if (data.operationGroupId !== savedData.operationGroupId) {
-                    options.operationGroupId = data.operationGroupId;
+                if (data.workGroupId !== savedData.workGroupId) {
+                    options.workGroupId = data.workGroupId;
                 }
 
                 if (data.name.trim() !== savedData.name.trim()) {
                     options.name = data.name.trim();
+                }
+
+                if (parsedTpz.value !== savedTpz?.value) {
+                    options.tpz = parsedTpz.value;
+                }
+
+                if (parsedTsht.value !== savedTsht?.value) {
+                    options.tsht = parsedTsht.value;
                 }
 
                 if (data.description.trim() !== savedData.description.trim()) {
@@ -150,8 +196,8 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                     options.files = data.files;
                 }
 
-                const { status } = await ApiService.guide.operation.patch({
-                    id: idOperation,
+                const { status } = await ApiService.guide.work.patch({
+                    id: idWork,
                     options,
                 });
 
@@ -170,22 +216,24 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
     }
 
     const title = useMemo(
-        () => `${idOperation === null ? 'Добавление' : 'Редактирование'} операции`,
-        [idOperation]
+        () => `${idWork === null ? 'Добавление' : 'Редактирование'} работы`,
+        [idWork]
     );
 
     const disabledSave = useMemo(() => {
-        const validRequired = !!data.name.trim() && !!data.operationGroupId;
+        const validRequired = !!data.name.trim() && !!data.workGroupId && !!parsedTpz && !!parsedTsht;
         const validEdit = validRequired && (
-            data.operationGroupId !== savedData.operationGroupId ||
+            data.workGroupId !== savedData.workGroupId ||
             data.name.trim() !== savedData.name.trim() ||
+            parsedTpz.value !== savedTpz?.value ||
+            parsedTsht.value !== savedTsht?.value ||
             data.description.trim() !== savedData.description.trim() ||
             data.files.length > 0 ||
             removedFileIds.length > 0
         );
 
-        return idOperation === null ? !validRequired : !validEdit;
-    }, [idOperation, data, savedData, removedFileIds]);
+        return idWork === null ? !validRequired : !validEdit;
+    }, [idWork, data, savedData, parsedTpz, parsedTsht, savedTpz, savedTsht, removedFileIds]);
 
     return (
         <ModalPage
@@ -215,7 +263,7 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                             Отмена
                         </Button>
                         <Button
-                            form={'save-operation'}
+                            form={'save-work'}
                             type={'submit'}
                             disabled={disabledSave || loading.get}
                             loading={loading.send}
@@ -229,21 +277,21 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
             {...restProps}
         >
             {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
-                <form id={'save-operation'} className={'modalForm'} onSubmit={saveOperation}>
+                <form id={'save-work'} className={'modalForm'} onSubmit={saveWork}>
                     <FormItem
-                        top={'Группа операций'}
+                        top={'Группа работ'}
                         noPadding={true}
                     >
                         <Select
                             filterFn={selectFilter.filterFn}
-                            options={operationGroups}
+                            options={workGroups}
                             searchable={true}
                             disabled={loading.send}
                             className={classNames(loading.send && 'disabled')}
-                            value={data.operationGroupId}
-                            onChange={(e) => mergeState({operationGroupId: Number(e.target.value)}, setData)}
-                            placeholder={'Выберите группу операций'}
-                            status={!data.operationGroupId ? 'error' : 'default'}
+                            value={data.workGroupId}
+                            onChange={(e) => mergeState({workGroupId: Number(e.target.value)}, setData)}
+                            placeholder={'Выберите группу работ'}
+                            status={!data.workGroupId ? 'error' : 'default'}
                             onInputChange={selectFilter.onInputChange}
                             onOpen={selectFilter.onOpen}
                             onClose={selectFilter.onClose}
@@ -262,6 +310,32 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                             status={!data.name.trim() ? 'error' : 'default'}
                         />
                     </FormItem>
+                    <div className={styles.times}>
+                        <FormItem
+                            top={'Тпз'}
+                            noPadding={true}
+                        >
+                            <Input
+                                disabled={loading.send}
+                                value={data.tpz}
+                                onChange={(e) => mergeState({tpz: e.target.value}, setData)}
+                                placeholder={'Например 1.5'}
+                                status={!parsedTpz ? 'error' : 'default'}
+                            />
+                        </FormItem>
+                        <FormItem
+                            top={'Тшт'}
+                            noPadding={true}
+                        >
+                            <Input
+                                disabled={loading.send}
+                                value={data.tsht}
+                                onChange={(e) => mergeState({tsht: e.target.value}, setData)}
+                                placeholder={'Например 0.8'}
+                                status={!parsedTsht ? 'error' : 'default'}
+                            />
+                        </FormItem>
+                    </div>
                     <FormItem
                         top={'Файлы'}
                         noPadding={true}
@@ -270,10 +344,10 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                             value={data.files}
                             savedFiles={data.existingFiles}
                             disabled={loading.send}
-                            maxFiles={20}
-                            maxSize={100}
+                            maxFiles={10}
+                            maxSize={20}
                             accept={['.zip', '.rar', '.7zip', 'image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp','.docx', '.doc', '.dotx', '.xls', '.xlsx', '.ppt', '.pptx', '.pdf']}
-                            maxTotalSize={200}
+                            maxTotalSize={100}
                             onChange={(files) => mergeState({files}, setData)}
                             onRemoveSavedFile={(file) => mergeState({
                                 existingFiles: data.existingFiles.filter((item) => item.id !== file.id)
@@ -305,4 +379,4 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
     )
 };
 
-export default ModalManageOperation;
+export default ModalManageWork;

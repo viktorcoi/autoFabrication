@@ -11,6 +11,7 @@ import Blank from "@/sections/guide/Blank";
 import OperationGroup from "@/sections/guide/OperationGroup";
 import Operation from "@/sections/guide/Operation";
 import WorkGroup from "@/sections/guide/WorkGroup";
+import Work from "@/sections/guide/Work";
 
 const sections = [
     {
@@ -84,6 +85,8 @@ const GuidePage = () => {
                     <Operation onLoading={setLoading} />
                 ) : activeSection === 7 ? (
                     <WorkGroup onLoading={setLoading} />
+                ) : activeSection === 8 ? (
+                    <Work onLoading={setLoading} />
                 ) : null}
             </div>
         </Container>

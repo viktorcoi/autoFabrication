@@ -109,8 +109,24 @@ model workGroup {
 	createdAt   DateTime  @default(now())
 	updatedAt   DateTime  @updatedAt
 	operation   operation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+	works       work[]
 
 	@@index([operationId])
+}
+
+model work {
+	id          Int        @id @default(autoincrement())
+	name        String     @unique
+	description String?
+	workGroupId Int
+	tpz         Float
+	tsht        Float
+	createdAt   DateTime   @default(now())
+	updatedAt   DateTime   @updatedAt
+	workGroup   workGroup  @relation(fields: [workGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+	files       workFile[]
+
+	@@index([workGroupId])
 }
 
 model operationFile {
@@ -124,4 +140,17 @@ model operationFile {
 	operation    operation @relation(fields: [operationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
 	@@index([operationId])
+}
+
+model workFile {
+	id           Int      @id @default(autoincrement())
+	workId       Int
+	originalName String   @map("originalName")
+	size         Int
+	mimeType     String?  @map("mimeType")
+	storagePath  String   @map("storagePath")
+	createdAt    DateTime @default(now())
+	work         work     @relation(fields: [workId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+	@@index([workId])
 }

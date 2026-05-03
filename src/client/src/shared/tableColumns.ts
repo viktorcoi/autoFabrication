@@ -57,5 +57,16 @@ export const tableColumns: Record<string, Column[]> = {
         {key: 'operationGroup', header: 'Группа операций', minSize: 160, size: 200, maxSize: 385},
         {key: 'download', header: 'Файлы', type: 'download', size: 95, resize: false},
         {key: 'description', header: 'Описание', minSize: 115, size: 600, maxSize: 3065},
+    ],
+
+    work: [
+        {key: 'name', header: 'Название', minSize: 110, size: 220, maxSize: 385},
+        {key: 'workGroup', header: 'Группа работ', minSize: 150, size: 200, maxSize: 385},
+        {key: 'operation', header: 'Операция', minSize: 145, size: 200, maxSize: 385},
+        {key: 'operationGroup', header: 'Группа операций', minSize: 175, size: 220, maxSize: 385},
+        {key: 'tpz', header: 'Тпз', minSize: 90, size: 110, maxSize: 140},
+        {key: 'tsht', header: 'Тшт', minSize: 90, size: 110, maxSize: 140},
+        {key: 'download', header: 'Файлы', type: 'download', size: 95, resize: false},
+        {key: 'description', header: 'Описание', minSize: 115, size: 420, maxSize: 3065},
     ]
 }

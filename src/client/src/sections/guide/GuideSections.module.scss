@@ -18,23 +18,17 @@
     flex-wrap: wrap;
 }
 
-.controls {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--app-distance-empty);
-    flex-wrap: wrap;
-    flex: 1 1 400px;
-}
-
 .filters {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: var(--vkui--size_button_group_gap_small--regular);
 }
 
 .filter {
-    min-width: 220px;
-    max-width: 260px;
+    position: relative;
+    &__counter {
+        position: absolute;
+        right: -8px;
+        bottom: -5px;
+    }
 }

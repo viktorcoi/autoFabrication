@@ -129,6 +129,41 @@ const operationIdSchema = z.coerce
 	.int()
 	.positive("Некорректный id операции");
 
+const workGroupIdSchema = z.coerce
+	.number()
+	.int()
+	.positive("Некорректный id группы работ");
+
+const parseDecimalNumber = (value: unknown) => {
+	if (typeof value === "number") {
+		return value;
+	}
+
+	if (typeof value !== "string") {
+		return value;
+	}
+
+	const normalizedValue = value.trim().replace(",", ".");
+
+	if (!normalizedValue.length) {
+		return value;
+	}
+
+	return Number(normalizedValue);
+};
+
+const workTimeSchema = z.preprocess(
+	parseDecimalNumber,
+	z
+		.number()
+		.finite("Значение времени должно быть числом")
+		.min(0, "Значение времени не может быть отрицательным")
+		.refine(
+			(value) => Math.round(value * 10) === value * 10,
+			"Значение времени должно содержать не более 1 знака после запятой",
+		),
+);
+
 const operationsTableSortingSchema = z.object({
 	id: z.enum(["name", "operationGroup", "download", "description"]),
 	sort: z.enum(["asc", "desc"]),
@@ -136,6 +171,23 @@ const operationsTableSortingSchema = z.object({
 
 const workGroupsTableSortingSchema = z.object({
 	id: z.enum(["name", "operation", "operationGroup", "description"]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
+const workNameSchema = z
+	.string()
+	.trim()
+	.min(1, "Название работы обязательно")
+	.max(30, "Название работы слишком длинное");
+
+const workDescriptionSchema = z
+	.string()
+	.trim()
+	.max(255, "Описание работы слишком длинное")
+	.transform((value) => value.length > 0 ? value : null);
+
+const worksTableSortingSchema = z.object({
+	id: z.enum(["name", "workGroup", "operation", "operationGroup", "tpz", "tsht", "download", "description"]),
 	sort: z.enum(["asc", "desc"]),
 }).strict();
 
@@ -643,6 +695,81 @@ export const getOperationsTableSchema = z.object({
 		.transform((value) => value ?? null),
 });
 
+export const createWorkSchema = z.object({
+	workGroupId: workGroupIdSchema,
+	name: workNameSchema,
+	tpz: workTimeSchema,
+	tsht: workTimeSchema,
+	description: workDescriptionSchema.optional(),
+});
+
+export const updateWorkSchema = z
+	.object({
+		workGroupId: workGroupIdSchema.optional(),
+		name: workNameSchema.optional(),
+		tpz: workTimeSchema.optional(),
+		tsht: workTimeSchema.optional(),
+		description: workDescriptionSchema.optional(),
+		removedFileIds: z.preprocess(
+			parseIdArray,
+			z.array(
+				z.coerce
+					.number()
+					.int()
+					.positive("Некорректный id файла работы"),
+			).max(10, "Нельзя удалить больше 10 файлов за один запрос").optional(),
+		),
+	})
+	.strict();
+
+export const updateWorksTableItemSchema = z
+	.object({
+		name: workNameSchema.optional(),
+		tpz: workTimeSchema.optional(),
+		tsht: workTimeSchema.optional(),
+		description: workDescriptionSchema.optional(),
+	})
+	.strict()
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нет данных для обновления",
+	);
+
+export const updateWorksTableSchema = z
+	.record(
+		z.string().regex(/^[1-9]\d*$/, "Некорректный id работы"),
+		z.unknown(),
+	)
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нужно передать хотя бы одну строку для редактирования",
+	);
+
+export const deleteWorkIdsSchema = z
+	.array(
+		z.coerce
+			.number()
+			.int()
+			.positive("id работы должен быть положительным числом"),
+	)
+	.min(1, "Нужно выбрать хотя бы одну работу");
+
+export const getWorksTableSchema = z.object({
+	page: z.coerce.number().int().min(0).default(0),
+	rows: z.coerce.number().int().positive().max(100).default(20),
+	search: z.preprocess(
+		(value) => typeof value === "string" ? value.trim() : undefined,
+		z.string().optional(),
+	).transform((value) => value && value.length > 0 ? value : undefined),
+	sorting: z
+		.preprocess(parseTableSorting, worksTableSortingSchema.nullable())
+		.optional()
+		.transform((value) => value ?? null),
+	operationGroupId: z.preprocess(parseOptionalId, operationGroupIdSchema.optional()),
+	operationId: z.preprocess(parseOptionalId, operationIdSchema.optional()),
+	workGroupId: z.preprocess(parseOptionalId, workGroupIdSchema.optional()),
+});
+
 export type GetTypeProductsTableQuery = z.infer<typeof getTypeProductsTableSchema>;
 export type UpdateTypeProductsTablePayload = z.infer<typeof updateTypeProductsTableSchema>;
 export type GetMaterialGroupsTableQuery = z.infer<typeof getMaterialGroupsTableSchema>;
@@ -657,3 +784,5 @@ export type GetWorkGroupsTableQuery = z.infer<typeof getWorkGroupsTableSchema>;
 export type UpdateWorkGroupsTablePayload = z.infer<typeof updateWorkGroupsTableSchema>;
 export type GetOperationsTableQuery = z.infer<typeof getOperationsTableSchema>;
 export type UpdateOperationsTablePayload = z.infer<typeof updateOperationsTableSchema>;
+export type GetWorksTableQuery = z.infer<typeof getWorksTableSchema>;
+export type UpdateWorksTablePayload = z.infer<typeof updateWorksTableSchema>;

@@ -10,6 +10,13 @@ import {
 	normalizeOperationFileOriginalName,
 	saveOperationFiles,
 } from "../../shared/storage/operations.js";
+import {
+	WORK_FILES_LIMIT,
+	WORK_FILES_TOTAL_SIZE_LIMIT,
+	getWorkFileAbsolutePath,
+	normalizeWorkFileOriginalName,
+	saveWorkFiles,
+} from "../../shared/storage/works.js";
 import type { RolePermissions } from "../roles/role.types.js";
 import {
 	updateBlanksTableItemSchema,
@@ -17,6 +24,7 @@ import {
 	updateMaterialsTableItemSchema,
 	updateOperationsTableItemSchema,
 	updateOperationGroupsTableItemSchema,
+	updateWorksTableItemSchema,
 	updateWorkGroupsTableItemSchema,
 	updateTypeProductsTableItemSchema,
 } from "./guide.schemas.js";
@@ -26,6 +34,7 @@ import type {
 	GetMaterialsTableQuery,
 	GetOperationsTableQuery,
 	GetOperationGroupsTableQuery,
+	GetWorksTableQuery,
 	GetWorkGroupsTableQuery,
 	GetTypeProductsTableQuery,
 	UpdateBlanksTablePayload,
@@ -33,6 +42,7 @@ import type {
 	UpdateMaterialsTablePayload,
 	UpdateOperationsTablePayload,
 	UpdateOperationGroupsTablePayload,
+	UpdateWorksTablePayload,
 	UpdateWorkGroupsTablePayload,
 	UpdateTypeProductsTablePayload,
 } from "./guide.schemas.js";
@@ -251,12 +261,92 @@ const workGroupTableSelect = {
 	},
 } satisfies Prisma.workGroupSelect;
 
+const workGroupListSelect = {
+	id: true,
+	name: true,
+} satisfies Prisma.workGroupSelect;
+
 const operationFilesStorageSelect = {
 	id: true,
 	originalName: true,
 	size: true,
 	storagePath: true,
 } satisfies Prisma.operationFileSelect;
+
+const workFileSelect = {
+	id: true,
+	originalName: true,
+	size: true,
+} satisfies Prisma.workFileSelect;
+
+const workSelect = {
+	id: true,
+	name: true,
+	description: true,
+	workGroupId: true,
+	tpz: true,
+	tsht: true,
+	createdAt: true,
+	updatedAt: true,
+	workGroup: {
+		select: {
+			id: true,
+			name: true,
+			description: true,
+			operationId: true,
+			operation: {
+				select: {
+					id: true,
+					name: true,
+					description: true,
+					operationGroupId: true,
+					operationGroup: {
+						select: {
+							id: true,
+							name: true,
+							description: true,
+						},
+					},
+				},
+			},
+		},
+	},
+	files: {
+		select: workFileSelect,
+		orderBy: {
+			id: "asc",
+		},
+	},
+} satisfies Prisma.workSelect;
+
+const workTableSelect = {
+	id: true,
+	name: true,
+	description: true,
+	tpz: true,
+	tsht: true,
+	workGroup: {
+		select: {
+			name: true,
+			operation: {
+				select: {
+					name: true,
+					operationGroup: {
+						select: {
+							name: true,
+						},
+					},
+				},
+			},
+		},
+	},
+	files: {
+		select: workFileSelect,
+		orderBy: {
+			id: "asc",
+		},
+	},
+} satisfies Prisma.workSelect;
 
 const operationUpdateSelect = {
 	id: true,
@@ -284,6 +374,40 @@ const operationFileDownloadSelect = {
 	originalName: true,
 	storagePath: true,
 } satisfies Prisma.operationFileSelect;
+
+const workFilesStorageSelect = {
+	id: true,
+	originalName: true,
+	size: true,
+	storagePath: true,
+} satisfies Prisma.workFileSelect;
+
+const workUpdateSelect = {
+	id: true,
+	files: {
+		select: workFilesStorageSelect,
+		orderBy: {
+			id: "asc",
+		},
+	},
+} satisfies Prisma.workSelect;
+
+const workArchiveSelect = {
+	id: true,
+	name: true,
+	files: {
+		select: workFilesStorageSelect,
+		orderBy: {
+			id: "asc",
+		},
+	},
+} satisfies Prisma.workSelect;
+
+const workFileDownloadSelect = {
+	id: true,
+	originalName: true,
+	storagePath: true,
+} satisfies Prisma.workFileSelect;
 
 const TYPE_PRODUCT_TABLE_FIELD_TO_MODEL_FIELD = {
 	id: "id",
@@ -334,6 +458,18 @@ const WORK_GROUP_TABLE_FIELD_TO_MODEL_FIELD = {
 	description: "description",
 } as const;
 
+const WORK_TABLE_FIELD_TO_MODEL_FIELD = {
+	id: "id",
+	name: "name",
+	workGroup: "workGroupId",
+	operation: "operation",
+	operationGroup: "operationGroup",
+	tpz: "tpz",
+	tsht: "tsht",
+	download: "download",
+	description: "description",
+} as const;
+
 const TYPE_PRODUCT_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
 const TYPE_PRODUCT_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
 const MATERIAL_GROUP_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
@@ -352,6 +488,9 @@ const OPERATION_READONLY_TABLE_FIELDS = new Set<string>(["operationGroup", "down
 const WORK_GROUP_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
 const WORK_GROUP_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
 const WORK_GROUP_READONLY_TABLE_FIELDS = new Set<string>(["operation", "operationGroup"]);
+const WORK_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
+const WORK_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
+const WORK_READONLY_TABLE_FIELDS = new Set<string>(["workGroup", "operation", "operationGroup", "download"]);
 
 const typeProductTableMeta = Object.freeze({
 	isConst: Object.freeze(
@@ -471,6 +610,25 @@ const workGroupTableMeta = Object.freeze({
 	),
 });
 
+const workTableMeta = Object.freeze({
+	isConst: Object.freeze(
+		Object.entries(WORK_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([columnId, modelField]) => (
+				WORK_SYSTEM_MODEL_FIELDS.has(modelField) || WORK_READONLY_TABLE_FIELDS.has(columnId)
+			))
+			.map(([columnId]) => columnId),
+	),
+	isRequired: Object.freeze(
+		Object.entries(WORK_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([columnId, modelField]) => (
+				!WORK_OPTIONAL_MODEL_FIELDS.has(modelField)
+				&& !WORK_SYSTEM_MODEL_FIELDS.has(modelField)
+				&& !WORK_READONLY_TABLE_FIELDS.has(columnId)
+			))
+			.map(([columnId]) => columnId),
+	),
+});
+
 type CreateTypeProductData = {
 	name: string;
 	description?: string | null;
@@ -523,6 +681,18 @@ type CreateOperationData = {
 };
 
 type UpdateOperationData = Partial<CreateOperationData> & {
+	removedFileIds?: number[];
+};
+
+type CreateWorkData = {
+	name: string;
+	description?: string | null;
+	workGroupId: number;
+	tpz: number;
+	tsht: number;
+};
+
+type UpdateWorkData = Partial<CreateWorkData> & {
 	removedFileIds?: number[];
 };
 
@@ -585,6 +755,14 @@ const UPDATE_OPERATION_SUCCESS_DESCRIPTION = "Отредактировано";
 const DELETE_OPERATION_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
 const DELETE_OPERATION_IN_USE_ERROR = "Эта операция используется и не может быть удалена";
 const OPERATION_FILE_NOT_FOUND_ERROR = "Файл операции не найден";
+
+const WORK_NOT_FOUND_ERROR = "Работа не найдена";
+const WORK_DUPLICATE_ERROR = "Работа с таким названием уже существует";
+const UPDATE_WORK_NO_RIGHTS_ERROR = "У вас нет прав для редактирования";
+const UPDATE_WORK_SUCCESS_DESCRIPTION = "Отредактировано";
+const DELETE_WORK_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
+const DELETE_WORK_IN_USE_ERROR = "Эта работа используется и не может быть удалена";
+const WORK_FILE_NOT_FOUND_ERROR = "Файл работы не найден";
 
 const getUniqueIds = (ids: number[]) => {
 	const uniqueIds = new Set<number>();
@@ -653,6 +831,42 @@ const assertUniqueOperationFiles = (
 
 		if (existingKeys.has(duplicateKey) || incomingKeys.has(duplicateKey)) {
 			throw new AppError(400, `Файл "${normalizedFileName}" уже добавлен к операции`);
+		}
+
+		incomingKeys.add(duplicateKey);
+	}
+};
+
+const mapWorkFiles = (
+	files: Array<{ id: number; originalName: string; size: number }>,
+) => files.map((file) => ({
+	id: file.id,
+	name: normalizeWorkFileOriginalName(file.originalName),
+	size: file.size,
+}));
+
+const normalizeWorkFileName = (name: string) =>
+	normalizeWorkFileOriginalName(name).trim().toLowerCase();
+
+const getWorkFileDuplicateKey = (file: { name: string; size: number }) =>
+	`${normalizeWorkFileName(file.name)}::${file.size}`;
+
+const assertUniqueWorkFiles = (
+	existingFiles: Array<{ name: string; size: number }>,
+	incomingFiles: Array<{ originalname: string; size: number }>,
+) => {
+	const existingKeys = new Set(existingFiles.map((file) => getWorkFileDuplicateKey(file)));
+	const incomingKeys = new Set<string>();
+
+	for (const file of incomingFiles) {
+		const normalizedFileName = normalizeWorkFileOriginalName(file.originalname);
+		const duplicateKey = getWorkFileDuplicateKey({
+			name: normalizedFileName,
+			size: file.size,
+		});
+
+		if (existingKeys.has(duplicateKey) || incomingKeys.has(duplicateKey)) {
+			throw new AppError(400, `Файл "${normalizedFileName}" уже добавлен к работе`);
 		}
 
 		incomingKeys.add(duplicateKey);
@@ -875,6 +1089,98 @@ const buildWorkGroupsTableWhere = (query: GetWorkGroupsTableQuery): Prisma.workG
 	return Object.keys(filters).length ? filters : undefined;
 };
 
+const buildWorksTableWhere = (query: GetWorksTableQuery): Prisma.workWhereInput | undefined => {
+	const filters: Prisma.workWhereInput = {};
+	const search = query.search;
+	const workGroupFilter: Prisma.workGroupWhereInput = {};
+	const operationFilter: Prisma.operationWhereInput = {};
+
+	if (search) {
+		filters.OR = [
+			{
+				name: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+			{
+				description: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+			{
+				workGroup: {
+					is: {
+						name: {
+							contains: search,
+							mode: "insensitive",
+						},
+					},
+				},
+			},
+			{
+				workGroup: {
+					is: {
+						operation: {
+							is: {
+								name: {
+									contains: search,
+									mode: "insensitive",
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				workGroup: {
+					is: {
+						operation: {
+							is: {
+								operationGroup: {
+									is: {
+										name: {
+											contains: search,
+											mode: "insensitive",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		];
+	}
+
+	if (typeof query.workGroupId === "number") {
+		filters.workGroupId = query.workGroupId;
+	}
+
+	if (typeof query.operationId === "number") {
+		operationFilter.id = query.operationId;
+	}
+
+	if (typeof query.operationGroupId === "number") {
+		operationFilter.operationGroupId = query.operationGroupId;
+	}
+
+	if (Object.keys(operationFilter).length) {
+		workGroupFilter.operation = {
+			is: operationFilter,
+		};
+	}
+
+	if (Object.keys(workGroupFilter).length) {
+		filters.workGroup = {
+			is: workGroupFilter,
+		};
+	}
+
+	return Object.keys(filters).length ? filters : undefined;
+};
+
 const buildOperationsTableWhere = (search?: string): Prisma.operationWhereInput | undefined => {
 	if (!search) {
 		return undefined;
@@ -1020,6 +1326,42 @@ const buildWorkGroupsTableOrderBy = (
 	}
 };
 
+const buildWorksTableOrderBy = (
+	sorting: GetWorksTableQuery["sorting"],
+): Prisma.workOrderByWithRelationInput[] => {
+	if (!sorting) {
+		return [{ id: "asc" }];
+	}
+
+	switch (sorting.id) {
+		case "workGroup":
+			return [
+				{ workGroup: { name: sorting.sort } },
+				{ id: "asc" },
+			];
+		case "operation":
+			return [
+				{ workGroup: { operation: { name: sorting.sort } } },
+				{ id: "asc" },
+			];
+		case "operationGroup":
+			return [
+				{ workGroup: { operation: { operationGroup: { name: sorting.sort } } } },
+				{ id: "asc" },
+			];
+		case "download":
+			return [
+				{ files: { _count: sorting.sort === "asc" ? "desc" : "asc" } },
+				{ id: "asc" },
+			];
+		default:
+			return [
+				{ [sorting.id]: sorting.sort } as Prisma.workOrderByWithRelationInput,
+				{ id: "asc" },
+			];
+	}
+};
+
 const buildOperationsTableOrderBy = (
 	sorting: GetOperationsTableQuery["sorting"],
 ): Prisma.operationOrderByWithRelationInput[] => {
@@ -1123,6 +1465,17 @@ const ensureOperationNameIsUnique = async (name: string, excludedId?: number) =>
 	}
 };
 
+const ensureWorkNameIsUnique = async (name: string, excludedId?: number) => {
+	const existingWork = await prisma.work.findUnique({
+		where: { name },
+		select: { id: true },
+	});
+
+	if (existingWork && existingWork.id !== excludedId) {
+		throw new AppError(409, WORK_DUPLICATE_ERROR);
+	}
+};
+
 const getGuidePermissions = async (actorId: number) => {
 	const actor = await prisma.user.findUnique({
 		where: { id: actorId },
@@ -1208,6 +1561,42 @@ export const listOperationGroups = async (search?: string) =>
 				}
 			: undefined,
 		select: operationGroupListSelect,
+		orderBy: {
+			id: "asc",
+		},
+	});
+
+export const listWorkGroups = async (
+	search?: string,
+	operationGroupId?: number,
+	operationId?: number,
+) =>
+	prisma.workGroup.findMany({
+		where: {
+			...(search
+				? {
+						name: {
+							contains: search,
+							mode: "insensitive",
+						},
+					}
+				: {}),
+			...(typeof operationId === "number"
+				? {
+						operationId,
+					}
+				: {}),
+			...(typeof operationGroupId === "number"
+				? {
+						operation: {
+							is: {
+								operationGroupId,
+							},
+						},
+					}
+				: {}),
+		},
+		select: workGroupListSelect,
 		orderBy: {
 			id: "asc",
 		},
@@ -1410,6 +1799,40 @@ export const getOperationsTable = async (query: GetOperationsTableQuery) => {
 	};
 };
 
+export const getWorksTable = async (query: GetWorksTableQuery) => {
+	const where = buildWorksTableWhere(query);
+	const orderBy = buildWorksTableOrderBy(query.sorting);
+	const skip = query.page * query.rows;
+	const [total, works] = await prisma.$transaction([
+		prisma.work.count({ where }),
+		prisma.work.findMany({
+			where,
+			select: workTableSelect,
+			orderBy,
+			skip,
+			take: query.rows,
+		}),
+	]);
+
+	return {
+		total,
+		data: works.map((work) => ({
+			id: work.id,
+			name: work.name,
+			workGroup: work.workGroup.name,
+			operation: work.workGroup.operation.name,
+			operationGroup: work.workGroup.operation.operationGroup.name,
+			tpz: work.tpz,
+			tsht: work.tsht,
+			files: mapWorkFiles(work.files),
+			download: work.files.length ? "download" : "",
+			...(work.description ? { description: work.description } : {}),
+			isConst: [...workTableMeta.isConst],
+			isRequired: [...workTableMeta.isRequired],
+		})),
+	};
+};
+
 export const getTypeProductById = async (id: number) => {
 	const typeProduct = await prisma.typeProduct.findUnique({
 		where: { id },
@@ -1535,6 +1958,57 @@ export const getOperationFilesArchiveInfo = async (id: number) => {
 		files: operation.files.map((file) => ({
 			...file,
 			originalName: normalizeOperationFileOriginalName(file.originalName),
+		})),
+	};
+};
+
+export const getWorkById = async (id: number) => {
+	const work = await prisma.work.findUnique({
+		where: { id },
+		select: workSelect,
+	});
+
+	if (!work) {
+		throw new AppError(404, WORK_NOT_FOUND_ERROR);
+	}
+
+	return {
+		...work,
+		files: mapWorkFiles(work.files),
+	};
+};
+
+export const getWorkFileDownloadInfo = async (fileId: number) => {
+	const workFile = await prisma.workFile.findUnique({
+		where: { id: fileId },
+		select: workFileDownloadSelect,
+	});
+
+	if (!workFile) {
+		throw new AppError(404, WORK_FILE_NOT_FOUND_ERROR);
+	}
+
+	return {
+		...workFile,
+		originalName: normalizeWorkFileOriginalName(workFile.originalName),
+	};
+};
+
+export const getWorkFilesArchiveInfo = async (id: number) => {
+	const work = await prisma.work.findUnique({
+		where: { id },
+		select: workArchiveSelect,
+	});
+
+	if (!work) {
+		throw new AppError(404, WORK_NOT_FOUND_ERROR);
+	}
+
+	return {
+		...work,
+		files: work.files.map((file) => ({
+			...file,
+			originalName: normalizeWorkFileOriginalName(file.originalName),
 		})),
 	};
 };
@@ -1668,6 +2142,54 @@ export const createOperation = async (
 		return {
 			...operation,
 			files: mapOperationFiles(operation.files),
+		};
+	} catch (error) {
+		await cleanupStoredFiles(savedFiles.map((file) => file.absolutePath));
+		throw error;
+	}
+};
+
+export const createWork = async (
+	data: CreateWorkData,
+	files: Express.Multer.File[],
+) => {
+	await ensureWorkNameIsUnique(data.name);
+	await getWorkGroupById(data.workGroupId);
+	assertUniqueWorkFiles([], files);
+
+	const savedFiles = await saveWorkFiles(files);
+
+	try {
+		const work = await prisma.work.create({
+			data: {
+				name: data.name,
+				description: data.description,
+				tpz: data.tpz,
+				tsht: data.tsht,
+				workGroup: {
+					connect: {
+						id: data.workGroupId,
+					},
+				},
+				...(savedFiles.length
+					? {
+							files: {
+								create: savedFiles.map((file) => ({
+									originalName: file.originalName,
+									size: file.size,
+									mimeType: file.mimeType,
+									storagePath: file.storagePath,
+								})),
+							},
+						}
+					: {}),
+			},
+			select: workSelect,
+		});
+
+		return {
+			...work,
+			files: mapWorkFiles(work.files),
 		};
 	} catch (error) {
 		await cleanupStoredFiles(savedFiles.map((file) => file.absolutePath));
@@ -1924,6 +2446,123 @@ export const updateOperation = async (
 		return {
 			...operation,
 			files: mapOperationFiles(operation.files),
+		};
+	} catch (error) {
+		await cleanupStoredFiles(savedFiles.map((file) => file.absolutePath));
+		throw error;
+	}
+};
+
+export const updateWork = async (
+	id: number,
+	data: UpdateWorkData,
+	files: Express.Multer.File[],
+) => {
+	const currentWork = await prisma.work.findUnique({
+		where: { id },
+		select: workUpdateSelect,
+	});
+
+	if (!currentWork) {
+		throw new AppError(404, WORK_NOT_FOUND_ERROR);
+	}
+
+	if (typeof data.name === "string") {
+		await ensureWorkNameIsUnique(data.name, id);
+	}
+
+	if (typeof data.workGroupId === "number") {
+		await getWorkGroupById(data.workGroupId);
+	}
+
+	const removedFileIds = getUniqueIds(data.removedFileIds ?? []);
+	const currentFilesById = new Map(currentWork.files.map((file) => [file.id, file]));
+	const removedFiles = removedFileIds
+		.map((fileId) => currentFilesById.get(fileId))
+		.filter((file): file is (typeof currentWork.files)[number] => Boolean(file));
+
+	if (removedFiles.length !== removedFileIds.length) {
+		throw new AppError(400, WORK_FILE_NOT_FOUND_ERROR);
+	}
+
+	const remainingFiles = currentWork.files.filter((file) => !removedFileIds.includes(file.id));
+	const totalFilesCount = remainingFiles.length + files.length;
+	const totalFilesSize = remainingFiles.reduce((result, file) => result + file.size, 0)
+		+ files.reduce((result, file) => result + file.size, 0);
+	assertUniqueWorkFiles(
+		remainingFiles.map((file) => ({
+			name: file.originalName,
+			size: file.size,
+		})),
+		files,
+	);
+
+	if (totalFilesCount > WORK_FILES_LIMIT) {
+		throw new AppError(400, "Можно хранить не более 10 файлов у одной работы");
+	}
+
+	if (totalFilesSize > WORK_FILES_TOTAL_SIZE_LIMIT) {
+		throw new AppError(413, "Общий размер файлов работы не должен превышать 100 MB");
+	}
+
+	const savedFiles = await saveWorkFiles(files);
+
+	try {
+		const work = await prisma.work.update({
+			where: { id },
+			data: {
+				name: data.name,
+				description: data.description,
+				tpz: data.tpz,
+				tsht: data.tsht,
+				...(typeof data.workGroupId === "number"
+					? {
+							workGroup: {
+								connect: {
+									id: data.workGroupId,
+								},
+							},
+						}
+					: {}),
+				...(removedFileIds.length || savedFiles.length
+					? {
+							files: {
+								...(removedFileIds.length
+									? {
+											deleteMany: {
+												id: {
+													in: removedFileIds,
+												},
+											},
+										}
+									: {}),
+								...(savedFiles.length
+									? {
+											create: savedFiles.map((file) => ({
+												originalName: file.originalName,
+												size: file.size,
+												mimeType: file.mimeType,
+												storagePath: file.storagePath,
+											})),
+										}
+									: {}),
+							},
+						}
+					: {}),
+			},
+			select: workSelect,
+		});
+
+		if (removedFiles.length) {
+			const removedAbsolutePaths = removedFiles
+				.map((file) => getWorkFileAbsolutePath(file.storagePath))
+				.filter((absolutePath): absolutePath is string => Boolean(absolutePath));
+			await cleanupStoredFiles(removedAbsolutePaths);
+		}
+
+		return {
+			...work,
+			files: mapWorkFiles(work.files),
 		};
 	} catch (error) {
 		await cleanupStoredFiles(savedFiles.map((file) => file.absolutePath));
@@ -2306,6 +2945,62 @@ export const updateOperationsTable = async (
 			result.success.push({
 				id,
 				description: UPDATE_OPERATION_SUCCESS_DESCRIPTION,
+			});
+		} catch (error) {
+			if (error instanceof AppError) {
+				result.error.push({
+					id,
+					description: error.message,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const updateWorksTable = async (
+	payload: UpdateWorksTablePayload,
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const permissions = await getGuidePermissions(actorId);
+	const ids = Object.keys(payload).map((id) => Number(id));
+
+	if (!hasPermission(permissions, "/guide", "editing")) {
+		return {
+			success: [],
+			error: ids.map((id) => ({
+				id,
+				description: UPDATE_WORK_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const [rawId, rawItem] of Object.entries(payload)) {
+		const id = Number(rawId);
+		const parsedItem = updateWorksTableItemSchema.safeParse(rawItem);
+
+		if (!parsedItem.success) {
+			result.error.push({
+				id,
+				description: getValidationErrorMessage(parsedItem.error.issues) || "Некорректные данные",
+			});
+			continue;
+		}
+
+		try {
+			await updateWork(id, parsedItem.data, []);
+			result.success.push({
+				id,
+				description: UPDATE_WORK_SUCCESS_DESCRIPTION,
 			});
 		} catch (error) {
 			if (error instanceof AppError) {
@@ -2848,6 +3543,92 @@ export const deleteOperations = async (
 				result.error.push({
 					id,
 					description: OPERATION_NOT_FOUND_ERROR,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const deleteWorks = async (
+	ids: number[],
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const uniqueIds = getUniqueIds(ids);
+	const permissions = await getGuidePermissions(actorId);
+
+	if (!hasPermission(permissions, "/guide", "removing")) {
+		return {
+			success: [],
+			error: uniqueIds.map((id) => ({
+				id,
+				description: DELETE_WORK_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const existingWorks = await prisma.work.findMany({
+		where: {
+			id: {
+				in: uniqueIds,
+			},
+		},
+		select: {
+			id: true,
+		},
+	});
+	const worksById = new Map(existingWorks.map((work) => [work.id, work]));
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const id of uniqueIds) {
+		if (!worksById.has(id)) {
+			result.error.push({
+				id,
+				description: WORK_NOT_FOUND_ERROR,
+			});
+			continue;
+		}
+
+		try {
+			const deletedWork = await prisma.work.delete({
+				where: { id },
+				select: {
+					id: true,
+					files: {
+						select: {
+							storagePath: true,
+						},
+					},
+				},
+			});
+			const deletedAbsolutePaths = deletedWork.files
+				.map((file) => getWorkFileAbsolutePath(file.storagePath))
+				.filter((absolutePath): absolutePath is string => Boolean(absolutePath));
+			await cleanupStoredFiles(deletedAbsolutePaths);
+			result.success.push({
+				id,
+				description: "Удалено",
+			});
+		} catch (error) {
+			if (isPrismaDeleteConstraintError(error)) {
+				result.error.push({
+					id,
+					description: DELETE_WORK_IN_USE_ERROR,
+				});
+				continue;
+			}
+
+			if (isPrismaRecordNotFoundError(error)) {
+				result.error.push({
+					id,
+					description: WORK_NOT_FOUND_ERROR,
 				});
 				continue;
 			}

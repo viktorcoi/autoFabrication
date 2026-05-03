@@ -1,8 +1,15 @@
 import axios from "axios";
 import { api } from "@/apiService/apiService";
-import { PathOperationOptions, PostOperationOptions } from "@/apiService/apiGuide/types";
+import {
+    PathOperationOptions,
+    PathWorkOptions,
+    PostOperationOptions,
+    PostWorkOptions
+} from "@/apiService/apiGuide/types";
 
-export const createOperationOptions = (options: PostOperationOptions | PathOperationOptions) => {
+const createGuideEntityOptions = (
+    options: PostOperationOptions | PathOperationOptions | PostWorkOptions | PathWorkOptions
+) => {
     const formData = new FormData();
 
     if (typeof options.name === "string") {
@@ -13,8 +20,20 @@ export const createOperationOptions = (options: PostOperationOptions | PathOpera
         formData.append("description", options.description);
     }
 
-    if (typeof options.operationGroupId === "number" && options.operationGroupId > 0) {
+    if ("operationGroupId" in options && typeof options.operationGroupId === "number" && options.operationGroupId > 0) {
         formData.append("operationGroupId", String(options.operationGroupId));
+    }
+
+    if ("workGroupId" in options && typeof options.workGroupId === "number" && options.workGroupId > 0) {
+        formData.append("workGroupId", String(options.workGroupId));
+    }
+
+    if ("tpz" in options && typeof options.tpz === "number") {
+        formData.append("tpz", String(options.tpz));
+    }
+
+    if ("tsht" in options && typeof options.tsht === "number") {
+        formData.append("tsht", String(options.tsht));
     }
 
     if ("removedFileIds" in options && Array.isArray(options.removedFileIds)) {
@@ -30,6 +49,14 @@ export const createOperationOptions = (options: PostOperationOptions | PathOpera
     }
 
     return formData;
+};
+
+export const createOperationOptions = (options: PostOperationOptions | PathOperationOptions) => {
+    return createGuideEntityOptions(options);
+};
+
+export const createWorkOptions = (options: PostWorkOptions | PathWorkOptions) => {
+    return createGuideEntityOptions(options);
 };
 
 const triggerBlobDownload = (blob: Blob, fileName: string) => {
@@ -146,6 +173,29 @@ export const downloadOperationFilesArchive = async (operationId: number, operati
     const fileNameFromHeader = getDownloadFileNameFromContentDisposition(response.headers["content-disposition"]);
     const archiveFileName = fileNameFromHeader
         || `${sanitizeDownloadFileName(operationName, "operation-files")}.zip`;
+
+    triggerBlobDownload(response.data, archiveFileName);
+};
+
+export const downloadWorkFile = async (fileId: number, fileName: string) => {
+    const response = await getBlobResponse(
+        `/guide/work/files/${fileId}/download`,
+        "Не удалось скачать файл",
+    );
+    const fileNameFromHeader = getDownloadFileNameFromContentDisposition(response.headers["content-disposition"]);
+    const resolvedFileName = fileNameFromHeader || sanitizeDownloadFileName(fileName, "file");
+
+    triggerBlobDownload(response.data, resolvedFileName);
+};
+
+export const downloadWorkFilesArchive = async (workId: number, workName: string) => {
+    const response = await getBlobResponse(
+        `/guide/work/${workId}/files/archive`,
+        "Не удалось скачать архив",
+    );
+    const fileNameFromHeader = getDownloadFileNameFromContentDisposition(response.headers["content-disposition"]);
+    const archiveFileName = fileNameFromHeader
+        || `${sanitizeDownloadFileName(workName, "work-files")}.zip`;
 
     triggerBlobDownload(response.data, archiveFileName);
 };

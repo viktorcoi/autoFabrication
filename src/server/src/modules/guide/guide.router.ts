@@ -15,11 +15,18 @@ import {
 	getOperationFileAbsolutePath,
 } from "../../shared/storage/operations.js";
 import {
+	WORK_FILES_LIMIT,
+	WORK_FILE_SIZE_LIMIT,
+	assertWorkFilesTotalSize,
+	getWorkFileAbsolutePath,
+} from "../../shared/storage/works.js";
+import {
 	createBlankSchema,
 	createMaterialGroupSchema,
 	createMaterialSchema,
 	createOperationSchema,
 	createOperationGroupSchema,
+	createWorkSchema,
 	createWorkGroupSchema,
 	createTypeProductSchema,
 	deleteBlankIdsSchema,
@@ -27,6 +34,7 @@ import {
 	deleteMaterialIdsSchema,
 	deleteOperationIdsSchema,
 	deleteOperationGroupIdsSchema,
+	deleteWorkIdsSchema,
 	deleteWorkGroupIdsSchema,
 	deleteTypeProductIdsSchema,
 	getBlanksTableSchema,
@@ -34,6 +42,7 @@ import {
 	getMaterialsTableSchema,
 	getOperationsTableSchema,
 	getOperationGroupsTableSchema,
+	getWorksTableSchema,
 	getWorkGroupsTableSchema,
 	getTypeProductsTableSchema,
 	updateBlankSchema,
@@ -46,6 +55,8 @@ import {
 	updateOperationsTableSchema,
 	updateOperationGroupSchema,
 	updateOperationGroupsTableSchema,
+	updateWorkSchema,
+	updateWorksTableSchema,
 	updateWorkGroupSchema,
 	updateWorkGroupsTableSchema,
 	updateTypeProductSchema,
@@ -57,6 +68,7 @@ import {
 	createMaterialGroup,
 	createOperation,
 	createOperationGroup,
+	createWork,
 	createWorkGroup,
 	createTypeProduct,
 	deleteBlanks,
@@ -64,6 +76,7 @@ import {
 	deleteMaterials,
 	deleteOperations,
 	deleteOperationGroups,
+	deleteWorks,
 	deleteWorkGroups,
 	deleteTypeProducts,
 	getBlankById,
@@ -78,6 +91,10 @@ import {
 	getOperationsTable,
 	getOperationGroupById,
 	getOperationGroupsTable,
+	getWorkById,
+	getWorkFileDownloadInfo,
+	getWorkFilesArchiveInfo,
+	getWorksTable,
 	getWorkGroupById,
 	getWorkGroupsTable,
 	getTypeProductById,
@@ -86,6 +103,7 @@ import {
 	listOperations,
 	listMaterialGroups,
 	listOperationGroups,
+	listWorkGroups,
 	updateBlank,
 	updateBlanksTable,
 	updateMaterial,
@@ -96,6 +114,8 @@ import {
 	updateOperationsTable,
 	updateOperationGroup,
 	updateOperationGroupsTable,
+	updateWork,
+	updateWorksTable,
 	updateWorkGroup,
 	updateWorkGroupsTable,
 	updateTypeProduct,
@@ -142,6 +162,10 @@ const OPERATION_FILE_NOT_FOUND_ERROR = "Файл операции не найд�
 const OPERATION_ARCHIVE_EMPTY_ERROR = "У операции нет загруженных файлов";
 const OPERATION_ARCHIVE_NAME_FALLBACK = "operation-files";
 const OPERATION_ARCHIVE_ENTRY_FALLBACK = "file";
+const WORK_FILE_NOT_FOUND_ERROR = "Файл работы не найден";
+const WORK_ARCHIVE_EMPTY_ERROR = "У работы нет загруженных файлов";
+const WORK_ARCHIVE_NAME_FALLBACK = "work-files";
+const WORK_ARCHIVE_ENTRY_FALLBACK = "file";
 
 const sanitizeArchiveEntryName = (value: string, fallback: string) => {
 	const sanitized = value
@@ -196,6 +220,15 @@ const operationUpload = multer({
 	},
 });
 
+const workUpload = multer({
+	storage: multer.memoryStorage(),
+	defParamCharset: "utf8",
+	limits: {
+		fileSize: WORK_FILE_SIZE_LIMIT,
+		files: WORK_FILES_LIMIT,
+	},
+});
+
 const parseOperationUpload = (request: Request, response: Response, next: NextFunction) => {
 	operationUpload.array("files", OPERATION_FILES_LIMIT)(request, response, (error) => {
 		if (!error) {
@@ -221,6 +254,38 @@ const parseOperationUpload = (request: Request, response: Response, next: NextFu
 			}
 
 			next(new AppError(400, "Не удалось загрузить файлы операции"));
+			return;
+		}
+
+		next(error);
+	});
+};
+
+const parseWorkUpload = (request: Request, response: Response, next: NextFunction) => {
+	workUpload.array("files", WORK_FILES_LIMIT)(request, response, (error) => {
+		if (!error) {
+			try {
+				const files = Array.isArray(request.files) ? request.files : [];
+				assertWorkFilesTotalSize(files);
+				next();
+			} catch (uploadError) {
+				next(uploadError);
+			}
+			return;
+		}
+
+		if (error instanceof multer.MulterError) {
+			if (error.code === "LIMIT_FILE_SIZE") {
+				next(new AppError(413, "Размер файла не должен превышать 20 MB"));
+				return;
+			}
+
+			if (error.code === "LIMIT_FILE_COUNT") {
+				next(new AppError(400, "Можно загрузить не более 10 файлов"));
+				return;
+			}
+
+			next(new AppError(400, "Не удалось загрузить файлы работы"));
 			return;
 		}
 
@@ -614,6 +679,21 @@ guideRouter.get(
 );
 
 guideRouter.get(
+	"/workGroup",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const searchValue = typeof request.query.search === "string"
+			? request.query.search.trim()
+			: "";
+		const operationGroupId = parseOptionalQueryId(request.query.operationGroupId, "id группы операций");
+		const operationId = parseOptionalQueryId(request.query.operationId, "id операции");
+		const workGroups = await listWorkGroups(searchValue || undefined, operationGroupId, operationId);
+
+		response.json(workGroups);
+	}),
+);
+
+guideRouter.get(
 	"/workGroup/:id",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
@@ -859,6 +939,187 @@ guideRouter.delete(
 		const auth = requireAuth(request, response);
 		const payload = validate(deleteOperationIdsSchema, request.body ?? []);
 		const result = await deleteOperations(payload, auth.userId);
+
+		response.json(result);
+	}),
+);
+
+guideRouter.get(
+	"/work/table",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const query = validate(getWorksTableSchema, request.query);
+		const table = await getWorksTable(query);
+
+		response.json(table);
+	}),
+);
+
+guideRouter.get(
+	"/work/files/:fileId/download",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response, next) => {
+		const workFile = await getWorkFileDownloadInfo(parseId(String(request.params.fileId)));
+		const absolutePath = getWorkFileAbsolutePath(workFile.storagePath);
+
+		if (!absolutePath) {
+			throw new AppError(500, "Не удалось получить путь к файлу работы");
+		}
+
+		response.download(absolutePath, workFile.originalName, (error) => {
+			if (error && !response.headersSent) {
+				if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") {
+					next(new AppError(404, WORK_FILE_NOT_FOUND_ERROR));
+					return;
+				}
+
+				next(error);
+			}
+		});
+	}),
+);
+
+guideRouter.get(
+	"/work/:id/files/archive",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response, next) => {
+		const work = await getWorkFilesArchiveInfo(parseId(String(request.params.id)));
+
+		if (!work.files.length) {
+			throw new AppError(404, WORK_ARCHIVE_EMPTY_ERROR);
+		}
+
+		const archiveFiles = work.files.map((file) => {
+			const absolutePath = getWorkFileAbsolutePath(file.storagePath);
+
+			if (!absolutePath) {
+				throw new AppError(500, "Не удалось получить путь к файлу работы");
+			}
+
+			return {
+				absolutePath,
+				originalName: file.originalName,
+			};
+		});
+
+		await ensureOperationArchiveFilesExist(archiveFiles.map((file) => file.absolutePath));
+
+		const archive = archiver("zip", {
+			zlib: {
+				level: 9,
+			},
+		});
+		const archiveName = `${sanitizeArchiveEntryName(work.name, WORK_ARCHIVE_NAME_FALLBACK)}.zip`;
+		const usedNames = new Set<string>();
+
+		response.attachment(archiveName);
+
+		archive.on("warning", (error: Error & { code?: string }) => {
+			if (error.code === "ENOENT") {
+				if (!response.headersSent) {
+					next(new AppError(404, WORK_FILE_NOT_FOUND_ERROR));
+					return;
+				}
+
+				response.destroy(error as Error);
+				return;
+			}
+
+			if (!response.headersSent) {
+				next(error);
+				return;
+			}
+
+			response.destroy(error as Error);
+		});
+
+		archive.on("error", (error: Error) => {
+			if (!response.headersSent) {
+				next(error);
+				return;
+			}
+
+			response.destroy(error);
+		});
+
+		response.on("close", () => {
+			if (!response.writableEnded) {
+				archive.abort();
+			}
+		});
+
+		archive.pipe(response);
+
+		for (const file of archiveFiles) {
+			archive.file(file.absolutePath, {
+				name: getUniqueArchiveEntryName(file.originalName, usedNames),
+			});
+		}
+
+		void archive.finalize();
+	}),
+);
+
+guideRouter.get(
+	"/work/:id",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const work = await getWorkById(parseId(String(request.params.id)));
+
+		response.json(work);
+	}),
+);
+
+guideRouter.post(
+	"/work",
+	requirePermission("/guide", "adding"),
+	parseWorkUpload,
+	asyncHandler(async (request, response) => {
+		const payload = validate(createWorkSchema, request.body ?? {});
+		const files = Array.isArray(request.files) ? request.files : [];
+		const work = await createWork(payload, files);
+
+		response.status(201).json(work);
+	}),
+);
+
+guideRouter.patch(
+	"/work/table",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(updateWorksTableSchema, request.body ?? {});
+		const result = await updateWorksTable(payload, auth.userId);
+
+		response.json(result);
+	}),
+);
+
+guideRouter.patch(
+	"/work/:id",
+	requirePermission("/guide", "editing"),
+	parseWorkUpload,
+	asyncHandler(async (request, response) => {
+		const payload = validate(updateWorkSchema, request.body ?? {});
+		const files = Array.isArray(request.files) ? request.files : [];
+
+		if (Object.keys(payload).length === 0 && files.length === 0) {
+			throw new AppError(400, "Нужно передать хотя бы одно поле для обновления");
+		}
+
+		const work = await updateWork(parseId(String(request.params.id)), payload, files);
+
+		response.json(work);
+	}),
+);
+
+guideRouter.delete(
+	"/work",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(deleteWorkIdsSchema, request.body ?? []);
+		const result = await deleteWorks(payload, auth.userId);
 
 		response.json(result);
 	}),
