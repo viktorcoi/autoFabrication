@@ -507,6 +507,7 @@ export const getMaterialsTableSchema = z.object({
 		.preprocess(parseTableSorting, materialsTableSortingSchema.nullable())
 		.optional()
 		.transform((value) => value ?? null),
+	materialGroupId: z.preprocess(parseOptionalId, materialGroupIdSchema.optional()),
 });
 
 export const createBlankSchema = z.object({
@@ -571,6 +572,8 @@ export const getBlanksTableSchema = z.object({
 		.preprocess(parseTableSorting, blanksTableSortingSchema.nullable())
 		.optional()
 		.transform((value) => value ?? null),
+	materialGroupId: z.preprocess(parseOptionalId, materialGroupIdSchema.optional()),
+	materialId: z.preprocess(parseOptionalId, materialIdSchema.optional()),
 });
 
 export const createWorkGroupSchema = z.object({
@@ -703,6 +706,7 @@ export const getOperationsTableSchema = z.object({
 		.preprocess(parseTableSorting, operationsTableSortingSchema.nullable())
 		.optional()
 		.transform((value) => value ?? null),
+	operationGroupId: z.preprocess(parseOptionalId, operationGroupIdSchema.optional()),
 });
 
 export const createWorkSchema = z.object({
