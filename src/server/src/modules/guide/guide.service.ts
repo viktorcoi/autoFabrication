@@ -384,6 +384,8 @@ const workFilesStorageSelect = {
 
 const workUpdateSelect = {
 	id: true,
+	name: true,
+	workGroupId: true,
 	files: {
 		select: workFilesStorageSelect,
 		orderBy: {
@@ -1458,24 +1460,44 @@ const ensureMaterialNameIsUnique = async (name: string, excludedId?: number) => 
 	}
 };
 
-const ensureBlankNameIsUnique = async (name: string, excludedId?: number) => {
-	const existingBlank = await prisma.blank.findUnique({
-		where: { name },
+const ensureBlankNameIsUnique = async (name: string, materialId: number, excludedId?: number) => {
+	const existingBlank = await prisma.blank.findFirst({
+		where: {
+			name,
+			materialId,
+			...(typeof excludedId === "number"
+				? {
+						id: {
+							not: excludedId,
+						},
+					}
+				: {}),
+		},
 		select: { id: true },
 	});
 
-	if (existingBlank && existingBlank.id !== excludedId) {
+	if (existingBlank) {
 		throw new AppError(409, BLANK_DUPLICATE_ERROR);
 	}
 };
 
-const ensureWorkGroupNameIsUnique = async (name: string, excludedId?: number) => {
-	const existingWorkGroup = await prisma.workGroup.findUnique({
-		where: { name },
+const ensureWorkGroupNameIsUnique = async (name: string, operationId: number, excludedId?: number) => {
+	const existingWorkGroup = await prisma.workGroup.findFirst({
+		where: {
+			name,
+			operationId,
+			...(typeof excludedId === "number"
+				? {
+						id: {
+							not: excludedId,
+						},
+					}
+				: {}),
+		},
 		select: { id: true },
 	});
 
-	if (existingWorkGroup && existingWorkGroup.id !== excludedId) {
+	if (existingWorkGroup) {
 		throw new AppError(409, WORK_GROUP_DUPLICATE_ERROR);
 	}
 };
@@ -1491,13 +1513,23 @@ const ensureOperationNameIsUnique = async (name: string, excludedId?: number) =>
 	}
 };
 
-const ensureWorkNameIsUnique = async (name: string, excludedId?: number) => {
-	const existingWork = await prisma.work.findUnique({
-		where: { name },
+const ensureWorkNameIsUnique = async (name: string, workGroupId: number, excludedId?: number) => {
+	const existingWork = await prisma.work.findFirst({
+		where: {
+			name,
+			workGroupId,
+			...(typeof excludedId === "number"
+				? {
+						id: {
+							not: excludedId,
+						},
+					}
+				: {}),
+		},
 		select: { id: true },
 	});
 
-	if (existingWork && existingWork.id !== excludedId) {
+	if (existingWork) {
 		throw new AppError(409, WORK_DUPLICATE_ERROR);
 	}
 };
@@ -2101,8 +2133,8 @@ export const createMaterial = async (data: CreateMaterialData) => {
 };
 
 export const createBlank = async (data: CreateBlankData) => {
-	await ensureBlankNameIsUnique(data.name);
 	await getMaterialById(data.materialId);
+	await ensureBlankNameIsUnique(data.name, data.materialId);
 
 	return prisma.blank.create({
 		data: {
@@ -2119,8 +2151,8 @@ export const createBlank = async (data: CreateBlankData) => {
 };
 
 export const createWorkGroup = async (data: CreateWorkGroupData) => {
-	await ensureWorkGroupNameIsUnique(data.name);
 	await getOperationById(data.operationId);
+	await ensureWorkGroupNameIsUnique(data.name, data.operationId);
 
 	return prisma.workGroup.create({
 		data: {
@@ -2186,8 +2218,8 @@ export const createWork = async (
 	data: CreateWorkData,
 	files: Express.Multer.File[],
 ) => {
-	await ensureWorkNameIsUnique(data.name);
 	await getWorkGroupById(data.workGroupId);
+	await ensureWorkNameIsUnique(data.name, data.workGroupId);
 	assertUniqueWorkFiles([], files);
 
 	const savedFiles = await saveWorkFiles(files);
@@ -2312,14 +2344,16 @@ export const updateMaterial = async (id: number, data: UpdateMaterialData) => {
 };
 
 export const updateBlank = async (id: number, data: UpdateBlankData) => {
-	await getBlankById(id);
-
-	if (typeof data.name === "string") {
-		await ensureBlankNameIsUnique(data.name, id);
-	}
+	const currentBlank = await getBlankById(id);
 
 	if (typeof data.materialId === "number") {
 		await getMaterialById(data.materialId);
+	}
+
+	const nextName = data.name ?? currentBlank.name;
+	const nextMaterialId = data.materialId ?? currentBlank.materialId;
+	if (nextName !== currentBlank.name || nextMaterialId !== currentBlank.materialId) {
+		await ensureBlankNameIsUnique(nextName, nextMaterialId, id);
 	}
 
 	return prisma.blank.update({
@@ -2342,14 +2376,16 @@ export const updateBlank = async (id: number, data: UpdateBlankData) => {
 };
 
 export const updateWorkGroup = async (id: number, data: UpdateWorkGroupData) => {
-	await getWorkGroupById(id);
-
-	if (typeof data.name === "string") {
-		await ensureWorkGroupNameIsUnique(data.name, id);
-	}
+	const currentWorkGroup = await getWorkGroupById(id);
 
 	if (typeof data.operationId === "number") {
 		await getOperationById(data.operationId);
+	}
+
+	const nextName = data.name ?? currentWorkGroup.name;
+	const nextOperationId = data.operationId ?? currentWorkGroup.operationId;
+	if (nextName !== currentWorkGroup.name || nextOperationId !== currentWorkGroup.operationId) {
+		await ensureWorkGroupNameIsUnique(nextName, nextOperationId, id);
 	}
 
 	return prisma.workGroup.update({
@@ -2500,12 +2536,14 @@ export const updateWork = async (
 		throw new AppError(404, WORK_NOT_FOUND_ERROR);
 	}
 
-	if (typeof data.name === "string") {
-		await ensureWorkNameIsUnique(data.name, id);
-	}
-
 	if (typeof data.workGroupId === "number") {
 		await getWorkGroupById(data.workGroupId);
+	}
+
+	const nextName = data.name ?? currentWork.name;
+	const nextWorkGroupId = data.workGroupId ?? currentWork.workGroupId;
+	if (nextName !== currentWork.name || nextWorkGroupId !== currentWork.workGroupId) {
+		await ensureWorkNameIsUnique(nextName, nextWorkGroupId, id);
 	}
 
 	const removedFileIds = getUniqueIds(data.removedFileIds ?? []);

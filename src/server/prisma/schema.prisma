@@ -77,7 +77,7 @@ model material {
 
 model blank {
 	id          Int      @id @default(autoincrement())
-	name        String   @unique
+	name        String
 	description String?
 	materialId  Int
 	createdAt   DateTime @default(now())
@@ -85,6 +85,7 @@ model blank {
 	material    material @relation(fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
 	@@index([materialId])
+	@@unique([name, materialId])
 }
 
 model operation {
@@ -103,7 +104,7 @@ model operation {
 
 model workGroup {
 	id          Int       @id @default(autoincrement())
-	name        String    @unique
+	name        String
 	description String?
 	operationId Int
 	createdAt   DateTime  @default(now())
@@ -112,11 +113,12 @@ model workGroup {
 	works       work[]
 
 	@@index([operationId])
+	@@unique([name, operationId])
 }
 
 model work {
 	id          Int        @id @default(autoincrement())
-	name        String     @unique
+	name        String
 	description String?
 	workGroupId Int
 	tpz         Float
@@ -127,6 +129,7 @@ model work {
 	files       workFile[]
 
 	@@index([workGroupId])
+	@@unique([name, workGroupId])
 }
 
 model operationFile {
