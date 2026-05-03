@@ -57,10 +57,7 @@ const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
 
         await ApiService.guide.workGroup.get({
             controller,
-            options: {
-                ...(data.operationGroupId ? {operationGroupId: data.operationGroupId} : {}),
-                ...(data.operationId ? {operationId: id} : {}),
-            },
+            options: { operationId: id },
         }).then(({status, data}) => {
             if (status === 'success') {
                 mergeState({workGroup: data.map(({id, name}) => ({
@@ -96,8 +93,8 @@ const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
                     mergeState({operationId: idOperation}, setData);
 
                     await getWorkGroups(
-                        id,
-                        idOperation || undefined
+                        idOperation,
+                        dataProps.workGroupId || undefined
                     ).finally(() => mergeState({workGroup: cancelRef.current}, setLoading));
                 }
                 cancelRef.current = false;
