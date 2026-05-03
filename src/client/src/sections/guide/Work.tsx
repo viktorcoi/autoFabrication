@@ -35,9 +35,9 @@ import {
 import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import ModalManageWork from "@/components/modals/ModalGuide/ModalManageWork/ModalManageWork";
-import ModalWorkFiles from "@/components/modals/ModalGuide/ModalWorkFiles/ModalWorkFiles";
+import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
 import styles from './GuideSections.module.scss';
-import ModalFiltersWorks from "@/components/modals/ModalGuide/ModalFiltersWorks/ModalFiltersWorks";
+import ModalFiltersWorks from "@/components/modals/ModalFilters/ModalFiltersWorks/ModalFiltersWorks";
 
 const Work = (
     {onLoading}: {onLoading(value: boolean): void}
@@ -340,9 +340,10 @@ const Work = (
                     preventClose={loading.modal}
                 />
             ) : 'modal-work-files' === modals.id ? (
-                <ModalWorkFiles
-                    workId={modals.data?.id ?? 0}
-                    workName={modals.data?.name ?? ''}
+                <ModalFiles
+                    itemId={modals.data?.id ?? 0}
+                    name={modals.data?.name ?? ''}
+                    url={'/work'}
                     files={modals.data?.files ?? []}
                     open={modals.show}
                     onClose={closeModal}

@@ -24,6 +24,7 @@ import {
     isInteractiveTarget,
     renderContent,
 } from '../helpers';
+import {sanitizeSingleDecimalInput} from "@/shared/helpers";
 import styles from './TableBody.module.scss';
 import type {TableBodyProps} from './types';
 import ImagesProvider from "@/components/ImagesProvider/ImagesProvider";
@@ -444,9 +445,14 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 value={cellTextValue}
                                                 className={styles.cellInput}
                                                 mode={'plain'}
+                                                inputMode={columnType === 'decimal' ? 'decimal' : undefined}
                                                 disabled={isConstCell || loading || Boolean(disabled)}
                                                 onChange={(event) => {
-                                                    onDraftTextChange(rowId, columnId, event.target.value);
+                                                    const nextValue = columnType === 'decimal'
+                                                        ? sanitizeSingleDecimalInput(event.target.value)
+                                                        : event.target.value;
+
+                                                    onDraftTextChange(rowId, columnId, nextValue);
                                                 }}
                                                 onMouseDown={(event) => event.stopPropagation()}
                                                 onClick={(event) => event.stopPropagation()}
@@ -466,7 +472,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 styles.bodyCell,
                                                 isDragging && styles.bodyCellActiveDrag,
                                                 isResizing && styles.bodyCellResizing,
-                                                editing && (columnType === 'text' || columnType === 'date') && styles['bodyCell--editing'],
+                                                editing && (columnType === 'text' || columnType === 'date' || columnType === 'decimal') && styles['bodyCell--editing'],
                                                 isInvalidRequiredCell && styles['bodyCell--invalid'],
                                             )}
                                             style={{
@@ -539,7 +545,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 });
                                             }}
                                         >
-                                            {(columnType === 'text' || columnType === 'date') ? (
+                                            {(columnType === 'text' || columnType === 'date' || columnType === 'decimal') ? (
                                                 cellContent
                                             ) : (
                                                 <div

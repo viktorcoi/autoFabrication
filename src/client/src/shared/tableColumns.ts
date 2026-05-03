@@ -8,7 +8,7 @@ export const tableColumns: Record<string, Column[]> = {
     ],
 
     user: [
-        {key: 'login', header: 'Логин', minSize: 90, size: 180, maxSize: 430,  isConst: true},
+        {key: 'login', header: 'Логин', minSize: 90, size: 180, maxSize: 430, isConst: true},
         {key: 'lastName', header: 'Фамилия', minSize: 110, size: 240, maxSize: 265},
         {key: 'firstName', header: 'Имя', minSize: 75, size: 140, maxSize: 265},
         {key: 'middleName', header: 'Отчество', minSize: 110, size: 180, maxSize: 265},
@@ -61,12 +61,12 @@ export const tableColumns: Record<string, Column[]> = {
 
     work: [
         {key: 'name', header: 'Название', minSize: 110, size: 220, maxSize: 385},
+        {key: 'tpz', header: 'Тпз', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'tsht', header: 'Тшт', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
         {key: 'workGroup', header: 'Группа работ', minSize: 150, size: 200, maxSize: 385},
         {key: 'operation', header: 'Операция', minSize: 145, size: 200, maxSize: 385},
         {key: 'operationGroup', header: 'Группа операций', minSize: 175, size: 220, maxSize: 385},
-        {key: 'tpz', header: 'Тпз', minSize: 90, size: 110, maxSize: 140},
-        {key: 'tsht', header: 'Тшт', minSize: 90, size: 110, maxSize: 140},
         {key: 'download', header: 'Файлы', type: 'download', size: 95, resize: false},
         {key: 'description', header: 'Описание', minSize: 115, size: 420, maxSize: 3065},
-    ]
-}
+    ],
+};

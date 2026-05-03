@@ -17,38 +17,51 @@ import {
 } from "@vkontakte/icons";
 import {
     downloadOperationFile,
-    downloadOperationFilesArchive
+    downloadOperationFilesArchive,
+    downloadWorkFile,
+    downloadWorkFilesArchive
 } from "@/apiService/apiGuide/helpers";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {formatBytes} from "@/components/UploadFile/helpers";
-import {ModalOperationFilesProps} from "@/components/modals/ModalGuide/ModalOperationFiles/types";
-import styles from './ModalOperationFiles.module.scss';
+import {ModalFilesProps} from "@/components/modals/ModalFiles/types";
+import styles from './ModalFiles.module.scss';
 
 const DOWNLOAD_ALL_ID = 0;
 
-const ModalOperationFiles = (props: ModalOperationFilesProps) => {
+const downloadMap = {
+    '/operation': {
+        all: downloadOperationFilesArchive,
+        one: downloadOperationFile,
+    },
+    '/work': {
+        all: downloadWorkFilesArchive,
+        one: downloadWorkFile,
+    },
+};
+
+const ModalFiles = (props: ModalFilesProps) => {
 
     const {
-        operationId,
-        operationName,
+        itemId,
+        name,
+        url,
         files,
         onClose = () => {},
         ...restProps
     } = props;
 
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
-
     const [loadingFileId, setLoadingFileId] = useState<number | null>(null);
 
     const handleDownloadAll = async () => {
         setLoadingFileId(DOWNLOAD_ALL_ID);
 
         try {
-            await downloadOperationFilesArchive(operationId, operationName);
+            await downloadMap[url].all(itemId, name);
 
             addSnackbar({
                 type: 'success',
-                text: `Скачивание архива из "${operationName}" запущено`
+                text: `Скачивание архива из "${name}" запущено`
             });
         } catch (error) {
             addSnackbar({
@@ -64,7 +77,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
         setLoadingFileId(fileId);
 
         try {
-            await downloadOperationFile(fileId, fileName);
+            await downloadMap[url].one(fileId, fileName);
         } catch (error) {
             addSnackbar({
                 type: 'error',
@@ -101,7 +114,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
                             </Tooltip>
                         )}
                     >
-                        {`Файлы из "${operationName}"`}
+                        {`Файлы из "${name}"`}
                     </ModalPageHeader>
                 </PlatformProvider>
             )}
@@ -113,7 +126,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
                     icon={<Icon56FolderOutline />}
                     title={'Файлы отсутствуют'}
                 >
-                    <Text>У этой операции нет загруженных файлов</Text>
+                    <Text>Нет загруженных файлов</Text>
                 </Placeholder>
             ) : (
                 <div className={styles.list}>
@@ -158,7 +171,7 @@ const ModalOperationFiles = (props: ModalOperationFilesProps) => {
                 </div>
             )}
         </ModalPage>
-    )
+    );
 };
 
-export default ModalOperationFiles;
+export default ModalFiles;

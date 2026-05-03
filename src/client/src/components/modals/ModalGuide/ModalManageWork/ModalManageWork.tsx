@@ -12,7 +12,7 @@ import {
     Textarea
 } from "@vkontakte/vkui";
 import {SubmitEvent, useEffect, useMemo, useState} from "react";
-import {mergeState} from "@/shared/helpers";
+import {mergeState, sanitizeSingleDecimalInput} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useController, useSelectFilter} from "@/shared/hooks";
@@ -318,7 +318,8 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
                             <Input
                                 disabled={loading.send}
                                 value={data.tpz}
-                                onChange={(e) => mergeState({tpz: e.target.value}, setData)}
+                                inputMode={'decimal'}
+                                onChange={(e) => mergeState({tpz: sanitizeSingleDecimalInput(e.target.value)}, setData)}
                                 placeholder={'Например 1.5'}
                                 status={!parsedTpz ? 'error' : 'default'}
                             />
@@ -330,7 +331,8 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
                             <Input
                                 disabled={loading.send}
                                 value={data.tsht}
-                                onChange={(e) => mergeState({tsht: e.target.value}, setData)}
+                                inputMode={'decimal'}
+                                onChange={(e) => mergeState({tsht: sanitizeSingleDecimalInput(e.target.value)}, setData)}
                                 placeholder={'Например 0.8'}
                                 status={!parsedTsht ? 'error' : 'default'}
                             />

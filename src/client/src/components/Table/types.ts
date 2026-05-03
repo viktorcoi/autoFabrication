@@ -10,7 +10,7 @@ export type TableRow = Record<string, unknown> & {
     isRequired?: string[];
 };
 
-export type ColumnType = 'text' | 'button' | 'download' | 'boolean' | 'avatar' | 'date' | 'status';
+export type ColumnType = 'text' | 'button' | 'download' | 'boolean' | 'avatar' | 'date' | 'status' | 'decimal';
 
 export type Column = {
     key: string;

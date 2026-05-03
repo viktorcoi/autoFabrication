@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 const typeProductNameSchema = z
 	.string()
@@ -134,7 +134,7 @@ const workGroupIdSchema = z.coerce
 	.int()
 	.positive("Некорректный id группы работ");
 
-const parseDecimalNumber = (value: unknown) => {
+const parseWorkTimeNumber = (value: unknown) => {
 	if (typeof value === "number") {
 		return value;
 	}
@@ -143,26 +143,36 @@ const parseDecimalNumber = (value: unknown) => {
 		return value;
 	}
 
-	const normalizedValue = value.trim().replace(",", ".");
+	const normalizedValue = value.trim();
 
 	if (!normalizedValue.length) {
 		return value;
 	}
 
-	return Number(normalizedValue);
+	if (!/^\d+(?:[.,]\d)?$/.test(normalizedValue)) {
+		return Number.NaN;
+	}
+
+	return Number(normalizedValue.replace(",", "."));
 };
 
 const workTimeSchema = z.preprocess(
-	parseDecimalNumber,
+	parseWorkTimeNumber,
 	z
-		.number()
-		.finite("Значение времени должно быть числом")
-		.min(0, "Значение времени не может быть отрицательным")
+		.custom<number>(
+			(value) => typeof value === "number" && Number.isFinite(value),
+			{ message: "Значение времени должно быть числом" },
+		)
+		.refine(
+			(value) => value >= 0,
+			"Значение времени не может быть отрицательным",
+		)
 		.refine(
 			(value) => Math.round(value * 10) === value * 10,
 			"Значение времени должно содержать не более 1 знака после запятой",
 		),
 );
+
 
 const operationsTableSortingSchema = z.object({
 	id: z.enum(["name", "operationGroup", "download", "description"]),

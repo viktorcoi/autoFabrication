@@ -61,6 +61,28 @@ export const mergeState = <K>(
     setState(prevState => ({ ...prevState, ...newState }));
 };
 
+export const sanitizeSingleDecimalInput = (value: string) => {
+    const normalized = value
+        .replace(/,/g, '.')
+        .replace(/[^\d.]/g, '');
+
+    if (!normalized.length) {
+        return '';
+    }
+
+    const startsWithDot = normalized.startsWith('.');
+    const [integerPart = '', ...fractionParts] = normalized.split('.');
+
+    if (fractionParts.length === 0) {
+        return startsWithDot ? '0.' : integerPart;
+    }
+
+    const fraction = fractionParts.join('').slice(0, 1);
+    const safeIntegerPart = startsWithDot ? '0' : integerPart;
+
+    return `${safeIntegerPart}.${fraction}`;
+};
+
 const getRandomNumber = (max: number) => {
     if (max <= 0) {
         return 0;

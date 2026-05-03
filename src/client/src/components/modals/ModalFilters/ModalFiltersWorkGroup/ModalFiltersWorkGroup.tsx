@@ -9,7 +9,7 @@ import {
     Spinner
 } from "@vkontakte/vkui";
 import {useEffect, useMemo, useState} from "react";
-import {ModalFiltersWorkGroupProps} from "@/components/modals/ModalGuide/ModalFiltersWorkGroup/types";
+import {ModalFiltersWorkGroupProps} from "@/components/modals/ModalFilters/ModalFiltersWorkGroup/types";
 import {useController, useSelectFilter} from "@/shared/hooks";
 import {ApiService} from "@/apiService/apiService";
 import {mergeState} from "@/shared/helpers";

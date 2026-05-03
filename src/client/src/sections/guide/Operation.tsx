@@ -22,7 +22,7 @@ import {OperationTableRow, PatchOperationTableOptions} from "@/apiService/apiGui
 import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import ModalManageOperation from "@/components/modals/ModalGuide/ModalManageOperation/ModalManageOperation";
-import ModalOperationFiles from "@/components/modals/ModalGuide/ModalOperationFiles/ModalOperationFiles";
+import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
 import styles from './GuideSections.module.scss';
 
 const Operation = (
@@ -299,9 +299,10 @@ const Operation = (
                     preventClose={loading.modal}
                 />
             ) : 'modal-operation-files' === modals.id ? (
-                <ModalOperationFiles
-                    operationId={modals.data?.id ?? 0}
-                    operationName={modals.data?.name ?? ''}
+                <ModalFiles
+                    itemId={modals.data?.id ?? 0}
+                    name={modals.data?.name ?? ''}
+                    url={'/operation'}
                     files={modals.data?.files ?? []}
                     open={modals.show}
                     onClose={closeModal}

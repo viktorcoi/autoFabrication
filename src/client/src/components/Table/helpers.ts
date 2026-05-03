@@ -163,6 +163,7 @@ export const getColumnType = (column?: Column): ColumnType => {
         || column?.type === 'avatar'
         || column?.type === 'date'
         || column?.type === 'status'
+        || column?.type === 'decimal'
         || column?.type === 'text'
     ) {
         return column.type;

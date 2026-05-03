@@ -13,7 +13,7 @@ import {useController, useSelectFilter} from "@/shared/hooks";
 import {ApiService} from "@/apiService/apiService";
 import {mergeState} from "@/shared/helpers";
 import styles from './ModalFiltersWorks.module.scss'
-import {ModalFiltersWorksProps} from "@/components/modals/ModalGuide/ModalFiltersWorks/types";
+import {ModalFiltersWorksProps} from "@/components/modals/ModalFilters/ModalFiltersWorks/types";
 
 const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
 

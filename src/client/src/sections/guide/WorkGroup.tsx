@@ -35,7 +35,7 @@ import {
 import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import ModalManageWorkGroup from "@/components/modals/ModalGuide/ModalManageWorkGroup/ModalManageWorkGroup";
-import ModalFiltersWorkGroup from "@/components/modals/ModalGuide/ModalFiltersWorkGroup/ModalFiltersWorkGroup";
+import ModalFiltersWorkGroup from "@/components/modals/ModalFilters/ModalFiltersWorkGroup/ModalFiltersWorkGroup";
 import styles from './GuideSections.module.scss';
 
 const WorkGroup = (
