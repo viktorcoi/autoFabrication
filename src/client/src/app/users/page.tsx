@@ -1,21 +1,23 @@
 'use client'
 
-import {ActionSheet, ActionSheetItem, Button, ButtonGroup, Search, Tooltip} from "@vkontakte/vkui";
+import {ActionSheet, ActionSheetItem, Button, ButtonGroup, Counter, Search, Tooltip} from "@vkontakte/vkui";
 import {
     Icon20KeyOutline, Icon20MentionOutline,
     Icon24Add,
+    Icon24Filter,
     Icon24PenOutline,
     Icon24SearchSlashOutline,
     Icon24TrashSimpleOutline
 } from "@vkontakte/icons";
 import Container from "@/components/Container/Container";
 import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
-import {useController, useSearch} from "@/shared/hooks";
+import {useController, useFilersCount, useSearch} from "@/shared/hooks";
 import {mergeState} from "@/shared/helpers";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import Table from "@/components/Table/Table";
 import {ApiService} from "@/apiService/apiService";
 import {
+    GetUsersTableFilters,
     PatchUsersTableOptions,
     UserTableRow
 } from "@/apiService/apiUsers/types";
@@ -33,6 +35,7 @@ import {useShowErrors} from "@/store/showErrors/showErrors";
 import {useAppStore} from "@/store/app/app";
 import {SnackbarItem} from "@/store/snackbar/types";
 import {UserPermissionFlagsType} from "@/apiService/apiAuth/types";
+import ModalFiltersUsers from "@/components/modals/ModalFilters/ModalFiltersUsers/ModalFiltersUsers";
 
 const UsersPage = () => {
 
@@ -63,12 +66,16 @@ const UsersPage = () => {
         editMode: false,
         actionSheet: null
     });
+    const [tableFilters, setTableFilters] = useState<GetUsersTableFilters>({
+        roleId: 0,
+    });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user' | 'modal-change-password' | 'modal-change-login' | 'modal-multi-remove-user'
+        'modal-manage-user' | 'modal-remove-user' | 'modal-create-user' | 'modal-change-password' | 'modal-change-login' | 'modal-multi-remove-user' | 'modal-filters-users'
     >>({id: null, show: false, data: null});
 
     const actionSheetRef = useRef(null);
 
+    const countFilter = useFilersCount(tableFilters);
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const showErrors = useShowErrors(state => state);
     // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
@@ -77,7 +84,13 @@ const UsersPage = () => {
     const {
         createController,
         cancelRef
-    } = useController([tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows]);
+    } = useController([
+        tableOptions.sorting,
+        tableOptions.search,
+        tableOptions.page,
+        tableOptions.rows,
+        tableFilters.roleId
+    ]);
 
     useEffect(() => {
         mergeState({search: delaySearch}, setTableOptions);
@@ -87,9 +100,12 @@ const UsersPage = () => {
         mergeState({page: true}, setLoading);
 
         const controller = createController();
+        const filterOptions: Partial<GetUsersTableFilters> = {
+            roleId: tableFilters.roleId || undefined,
+        };
 
         await ApiService.users.table.get({
-            options: {...tableOptions},
+            options: {...tableOptions, ...filterOptions},
             controller
         }).then(({status, data}) => {
             if (status === 'success') {
@@ -108,7 +124,7 @@ const UsersPage = () => {
 
     useEffect(() => {
         getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
-    }, [tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows]);
+    }, [tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows, tableFilters.roleId]);
 
     const closeModal = (r: ModalPageCloseReasonType) => {
         mergeState({show: false}, setModals);
@@ -291,7 +307,15 @@ const UsersPage = () => {
     return (
         <>
             {tableManage.actionSheet}
-            {'modal-multi-remove-user' === modals.id ? (
+            {'modal-filters-users' === modals.id ? (
+                <ModalFiltersUsers
+                    onChangeFilters={setTableFilters}
+                    data={tableFilters}
+                    open={modals.show}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                />
+            ) : 'modal-multi-remove-user' === modals.id ? (
                 <ModalMultiRemove
                     data={modals.data}
                     url={'/users'}
@@ -402,14 +426,41 @@ const UsersPage = () => {
                                 )}
                             </ButtonGroup>
                         )}
-                        <Search
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            disabled={loading.page || tableManage.editMode}
-                            noPadding={true}
-                            className={'search'}
-                            slotProps={{ input: { getRootRef: inputRef } }}
-                        />
+                        <div className={'filters'}>
+                            <Search
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                disabled={loading.page || tableManage.editMode}
+                                noPadding={true}
+                                className={'search'}
+                                slotProps={{ input: { getRootRef: inputRef } }}
+                            />
+                            <Tooltip
+                                description={'Фильтры'}
+                                usePortal={true}
+                                placement={"top"}
+                                disableTriggerOnFocus={true}
+                            >
+                                <div className={'filter'}>
+                                    <Button
+                                        disabled={loading.page || tableManage.editMode}
+                                        onClick={() => mergeState({id: 'modal-filters-users', show: true}, setModals)}
+                                        mode={'secondary'}
+                                        size={'m'}
+                                        before={<Icon24Filter/>}
+                                    />
+                                    {!!countFilter && (
+                                        <Counter
+                                            mode={'primary'}
+                                            size={'s'}
+                                            className={'filter__counter'}
+                                        >
+                                            {countFilter}
+                                        </Counter>
+                                    )}
+                                </div>
+                            </Tooltip>
+                        </div>
                     </>
                 )}
             >

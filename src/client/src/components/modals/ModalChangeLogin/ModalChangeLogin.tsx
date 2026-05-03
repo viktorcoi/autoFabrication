@@ -109,6 +109,7 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
             hideCloseButton={loading.send}
             onClose={onClose}
             preventClose={preventClose}
+            height={188}
             header={
                 <PlatformProvider
                     value={'ios'}

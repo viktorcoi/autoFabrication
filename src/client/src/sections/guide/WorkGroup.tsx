@@ -374,7 +374,7 @@ const WorkGroup = (
                             )}
                         </ButtonGroup>
                     )}
-                        <div className={styles.filters}>
+                        <div className={'filters'}>
                             <Search
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
@@ -389,7 +389,7 @@ const WorkGroup = (
                                 placement={"top"}
                                 disableTriggerOnFocus={true}
                             >
-                                <div className={styles.filter}>
+                                <div className={'filter'}>
                                     <Button
                                         disabled={loading.page || tableManage.editMode}
                                         onClick={() => mergeState({id: 'modal-filters-work-group', show: true}, setModals)}
@@ -401,7 +401,7 @@ const WorkGroup = (
                                         <Counter
                                             mode={'primary'}
                                             size={'s'}
-                                            className={styles.filter__counter}
+                                            className={'filter__counter'}
                                         >
                                             {countFilter}
                                         </Counter>

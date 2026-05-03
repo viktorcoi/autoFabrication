@@ -56,3 +56,7 @@ export interface PathUserOptions {
 }
 
 export type PatchUsersTableOptions = Record<number, Partial<Pick<UserTableRow, "firstName" | "lastName" | "middleName" | "birthDate">>>;
+
+export type GetUsersTableFilters = {
+	roleId: number;
+};

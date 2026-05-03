@@ -192,6 +192,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
 
     return (
         <ModalPage
+            height={604}
             hideCloseButton={loading.send}
             onClose={onClose}
             preventClose={preventClose || openAvatar || modals.id !== null}

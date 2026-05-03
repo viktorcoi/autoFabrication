@@ -17,18 +17,3 @@
     gap: var(--app-distance-empty);
     flex-wrap: wrap;
 }
-
-.filters {
-    display: flex;
-    align-items: center;
-    gap: var(--vkui--size_button_group_gap_small--regular);
-}
-
-.filter {
-    position: relative;
-    &__counter {
-        position: absolute;
-        right: -8px;
-        bottom: -5px;
-    }
-}

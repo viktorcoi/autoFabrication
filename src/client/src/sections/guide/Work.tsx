@@ -10,7 +10,7 @@ import {
 } from "@vkontakte/vkui";
 import Table from "@/components/Table/Table";
 import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
-import {useController, useFilersCount, useSearch, useSelectFilter} from "@/shared/hooks";
+import {useController, useFilersCount, useSearch} from "@/shared/hooks";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 import {useAppStore} from "@/store/app/app";
@@ -403,7 +403,7 @@ const Work = (
                             )}
                         </ButtonGroup>
                     )}
-                    <div className={styles.filters}>
+                    <div className={'filters'}>
                         <Search
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -418,7 +418,7 @@ const Work = (
                             placement={"top"}
                             disableTriggerOnFocus={true}
                         >
-                            <div className={styles.filter}>
+                            <div className={'filter'}>
                                 <Button
                                     disabled={loading.page || tableManage.editMode}
                                     onClick={() => mergeState({id: 'modal-filters-works', show: true}, setModals)}
@@ -430,7 +430,7 @@ const Work = (
                                     <Counter
                                         mode={'primary'}
                                         size={'s'}
-                                        className={styles.filter__counter}
+                                        className={'filter__counter'}
                                     >
                                         {countFilter}
                                     </Counter>

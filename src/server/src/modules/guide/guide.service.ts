@@ -946,13 +946,12 @@ const buildOperationGroupsTableWhere = (search?: string): Prisma.operationGroupW
 	};
 };
 
-const buildMaterialsTableWhere = (search?: string): Prisma.materialWhereInput | undefined => {
-	if (!search) {
-		return undefined;
-	}
+const buildMaterialsTableWhere = (query: GetMaterialsTableQuery): Prisma.materialWhereInput | undefined => {
+	const filters: Prisma.materialWhereInput = {};
+	const search = query.search;
 
-	return {
-		OR: [
+	if (search) {
+		filters.OR = [
 			{
 				name: {
 					contains: search,
@@ -975,17 +974,23 @@ const buildMaterialsTableWhere = (search?: string): Prisma.materialWhereInput | 
 					},
 				},
 			},
-		],
-	};
-};
-
-const buildBlanksTableWhere = (search?: string): Prisma.blankWhereInput | undefined => {
-	if (!search) {
-		return undefined;
+		];
 	}
 
-	return {
-		OR: [
+	if (typeof query.materialGroupId === "number") {
+		filters.materialGroupId = query.materialGroupId;
+	}
+
+	return Object.keys(filters).length ? filters : undefined;
+};
+
+const buildBlanksTableWhere = (query: GetBlanksTableQuery): Prisma.blankWhereInput | undefined => {
+	const filters: Prisma.blankWhereInput = {};
+	const search = query.search;
+	const materialFilter: Prisma.materialWhereInput = {};
+
+	if (search) {
+		filters.OR = [
 			{
 				name: {
 					contains: search,
@@ -1022,8 +1027,24 @@ const buildBlanksTableWhere = (search?: string): Prisma.blankWhereInput | undefi
 					},
 				},
 			},
-		],
-	};
+		];
+	}
+
+	if (typeof query.materialId === "number") {
+		filters.materialId = query.materialId;
+	}
+
+	if (typeof query.materialGroupId === "number") {
+		materialFilter.materialGroupId = query.materialGroupId;
+	}
+
+	if (Object.keys(materialFilter).length) {
+		filters.material = {
+			is: materialFilter,
+		};
+	}
+
+	return Object.keys(filters).length ? filters : undefined;
 };
 
 const buildWorkGroupsTableWhere = (query: GetWorkGroupsTableQuery): Prisma.workGroupWhereInput | undefined => {
@@ -1181,13 +1202,12 @@ const buildWorksTableWhere = (query: GetWorksTableQuery): Prisma.workWhereInput 
 	return Object.keys(filters).length ? filters : undefined;
 };
 
-const buildOperationsTableWhere = (search?: string): Prisma.operationWhereInput | undefined => {
-	if (!search) {
-		return undefined;
-	}
+const buildOperationsTableWhere = (query: GetOperationsTableQuery): Prisma.operationWhereInput | undefined => {
+	const filters: Prisma.operationWhereInput = {};
+	const search = query.search;
 
-	return {
-		OR: [
+	if (search) {
+		filters.OR = [
 			{
 				name: {
 					contains: search,
@@ -1210,8 +1230,14 @@ const buildOperationsTableWhere = (search?: string): Prisma.operationWhereInput 
 					},
 				},
 			},
-		],
-	};
+		];
+	}
+
+	if (typeof query.operationGroupId === "number") {
+		filters.operationGroupId = query.operationGroupId;
+	}
+
+	return Object.keys(filters).length ? filters : undefined;
 };
 
 const buildTypeProductsTableOrderBy = (
@@ -1511,16 +1537,23 @@ export const listMaterialGroups = async (search?: string) =>
 		},
 	});
 
-export const listMaterials = async (search?: string) =>
+export const listMaterials = async (search?: string, materialGroupId?: number) =>
 	prisma.material.findMany({
-		where: search
-			? {
-					name: {
-						contains: search,
-						mode: "insensitive",
-					},
-				}
-			: undefined,
+		where: {
+			...(search
+				? {
+						name: {
+							contains: search,
+							mode: "insensitive",
+						},
+					}
+				: {}),
+			...(typeof materialGroupId === "number"
+				? {
+						materialGroupId,
+					}
+				: {}),
+		},
 		select: materialListSelect,
 		orderBy: {
 			id: "asc",
@@ -1684,7 +1717,7 @@ export const getOperationGroupsTable = async (query: GetOperationGroupsTableQuer
 };
 
 export const getMaterialsTable = async (query: GetMaterialsTableQuery) => {
-	const where = buildMaterialsTableWhere(query.search);
+	const where = buildMaterialsTableWhere(query);
 	const orderBy = buildMaterialsTableOrderBy(query.sorting);
 	const skip = query.page * query.rows;
 	const [total, materials] = await prisma.$transaction([
@@ -1712,7 +1745,7 @@ export const getMaterialsTable = async (query: GetMaterialsTableQuery) => {
 };
 
 export const getBlanksTable = async (query: GetBlanksTableQuery) => {
-	const where = buildBlanksTableWhere(query.search);
+	const where = buildBlanksTableWhere(query);
 	const orderBy = buildBlanksTableOrderBy(query.sorting);
 	const skip = query.page * query.rows;
 	const [total, blanks] = await prisma.$transaction([
@@ -1770,7 +1803,7 @@ export const getWorkGroupsTable = async (query: GetWorkGroupsTableQuery) => {
 };
 
 export const getOperationsTable = async (query: GetOperationsTableQuery) => {
-	const where = buildOperationsTableWhere(query.search);
+	const where = buildOperationsTableWhere(query);
 	const orderBy = buildOperationsTableOrderBy(query.sorting);
 	const skip = query.page * query.rows;
 	const [total, operations] = await prisma.$transaction([

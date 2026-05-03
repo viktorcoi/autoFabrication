@@ -165,7 +165,6 @@ const OPERATION_ARCHIVE_ENTRY_FALLBACK = "file";
 const WORK_FILE_NOT_FOUND_ERROR = "Файл работы не найден";
 const WORK_ARCHIVE_EMPTY_ERROR = "У работы нет загруженных файлов";
 const WORK_ARCHIVE_NAME_FALLBACK = "work-files";
-const WORK_ARCHIVE_ENTRY_FALLBACK = "file";
 
 const sanitizeArchiveEntryName = (value: string, fallback: string) => {
 	const sanitized = value
@@ -538,7 +537,8 @@ guideRouter.get(
 		const searchValue = typeof request.query.search === "string"
 			? request.query.search.trim()
 			: "";
-		const materials = await listMaterials(searchValue || undefined);
+		const materialGroupId = parseOptionalQueryId(request.query.materialGroupId, "id группы материала");
+		const materials = await listMaterials(searchValue || undefined, materialGroupId);
 
 		response.json(materials);
 	}),

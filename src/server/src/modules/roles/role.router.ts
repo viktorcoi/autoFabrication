@@ -43,6 +43,7 @@ roleRouter.get(
 		if (forSelect) {
 			const canReadRolesForSelect = (
 				hasPermission(permissions, "/roles", "view")
+				|| hasPermission(permissions, "/users", "view")
 				|| hasPermission(permissions, "/users", "adding")
 				|| hasPermission(permissions, "/users", "editing")
 			);

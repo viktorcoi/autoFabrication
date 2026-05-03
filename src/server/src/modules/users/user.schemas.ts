@@ -15,6 +15,11 @@ const passwordSchema = z
 	.min(6, "Пароль должен содержать не менее 6 символов.")
 	.max(15, 'Пароль должен быть не более 15 символов');
 
+const roleIdSchema = z.coerce
+	.number()
+	.int()
+	.positive("roleId должен быть положительным числом");
+
 const firstNameSchema = z
 	.string()
 	.trim()
@@ -65,6 +70,24 @@ const parseTableSorting = (value: unknown) => {
 	}
 };
 
+const parseOptionalId = (value: unknown) => {
+	if (value === undefined || value === null || value === "") {
+		return undefined;
+	}
+
+	if (typeof value === "string") {
+		const normalizedValue = value.trim();
+
+		if (normalizedValue.length === 0) {
+			return undefined;
+		}
+
+		return normalizedValue;
+	}
+
+	return value;
+};
+
 export const createUserSchema = z.object({
 	firstName: firstNameSchema,
 	lastName: lastNameSchema,
@@ -73,7 +96,7 @@ export const createUserSchema = z.object({
 	login: loginSchema,
 	password: passwordSchema,
 	avatarUrl: z.string().url("Аватар должен быть корректной ссылкой").nullable().optional(),
-	roleId: z.coerce.number().int().positive("roleId должен быть положительным числом"),
+	roleId: roleIdSchema,
 });
 
 export const updateUserSchema = createUserSchema.partial().extend({
@@ -110,6 +133,7 @@ export const getUsersTableSchema = z.object({
 		z.string().optional(),
 	).transform((value) => value && value.length > 0 ? value : undefined),
 	sorting: z.preprocess(parseTableSorting, userTableSortingSchema.nullable()).optional().transform((value) => value ?? null),
+	roleId: z.preprocess(parseOptionalId, roleIdSchema.optional()),
 });
 
 export type GetUsersTableQuery = z.infer<typeof getUsersTableSchema>;

@@ -237,6 +237,7 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
 
     return (
         <ModalPage
+            height={640}
             hideCloseButton={loading.send}
             onClose={onClose}
             preventClose={preventClose}

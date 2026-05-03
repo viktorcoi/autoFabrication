@@ -54,6 +54,9 @@ import {
     TypeProductsTableRow,
     GetWorksTableFilters,
     GetWorkGroupsTableFilters,
+    GetMaterialsTableFilters,
+    GetBlanksTableFilters,
+    GetOperationsTableFilters,
 } from "@/apiService/apiGuide/types";
 import {createOperationOptions, createWorkOptions} from "@/apiService/apiGuide/helpers";
 
@@ -356,7 +359,7 @@ export const ApiGuide = {
 
         table: {
             get: async (options: ApiServiceOptions<{
-                options?: GetTableOptions;
+                options?: GetTableOptions<Partial<GetOperationsTableFilters>>;
             }>): Promise<ApiServiceResponse<GetTableResponse<OperationTableRow[]>>> => {
                 return await api.get("/guide/operation/table", {
                     signal: options.controller?.signal,
@@ -388,9 +391,20 @@ export const ApiGuide = {
     },
 
     material: {
-        get: async (options: ApiServiceOptions = {}): Promise<ApiServiceResponse<GetMaterialsResponse[]>> => {
+        get: async (options: ApiServiceOptions<{
+            options?: {
+                search?: string;
+                materialGroupId?: number;
+            };
+        }> = {}): Promise<ApiServiceResponse<GetMaterialsResponse[]>> => {
             return await api.get("/guide/material", {
                 signal: options.controller?.signal,
+                params: {
+                    ...(options.options?.search?.trim() ? { search: options.options.search } : undefined),
+                    ...(typeof options.options?.materialGroupId === "number" && options.options.materialGroupId > 0
+                        ? { materialGroupId: options.options.materialGroupId }
+                        : undefined),
+                },
             }).then((response) => {
                 return handleApiSuccess(
                     response.data,
@@ -462,7 +476,7 @@ export const ApiGuide = {
 
         table: {
             get: async (options: ApiServiceOptions<{
-                options?: GetTableOptions;
+                options?: GetTableOptions<Partial<GetMaterialsTableFilters>>;
             }>): Promise<ApiServiceResponse<GetTableResponse<MaterialTableRow[]>>> => {
                 return await api.get("/guide/material/table", {
                     signal: options.controller?.signal,
@@ -556,7 +570,7 @@ export const ApiGuide = {
 
         table: {
             get: async (options: ApiServiceOptions<{
-                options?: GetTableOptions;
+                options?: GetTableOptions<Partial<GetBlanksTableFilters>>;
             }>): Promise<ApiServiceResponse<GetTableResponse<BlankTableRow[]>>> => {
                 return await api.get("/guide/blank/table", {
                     signal: options.controller?.signal,

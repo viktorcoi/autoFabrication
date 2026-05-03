@@ -8,6 +8,7 @@ import {
 import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {
 	GetByIdUserResponse,
+	GetUsersTableFilters,
 	PatchUsersTableOptions,
 	PathUserOptions,
 	PostUserOptions,
@@ -78,7 +79,7 @@ export const ApiUsers = {
 
 	table: {
 		get: async (options: ApiServiceOptions<{
-			options?: GetTableOptions;
+			options?: GetTableOptions<Partial<GetUsersTableFilters>>;
 		}>): Promise<ApiServiceResponse<GetTableResponse<UserTableRow[]>>> => {
 			return await api.get("/users/table", {
 				signal: options.controller?.signal,

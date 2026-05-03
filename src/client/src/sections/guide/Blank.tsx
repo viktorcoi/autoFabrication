@@ -1,12 +1,13 @@
-import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Search, Tooltip} from "@vkontakte/vkui";
+import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Counter, Search, Tooltip} from "@vkontakte/vkui";
 import Table from "@/components/Table/Table";
 import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
-import {useController, useSearch} from "@/shared/hooks";
+import {useController, useFilersCount, useSearch} from "@/shared/hooks";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 import {useAppStore} from "@/store/app/app";
 import {
     Icon24Add,
+    Icon24Filter,
     Icon24PenOutline,
     Icon24SearchSlashOutline,
     Icon24TrashSimpleOutline
@@ -18,10 +19,11 @@ import {TableEvent} from "@/components/Table/types";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import {ApiService} from "@/apiService/apiService";
 import {SnackbarItem} from "@/store/snackbar/types";
-import {BlankTableRow, PatchBlankTableOptions} from "@/apiService/apiGuide/types";
+import {BlankTableRow, GetBlanksTableFilters, PatchBlankTableOptions} from "@/apiService/apiGuide/types";
 import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
 import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import ModalManageBlank from "@/components/modals/ModalGuide/ModalManageBlank/ModalManageBlank";
+import ModalFiltersBlank from "@/components/modals/ModalFilters/ModalFiltersBlank/ModalFiltersBlank";
 import styles from './GuideSections.module.scss';
 
 const Blank = (
@@ -55,12 +57,17 @@ const Blank = (
         editMode: false,
         actionSheet: null
     });
+    const [tableFilters, setTableFilters] = useState<GetBlanksTableFilters>({
+        materialGroupId: 0,
+        materialId: 0,
+    });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-manage-blank' | 'modal-remove-blank' | 'modal-multi-remove-blank'
+        'modal-manage-blank' | 'modal-remove-blank' | 'modal-multi-remove-blank' | 'modal-filters-blank'
     >>({id: null, show: false, data: null});
 
     const actionSheetRef = useRef(null);
 
+    const countFilter = useFilersCount(tableFilters);
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const showErrors = useShowErrors(state => state);
     const { TEST, permissions } = useAppStore(state => state);
@@ -68,7 +75,14 @@ const Blank = (
     const {
         createController,
         cancelRef
-    } = useController([tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows]);
+    } = useController([
+        tableOptions.sorting,
+        tableOptions.search,
+        tableOptions.page,
+        tableOptions.rows,
+        tableFilters.materialGroupId,
+        tableFilters.materialId
+    ]);
 
     useEffect(() => {
         mergeState({search: delaySearch}, setTableOptions);
@@ -78,9 +92,13 @@ const Blank = (
         mergeState({page: true}, setLoading);
 
         const controller = createController();
+        const filterOptions: Partial<GetBlanksTableFilters> = {
+            materialGroupId: tableFilters.materialGroupId || undefined,
+            materialId: tableFilters.materialId || undefined,
+        };
 
         await ApiService.guide.blank.table.get({
-            options: {...tableOptions},
+            options: {...tableOptions, ...filterOptions},
             controller
         }).then(({status, data}) => {
             if (status === 'success') {
@@ -99,7 +117,7 @@ const Blank = (
 
     useEffect(() => {
         getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
-    }, [tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows]);
+    }, [tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows, tableFilters.materialGroupId, tableFilters.materialId]);
 
     const closeModal = (r: ModalPageCloseReasonType) => {
         mergeState({show: false}, setModals);
@@ -260,7 +278,15 @@ const Blank = (
     return (
         <>
             {tableManage.actionSheet}
-            {'modal-multi-remove-blank' === modals.id ? (
+            {'modal-filters-blank' === modals.id ? (
+                <ModalFiltersBlank
+                    onChangeFilters={setTableFilters}
+                    data={tableFilters}
+                    open={modals.show}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                />
+            ) : 'modal-multi-remove-blank' === modals.id ? (
                 <ModalMultiRemove
                     data={modals.data}
                     url={'/blank'}
@@ -336,14 +362,41 @@ const Blank = (
                             )}
                         </ButtonGroup>
                     )}
-                    <Search
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        disabled={loading.page || tableManage.editMode}
-                        noPadding={true}
-                        className={'search'}
-                        slotProps={{ input: { getRootRef: inputRef } }}
-                    />
+                    <div className={'filters'}>
+                        <Search
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            disabled={loading.page || tableManage.editMode}
+                            noPadding={true}
+                            className={'search'}
+                            slotProps={{ input: { getRootRef: inputRef } }}
+                        />
+                        <Tooltip
+                            description={'Фильтры'}
+                            usePortal={true}
+                            placement={"top"}
+                            disableTriggerOnFocus={true}
+                        >
+                            <div className={'filter'}>
+                                <Button
+                                    disabled={loading.page || tableManage.editMode}
+                                    onClick={() => mergeState({id: 'modal-filters-blank', show: true}, setModals)}
+                                    mode={'secondary'}
+                                    size={'m'}
+                                    before={<Icon24Filter/>}
+                                />
+                                {!!countFilter && (
+                                    <Counter
+                                        mode={'primary'}
+                                        size={'s'}
+                                        className={'filter__counter'}
+                                    >
+                                        {countFilter}
+                                    </Counter>
+                                )}
+                            </div>
+                        </Tooltip>
+                    </div>
 
                 </div>
                 <Table

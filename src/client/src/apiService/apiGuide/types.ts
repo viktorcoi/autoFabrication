@@ -136,6 +136,10 @@ export interface MaterialTableRow extends TableRow {
     materialGroup: string;
 }
 
+export type GetMaterialsTableFilters = {
+    materialGroupId: number;
+};
+
 export type PatchMaterialTableOptions = Record<number, Partial<Pick<MaterialTableRow, "name" | "description">>>;
 
 export interface GetByIdBlankResponse {
@@ -177,6 +181,11 @@ export interface BlankTableRow extends TableRow {
     material: string;
     materialGroup: string;
 }
+
+export type GetBlanksTableFilters = {
+    materialGroupId: number;
+    materialId: number;
+};
 
 export type PatchBlankTableOptions = Record<number, Partial<Pick<BlankTableRow, "name" | "description">>>;
 
@@ -271,6 +280,10 @@ export interface OperationTableRow extends TableRow {
     download: string;
     files: OperationFileItem[];
 }
+
+export type GetOperationsTableFilters = {
+    operationGroupId: number;
+};
 
 export type PatchOperationTableOptions = Record<number, Partial<Pick<OperationTableRow, "name" | "description">>>;
 

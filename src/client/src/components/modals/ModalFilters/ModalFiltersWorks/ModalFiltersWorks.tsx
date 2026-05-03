@@ -12,8 +12,8 @@ import {useEffect, useMemo, useState} from "react";
 import {useController, useSelectFilter} from "@/shared/hooks";
 import {ApiService} from "@/apiService/apiService";
 import {mergeState} from "@/shared/helpers";
-import styles from './ModalFiltersWorks.module.scss'
 import {ModalFiltersWorksProps} from "@/components/modals/ModalFilters/ModalFiltersWorks/types";
+import styles from '../ModalFilters.module.scss';
 
 const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
 
@@ -154,6 +154,7 @@ const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
 
     return (
         <ModalPage
+            height={344}
             onClose={onClose}
             preventClose={preventClose}
             header={
@@ -168,7 +169,7 @@ const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
                             size={'m'}
                             mode={'tertiary'}
                             appearance={'negative'}
-                            onClick={(e) => {
+                            onClick={() => {
                                 onChangeFilters({
                                     operationGroupId: 0,
                                     operationId: 0,

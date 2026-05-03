@@ -227,67 +227,72 @@ const parseDateSearch = (value: string) => {
 	};
 };
 
-const buildUsersTableWhere = (search?: string): Prisma.UserWhereInput | undefined => {
-	if (!search) {
-		return undefined;
-	}
+const buildUsersTableWhere = (query: GetUsersTableQuery): Prisma.UserWhereInput | undefined => {
+	const filters: Prisma.UserWhereInput = {};
+	const search = query.search;
 
-	const orFilters: Prisma.UserWhereInput[] = [
-		{
-			login: {
-				contains: search,
-				mode: "insensitive",
+	if (search) {
+		const orFilters: Prisma.UserWhereInput[] = [
+			{
+				login: {
+					contains: search,
+					mode: "insensitive",
+				},
 			},
-		},
-		{
-			lastName: {
-				contains: search,
-				mode: "insensitive",
+			{
+				lastName: {
+					contains: search,
+					mode: "insensitive",
+				},
 			},
-		},
-		{
-			firstName: {
-				contains: search,
-				mode: "insensitive",
+			{
+				firstName: {
+					contains: search,
+					mode: "insensitive",
+				},
 			},
-		},
-		{
-			middleName: {
-				contains: search,
-				mode: "insensitive",
+			{
+				middleName: {
+					contains: search,
+					mode: "insensitive",
+				},
 			},
-		},
-		{
-			avatarUrl: {
-				contains: search,
-				mode: "insensitive",
+			{
+				avatarUrl: {
+					contains: search,
+					mode: "insensitive",
+				},
 			},
-		},
-		{
-			role: {
-				is: {
-					name: {
-						contains: search,
-						mode: "insensitive",
+			{
+				role: {
+					is: {
+						name: {
+							contains: search,
+							mode: "insensitive",
+						},
 					},
 				},
 			},
-		},
-	];
-	const parsedDateRange = parseDateSearch(search);
+		];
+		const parsedDateRange = parseDateSearch(search);
 
-	if (parsedDateRange) {
-		orFilters.push({
-			birthDate: {
-				gte: parsedDateRange.start,
-				lt: parsedDateRange.end,
-			},
-		});
+		if (parsedDateRange) {
+			orFilters.push({
+				birthDate: {
+					gte: parsedDateRange.start,
+					lt: parsedDateRange.end,
+				},
+			});
+		}
+
+		filters.OR = orFilters;
 	}
 
-	return {
-		OR: orFilters,
-	};
+	if (typeof query.roleId === "number") {
+		filters.roleId = query.roleId;
+	}
+
+	return Object.keys(filters).length ? filters : undefined;
 };
 
 const buildUsersTableOrderBy = (sorting: GetUsersTableQuery["sorting"]): Prisma.UserOrderByWithRelationInput[] => {
@@ -323,7 +328,7 @@ export const listUsers = async () =>
 	});
 
 export const getUsersTable = async (query: GetUsersTableQuery, actorId: number) => {
-	const where = buildUsersTableWhere(query.search);
+	const where = buildUsersTableWhere(query);
 	const orderBy = buildUsersTableOrderBy(query.sorting);
 	const skip = query.page * query.rows;
 	const [total, users] = await prisma.$transaction([
