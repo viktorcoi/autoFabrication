@@ -100,7 +100,7 @@ const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
                 cancelRef.current = false;
             } else if (data === 'canceled') cancelRef.current = true;
         });
-    }
+    };
 
     useEffect(() => {
         const controller = createController();
@@ -128,9 +128,8 @@ const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
 
     const handleChangeOperationGroupId = async (id: number) => {
         mergeState({operationGroupId: id}, setData);
-        mergeState({operationId: 0}, setData);
+        mergeState({operationId: 0, workGroupId: 0}, setData);
         if (id === 0) return;
-
 
         await getOperations(id).finally(() => mergeState({operation: cancelRef.current}, setLoading));
     };

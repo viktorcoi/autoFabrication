@@ -83,31 +83,94 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
 
     const [savedData, setSavedData] = useState<ManageWorkData>({...initialData});
     const [data, setData] = useState<ManageWorkData>({...initialData});
-    const [workGroups, setWorkGroups] = useState<CustomSelectOptionInterface[]>([]);
+
     const [loading, setLoading] = useState({
         get: true,
+        operation: false,
+        workGroup: false,
         send: false
     });
+    const [filter, setFilter] = useState({
+        operationGroupId: 0,
+        operationId: 0,
+    });
+    const [options, setOptions] = useState<Record<string, CustomSelectOptionInterface[]>>({
+        operationGroup: [],
+        operation: [],
+        workGroup: []
+    });
 
-    const { createController } = useController([]);
+    const {
+        controllerRef,
+        createController,
+        cancelRef
+    } = useController([]);
+
+    const getOperations = async (id: number) => {
+        mergeState({operation: true}, setLoading);
+
+        controllerRef.current?.abort();
+        const controller = createController();
+
+        await ApiService.guide.operation.get({
+            controller,
+            options: { operationGroupId: id },
+        }).then(async ({status, data}) => {
+            if (status === 'success') {
+                mergeState({operation: data.map(({id, name}) => ({
+                    value: id,
+                    label: name,
+                }))}, setOptions);
+                cancelRef.current = false;
+            } else if (data === 'canceled') {
+                cancelRef.current = true;
+            } else if (idWork === null) {
+                onClose('error')
+            }
+        });
+    };
+
+    const getWorkGroups = async (id: number) => {
+        mergeState({workGroup: true}, setLoading);
+
+        controllerRef.current?.abort();
+        const controller = createController();
+
+        await ApiService.guide.workGroup.get({
+            controller,
+            options: { operationId: id },
+        }).then(({status, data}) => {
+            if (status === 'success') {
+                mergeState({workGroup: data.map(({id, name}) => ({
+                    value: id,
+                    label: name,
+                }))}, setOptions);
+                cancelRef.current = false;
+            } else if (data === 'canceled') {
+                cancelRef.current = true;
+            } else if (idWork === null) {
+                onClose('error')
+            }
+        });
+    };
 
     useEffect(() => {
         const controller = createController();
 
-        ApiService.guide.workGroup.get({
-            controller
+        ApiService.guide.operationGroup.get({
+            controller,
         }).then(async ({status, data}) => {
             if (status === 'success') {
-                setWorkGroups(data.map(({id, name}) => ({
+                mergeState({operationGroup: data.map(({id, name}) => ({
                     value: id,
                     label: name,
-                })));
+                }))}, setOptions);
 
                 if (idWork !== null) {
                     await ApiService.guide.work.getById({
                         id: idWork,
                         controller
-                    }).then(({status, data}) => {
+                    }).then(async ({status, data}) => {
                         if (status === 'success') {
                             const init: ManageWorkData = {
                                 workGroupId: data.workGroupId,
@@ -119,6 +182,14 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
                                 existingFiles: data.files,
                             };
 
+                            mergeState({
+                                operationGroupId: data.workGroup.operation.operationGroupId,
+                                operationId: data.workGroup.operationId
+                            }, setFilter);
+
+                            await getOperations(data.workGroup.operation.operationGroupId).finally(() => mergeState({operation: false}, setLoading));
+                            await getWorkGroups(data.workGroup.operationId).finally(() => mergeState({workGroup: false}, setLoading));
+
                             setSavedData(init);
                             setData(init);
                         } else onClose('error')
@@ -127,6 +198,23 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
             } else onClose('error')
         }).finally(() => mergeState({get: false}, setLoading));
     }, [idWork]);
+
+    const handleChangeOperationGroupId = async (id: number) => {
+        mergeState({operationGroupId: id}, setFilter);
+        mergeState({operationId: 0}, setFilter);
+        mergeState({workGroupId: 0}, setData);
+        if (id === 0) return;
+
+        await getOperations(id).finally(() => mergeState({operation: cancelRef.current}, setLoading));
+    };
+
+    const handleChangeOperationId = async (id: number) => {
+        mergeState({operationId: id}, setFilter);
+        mergeState({workGroupId: 0}, setData);
+        if (id === 0) return;
+
+        await getWorkGroups(id).finally(() => mergeState({workGroup: cancelRef.current}, setLoading));
+    };
 
     const removedFileIds = useMemo(
         () => getFileIds(savedData.existingFiles).filter((fileId) => !getFileIds(data.existingFiles).includes(fileId)),
@@ -280,15 +368,57 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
             {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
                 <form id={'save-work'} className={'modalForm'} onSubmit={saveWork}>
                     <FormItem
+                        top={'Группа операций'}
+                        noPadding={true}
+                    >
+                        <Select
+                            disabled={loading.send}
+                            className={classNames(loading.send && 'disabled')}
+                            filterFn={selectFilter.filterFn}
+                            options={options.operationGroup}
+                            searchable={true}
+                            allowClearButton={true}
+                            value={filter.operationGroupId}
+                            onChange={(e) => handleChangeOperationGroupId(Number(e.target.value))}
+                            placeholder={'Выберите группу операций'}
+                            onInputChange={selectFilter.onInputChange}
+                            onOpen={selectFilter.onOpen}
+                            onClose={selectFilter.onClose}
+                            status={filter.operationGroupId !== 0 ? 'default' : 'error'}
+                        />
+                    </FormItem>
+                    <FormItem
+                        top={'Операция'}
+                        noPadding={true}
+                    >
+                        <Select
+                            disabled={loading.send || filter.operationGroupId === 0}
+                            className={classNames((loading.send || filter.operationGroupId === 0) && 'disabled')}
+                            filterFn={selectFilter.filterFn}
+                            options={options.operation}
+                            searchable={true}
+                            allowClearButton={true}
+                            fetching={loading.operation}
+                            value={filter.operationId}
+                            onChange={(e) => handleChangeOperationId(Number(e.target.value))}
+                            placeholder={'Выберите операцию'}
+                            onInputChange={selectFilter.onInputChange}
+                            onOpen={selectFilter.onOpen}
+                            onClose={selectFilter.onClose}
+                            status={filter.operationId !== 0 ? 'default' : 'error'}
+                        />
+                    </FormItem>
+                    <FormItem
                         top={'Группа работ'}
                         noPadding={true}
                     >
                         <Select
                             filterFn={selectFilter.filterFn}
-                            options={workGroups}
+                            options={options.workGroup}
                             searchable={true}
-                            disabled={loading.send}
-                            className={classNames(loading.send && 'disabled')}
+                            fetching={loading.workGroup}
+                            disabled={loading.send || filter.operationId === 0}
+                            className={classNames((loading.send || filter.operationId === 0) && 'disabled')}
                             value={data.workGroupId}
                             onChange={(e) => mergeState({workGroupId: Number(e.target.value)}, setData)}
                             placeholder={'Выберите группу работ'}
