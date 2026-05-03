@@ -95,6 +95,18 @@ const blanksTableSortingSchema = z.object({
 	sort: z.enum(["asc", "desc"]),
 }).strict();
 
+const workGroupNameSchema = z
+	.string()
+	.trim()
+	.min(1, "Название группы работ обязательно")
+	.max(30, "Название группы работ слишком длинное");
+
+const workGroupDescriptionSchema = z
+	.string()
+	.trim()
+	.max(255, "Описание группы работ слишком длинное")
+	.transform((value) => value.length > 0 ? value : null);
+
 const operationNameSchema = z
 	.string()
 	.trim()
@@ -112,8 +124,18 @@ const operationGroupIdSchema = z.coerce
 	.int()
 	.positive("Некорректный id группы операций");
 
+const operationIdSchema = z.coerce
+	.number()
+	.int()
+	.positive("Некорректный id операции");
+
 const operationsTableSortingSchema = z.object({
 	id: z.enum(["name", "operationGroup", "download", "description"]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
+const workGroupsTableSortingSchema = z.object({
+	id: z.enum(["name", "operation", "operationGroup", "description"]),
 	sort: z.enum(["asc", "desc"]),
 }).strict();
 
@@ -167,6 +189,24 @@ const parseIdArray = (value: unknown) => {
 	}
 
 	return [normalizedValue];
+};
+
+const parseOptionalId = (value: unknown) => {
+	if (value === undefined || value === null || value === "") {
+		return undefined;
+	}
+
+	if (typeof value === "string") {
+		const normalizedValue = value.trim();
+
+		if (normalizedValue.length === 0) {
+			return undefined;
+		}
+
+		return normalizedValue;
+	}
+
+	return value;
 };
 
 export const createTypeProductSchema = z.object({
@@ -471,6 +511,72 @@ export const getBlanksTableSchema = z.object({
 		.transform((value) => value ?? null),
 });
 
+export const createWorkGroupSchema = z.object({
+	operationId: operationIdSchema,
+	name: workGroupNameSchema,
+	description: workGroupDescriptionSchema.optional(),
+});
+
+export const updateWorkGroupSchema = z
+	.object({
+		operationId: operationIdSchema.optional(),
+		name: workGroupNameSchema.optional(),
+		description: workGroupDescriptionSchema.optional(),
+	})
+	.refine(
+		(value) => (
+			value.operationId !== undefined
+			|| value.name !== undefined
+			|| value.description !== undefined
+		),
+		"Нужно передать хотя бы одно поле для обновления",
+	);
+
+export const updateWorkGroupsTableItemSchema = z
+	.object({
+		name: workGroupNameSchema.optional(),
+		description: workGroupDescriptionSchema.optional(),
+	})
+	.strict()
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нет данных для обновления",
+	);
+
+export const updateWorkGroupsTableSchema = z
+	.record(
+		z.string().regex(/^[1-9]\d*$/, "Некорректный id группы работ"),
+		z.unknown(),
+	)
+	.refine(
+		(value) => Object.keys(value).length > 0,
+		"Нужно передать хотя бы одну строку для редактирования",
+	);
+
+export const deleteWorkGroupIdsSchema = z
+	.array(
+		z.coerce
+			.number()
+			.int()
+			.positive("id группы работ должен быть положительным числом"),
+	)
+	.min(1, "Нужно выбрать хотя бы одну группу работ");
+
+export const getWorkGroupsTableSchema = z.object({
+	page: z.coerce.number().int().min(0).default(0),
+	rows: z.coerce.number().int().positive().max(100).default(20),
+	search: z.preprocess(
+		(value) => typeof value === "string" ? value.trim() : undefined,
+		z.string().optional(),
+	).transform((value) => value && value.length > 0 ? value : undefined),
+	sorting: z
+		.preprocess(parseTableSorting, workGroupsTableSortingSchema.nullable())
+		.optional()
+		.transform((value) => value ?? null),
+	operationGroupId: z.preprocess(parseOptionalId, operationGroupIdSchema.optional()),
+	operationId: z.preprocess(parseOptionalId, operationIdSchema.optional()),
+});
+
 export const createOperationSchema = z.object({
 	operationGroupId: operationGroupIdSchema,
 	name: operationNameSchema,
@@ -547,5 +653,7 @@ export type GetMaterialsTableQuery = z.infer<typeof getMaterialsTableSchema>;
 export type UpdateMaterialsTablePayload = z.infer<typeof updateMaterialsTableSchema>;
 export type GetBlanksTableQuery = z.infer<typeof getBlanksTableSchema>;
 export type UpdateBlanksTablePayload = z.infer<typeof updateBlanksTableSchema>;
+export type GetWorkGroupsTableQuery = z.infer<typeof getWorkGroupsTableSchema>;
+export type UpdateWorkGroupsTablePayload = z.infer<typeof updateWorkGroupsTableSchema>;
 export type GetOperationsTableQuery = z.infer<typeof getOperationsTableSchema>;
 export type UpdateOperationsTablePayload = z.infer<typeof updateOperationsTableSchema>;

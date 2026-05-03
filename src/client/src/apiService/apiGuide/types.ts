@@ -75,6 +75,11 @@ export interface GetOperationGroupsResponse {
     name: string;
 }
 
+export interface GetOperationsResponse {
+    id: number;
+    name: string;
+}
+
 export interface PostOperationGroupOptions {
     name: string;
     description: string;
@@ -169,6 +174,53 @@ export interface BlankTableRow extends TableRow {
 }
 
 export type PatchBlankTableOptions = Record<number, Partial<Pick<BlankTableRow, "name" | "description">>>;
+
+export interface GetByIdWorkGroupResponse {
+    id: number;
+    name: string;
+    description: string;
+    operationId: number;
+    createdAt: string;
+    updatedAt: string;
+    operation: {
+        id: number;
+        name: string;
+        description: string;
+        operationGroupId: number;
+        operationGroup: {
+            id: number;
+            name: string;
+            description: string;
+        };
+    };
+}
+
+export interface PostWorkGroupOptions {
+    name: string;
+    description: string;
+    operationId: number;
+}
+
+export interface PathWorkGroupOptions {
+    name: string;
+    description: string;
+    operationId: number;
+}
+
+export interface WorkGroupTableRow extends TableRow {
+    id: number;
+    name: string;
+    description: string;
+    operation: string;
+    operationGroup: string;
+}
+
+export type PatchWorkGroupTableOptions = Record<number, Partial<Pick<WorkGroupTableRow, "name" | "description">>>;
+
+export type GetWorkGroupsTableFilters = {
+    operationGroupId?: number;
+    operationId?: number;
+};
 
 export interface OperationFileItem {
     id: number;

@@ -20,18 +20,21 @@ import {
 	createMaterialSchema,
 	createOperationSchema,
 	createOperationGroupSchema,
+	createWorkGroupSchema,
 	createTypeProductSchema,
 	deleteBlankIdsSchema,
 	deleteMaterialGroupIdsSchema,
 	deleteMaterialIdsSchema,
 	deleteOperationIdsSchema,
 	deleteOperationGroupIdsSchema,
+	deleteWorkGroupIdsSchema,
 	deleteTypeProductIdsSchema,
 	getBlanksTableSchema,
 	getMaterialGroupsTableSchema,
 	getMaterialsTableSchema,
 	getOperationsTableSchema,
 	getOperationGroupsTableSchema,
+	getWorkGroupsTableSchema,
 	getTypeProductsTableSchema,
 	updateBlankSchema,
 	updateBlanksTableSchema,
@@ -43,6 +46,8 @@ import {
 	updateOperationsTableSchema,
 	updateOperationGroupSchema,
 	updateOperationGroupsTableSchema,
+	updateWorkGroupSchema,
+	updateWorkGroupsTableSchema,
 	updateTypeProductSchema,
 	updateTypeProductsTableSchema,
 } from "./guide.schemas.js";
@@ -52,12 +57,14 @@ import {
 	createMaterialGroup,
 	createOperation,
 	createOperationGroup,
+	createWorkGroup,
 	createTypeProduct,
 	deleteBlanks,
 	deleteMaterialGroups,
 	deleteMaterials,
 	deleteOperations,
 	deleteOperationGroups,
+	deleteWorkGroups,
 	deleteTypeProducts,
 	getBlankById,
 	getBlanksTable,
@@ -71,9 +78,12 @@ import {
 	getOperationsTable,
 	getOperationGroupById,
 	getOperationGroupsTable,
+	getWorkGroupById,
+	getWorkGroupsTable,
 	getTypeProductById,
 	getTypeProductsTable,
 	listMaterials,
+	listOperations,
 	listMaterialGroups,
 	listOperationGroups,
 	updateBlank,
@@ -86,6 +96,8 @@ import {
 	updateOperationsTable,
 	updateOperationGroup,
 	updateOperationGroupsTable,
+	updateWorkGroup,
+	updateWorkGroupsTable,
 	updateTypeProduct,
 	updateTypeProductsTable,
 } from "./guide.service.js";
@@ -95,6 +107,30 @@ const parseId = (value: string) => {
 
 	if (!Number.isInteger(id) || id <= 0) {
 		throw new AppError(400, `Некорректный id`);
+	}
+
+	return id;
+};
+
+const parseOptionalQueryId = (value: unknown, label: string) => {
+	if (value === undefined || value === null) {
+		return undefined;
+	}
+
+	if (typeof value !== "string") {
+		throw new AppError(400, `Некорректный ${label}`);
+	}
+
+	const normalizedValue = value.trim();
+
+	if (!normalizedValue.length) {
+		return undefined;
+	}
+
+	const id = Number(normalizedValue);
+
+	if (!Number.isInteger(id) || id <= 0) {
+		throw new AppError(400, `Некорректный ${label}`);
 	}
 
 	return id;
@@ -567,6 +603,73 @@ guideRouter.delete(
 );
 
 guideRouter.get(
+	"/workGroup/table",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const query = validate(getWorkGroupsTableSchema, request.query);
+		const table = await getWorkGroupsTable(query);
+
+		response.json(table);
+	}),
+);
+
+guideRouter.get(
+	"/workGroup/:id",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const workGroup = await getWorkGroupById(parseId(String(request.params.id)));
+
+		response.json(workGroup);
+	}),
+);
+
+guideRouter.post(
+	"/workGroup",
+	requirePermission("/guide", "adding"),
+	asyncHandler(async (request, response) => {
+		const payload = validate(createWorkGroupSchema, request.body ?? {});
+		const workGroup = await createWorkGroup(payload);
+
+		response.status(201).json(workGroup);
+	}),
+);
+
+guideRouter.patch(
+	"/workGroup/table",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(updateWorkGroupsTableSchema, request.body ?? {});
+		const result = await updateWorkGroupsTable(payload, auth.userId);
+
+		response.json(result);
+	}),
+);
+
+guideRouter.patch(
+	"/workGroup/:id",
+	requirePermission("/guide", "editing"),
+	asyncHandler(async (request, response) => {
+		const payload = validate(updateWorkGroupSchema, request.body ?? {});
+		const workGroup = await updateWorkGroup(parseId(String(request.params.id)), payload);
+
+		response.json(workGroup);
+	}),
+);
+
+guideRouter.delete(
+	"/workGroup",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(deleteWorkGroupIdsSchema, request.body ?? []);
+		const result = await deleteWorkGroups(payload, auth.userId);
+
+		response.json(result);
+	}),
+);
+
+guideRouter.get(
 	"/operation/table",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
@@ -574,6 +677,20 @@ guideRouter.get(
 		const table = await getOperationsTable(query);
 
 		response.json(table);
+	}),
+);
+
+guideRouter.get(
+	"/operation",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const searchValue = typeof request.query.search === "string"
+			? request.query.search.trim()
+			: "";
+		const operationGroupId = parseOptionalQueryId(request.query.operationGroupId, "id группы операций");
+		const operations = await listOperations(searchValue || undefined, operationGroupId);
+
+		response.json(operations);
 	}),
 );
 

@@ -17,6 +17,7 @@ import {
 	updateMaterialsTableItemSchema,
 	updateOperationsTableItemSchema,
 	updateOperationGroupsTableItemSchema,
+	updateWorkGroupsTableItemSchema,
 	updateTypeProductsTableItemSchema,
 } from "./guide.schemas.js";
 import type {
@@ -25,12 +26,14 @@ import type {
 	GetMaterialsTableQuery,
 	GetOperationsTableQuery,
 	GetOperationGroupsTableQuery,
+	GetWorkGroupsTableQuery,
 	GetTypeProductsTableQuery,
 	UpdateBlanksTablePayload,
 	UpdateMaterialGroupsTablePayload,
 	UpdateMaterialsTablePayload,
 	UpdateOperationsTablePayload,
 	UpdateOperationGroupsTablePayload,
+	UpdateWorkGroupsTablePayload,
 	UpdateTypeProductsTablePayload,
 } from "./guide.schemas.js";
 
@@ -153,6 +156,11 @@ const blankTableSelect = {
 	},
 } satisfies Prisma.blankSelect;
 
+const operationListSelect = {
+	id: true,
+	name: true,
+} satisfies Prisma.operationSelect;
+
 const operationGroupListSelect = {
 	id: true,
 	name: true,
@@ -202,6 +210,46 @@ const operationTableSelect = {
 		},
 	},
 } satisfies Prisma.operationSelect;
+
+const workGroupSelect = {
+	id: true,
+	name: true,
+	description: true,
+	operationId: true,
+	createdAt: true,
+	updatedAt: true,
+	operation: {
+		select: {
+			id: true,
+			name: true,
+			description: true,
+			operationGroupId: true,
+			operationGroup: {
+				select: {
+					id: true,
+					name: true,
+					description: true,
+				},
+			},
+		},
+	},
+} satisfies Prisma.workGroupSelect;
+
+const workGroupTableSelect = {
+	id: true,
+	name: true,
+	description: true,
+	operation: {
+		select: {
+			name: true,
+			operationGroup: {
+				select: {
+					name: true,
+				},
+			},
+		},
+	},
+} satisfies Prisma.workGroupSelect;
 
 const operationFilesStorageSelect = {
 	id: true,
@@ -278,6 +326,14 @@ const OPERATION_TABLE_FIELD_TO_MODEL_FIELD = {
 	download: "download",
 } as const;
 
+const WORK_GROUP_TABLE_FIELD_TO_MODEL_FIELD = {
+	id: "id",
+	name: "name",
+	operation: "operationId",
+	operationGroup: "operationGroup",
+	description: "description",
+} as const;
+
 const TYPE_PRODUCT_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
 const TYPE_PRODUCT_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
 const MATERIAL_GROUP_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
@@ -293,6 +349,9 @@ const BLANK_READONLY_TABLE_FIELDS = new Set<string>(["material", "materialGroup"
 const OPERATION_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
 const OPERATION_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
 const OPERATION_READONLY_TABLE_FIELDS = new Set<string>(["operationGroup", "download"]);
+const WORK_GROUP_OPTIONAL_MODEL_FIELDS = new Set<string>(["description"]);
+const WORK_GROUP_SYSTEM_MODEL_FIELDS = new Set<string>(["id", "createdAt", "updatedAt"]);
+const WORK_GROUP_READONLY_TABLE_FIELDS = new Set<string>(["operation", "operationGroup"]);
 
 const typeProductTableMeta = Object.freeze({
 	isConst: Object.freeze(
@@ -393,6 +452,25 @@ const operationTableMeta = Object.freeze({
 	),
 });
 
+const workGroupTableMeta = Object.freeze({
+	isConst: Object.freeze(
+		Object.entries(WORK_GROUP_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([columnId, modelField]) => (
+				WORK_GROUP_SYSTEM_MODEL_FIELDS.has(modelField) || WORK_GROUP_READONLY_TABLE_FIELDS.has(columnId)
+			))
+			.map(([columnId]) => columnId),
+	),
+	isRequired: Object.freeze(
+		Object.entries(WORK_GROUP_TABLE_FIELD_TO_MODEL_FIELD)
+			.filter(([columnId, modelField]) => (
+				!WORK_GROUP_OPTIONAL_MODEL_FIELDS.has(modelField)
+				&& !WORK_GROUP_SYSTEM_MODEL_FIELDS.has(modelField)
+				&& !WORK_GROUP_READONLY_TABLE_FIELDS.has(columnId)
+			))
+			.map(([columnId]) => columnId),
+	),
+});
+
 type CreateTypeProductData = {
 	name: string;
 	description?: string | null;
@@ -429,6 +507,14 @@ type CreateBlankData = {
 };
 
 type UpdateBlankData = Partial<CreateBlankData>;
+
+type CreateWorkGroupData = {
+	name: string;
+	description?: string | null;
+	operationId: number;
+};
+
+type UpdateWorkGroupData = Partial<CreateWorkGroupData>;
 
 type CreateOperationData = {
 	name: string;
@@ -484,6 +570,13 @@ const UPDATE_BLANK_NO_RIGHTS_ERROR = "У вас нет прав для реда�
 const UPDATE_BLANK_SUCCESS_DESCRIPTION = "Отредактировано";
 const DELETE_BLANK_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
 const DELETE_BLANK_IN_USE_ERROR = "Эта заготовка используется и не может быть удалена";
+
+const WORK_GROUP_NOT_FOUND_ERROR = "Группа работ не найдена";
+const WORK_GROUP_DUPLICATE_ERROR = "Группа работ с таким названием уже существует";
+const UPDATE_WORK_GROUP_NO_RIGHTS_ERROR = "У вас нет прав для редактирования";
+const UPDATE_WORK_GROUP_SUCCESS_DESCRIPTION = "Отредактировано";
+const DELETE_WORK_GROUP_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
+const DELETE_WORK_GROUP_IN_USE_ERROR = "Эта группа работ используется и не может быть удалена";
 
 const OPERATION_NOT_FOUND_ERROR = "Операция не найдена";
 const OPERATION_DUPLICATE_ERROR = "Операция с таким названием уже существует";
@@ -719,6 +812,69 @@ const buildBlanksTableWhere = (search?: string): Prisma.blankWhereInput | undefi
 	};
 };
 
+const buildWorkGroupsTableWhere = (query: GetWorkGroupsTableQuery): Prisma.workGroupWhereInput | undefined => {
+	const filters: Prisma.workGroupWhereInput = {};
+	const search = query.search;
+	const operationFilter: Prisma.operationWhereInput = {};
+
+	if (search) {
+		filters.OR = [
+			{
+				name: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+			{
+				description: {
+					contains: search,
+					mode: "insensitive",
+				},
+			},
+			{
+				operation: {
+					is: {
+						name: {
+							contains: search,
+							mode: "insensitive",
+						},
+					},
+				},
+			},
+			{
+				operation: {
+					is: {
+						operationGroup: {
+							is: {
+								name: {
+									contains: search,
+									mode: "insensitive",
+								},
+							},
+						},
+					},
+				},
+			},
+		];
+	}
+
+	if (typeof query.operationId === "number") {
+		filters.operationId = query.operationId;
+	}
+
+	if (typeof query.operationGroupId === "number") {
+		operationFilter.operationGroupId = query.operationGroupId;
+	}
+
+	if (Object.keys(operationFilter).length) {
+		filters.operation = {
+			is: operationFilter,
+		};
+	}
+
+	return Object.keys(filters).length ? filters : undefined;
+};
+
 const buildOperationsTableWhere = (search?: string): Prisma.operationWhereInput | undefined => {
 	if (!search) {
 		return undefined;
@@ -838,6 +994,32 @@ const buildBlanksTableOrderBy = (
 	}
 };
 
+const buildWorkGroupsTableOrderBy = (
+	sorting: GetWorkGroupsTableQuery["sorting"],
+): Prisma.workGroupOrderByWithRelationInput[] => {
+	if (!sorting) {
+		return [{ id: "asc" }];
+	}
+
+	switch (sorting.id) {
+		case "operation":
+			return [
+				{ operation: { name: sorting.sort } },
+				{ id: "asc" },
+			];
+		case "operationGroup":
+			return [
+				{ operation: { operationGroup: { name: sorting.sort } } },
+				{ id: "asc" },
+			];
+		default:
+			return [
+				{ [sorting.id]: sorting.sort } as Prisma.workGroupOrderByWithRelationInput,
+				{ id: "asc" },
+			];
+	}
+};
+
 const buildOperationsTableOrderBy = (
 	sorting: GetOperationsTableQuery["sorting"],
 ): Prisma.operationOrderByWithRelationInput[] => {
@@ -919,6 +1101,17 @@ const ensureBlankNameIsUnique = async (name: string, excludedId?: number) => {
 	}
 };
 
+const ensureWorkGroupNameIsUnique = async (name: string, excludedId?: number) => {
+	const existingWorkGroup = await prisma.workGroup.findUnique({
+		where: { name },
+		select: { id: true },
+	});
+
+	if (existingWorkGroup && existingWorkGroup.id !== excludedId) {
+		throw new AppError(409, WORK_GROUP_DUPLICATE_ERROR);
+	}
+};
+
 const ensureOperationNameIsUnique = async (name: string, excludedId?: number) => {
 	const existingOperation = await prisma.operation.findUnique({
 		where: { name },
@@ -976,6 +1169,29 @@ export const listMaterials = async (search?: string) =>
 				}
 			: undefined,
 		select: materialListSelect,
+		orderBy: {
+			id: "asc",
+		},
+	});
+
+export const listOperations = async (search?: string, operationGroupId?: number) =>
+	prisma.operation.findMany({
+		where: {
+			...(search
+				? {
+						name: {
+							contains: search,
+							mode: "insensitive",
+						},
+					}
+				: {}),
+			...(typeof operationGroupId === "number"
+				? {
+						operationGroupId,
+					}
+				: {}),
+		},
+		select: operationListSelect,
 		orderBy: {
 			id: "asc",
 		},
@@ -1135,6 +1351,35 @@ export const getBlanksTable = async (query: GetBlanksTableQuery) => {
 	};
 };
 
+export const getWorkGroupsTable = async (query: GetWorkGroupsTableQuery) => {
+	const where = buildWorkGroupsTableWhere(query);
+	const orderBy = buildWorkGroupsTableOrderBy(query.sorting);
+	const skip = query.page * query.rows;
+	const [total, workGroups] = await prisma.$transaction([
+		prisma.workGroup.count({ where }),
+		prisma.workGroup.findMany({
+			where,
+			select: workGroupTableSelect,
+			orderBy,
+			skip,
+			take: query.rows,
+		}),
+	]);
+
+	return {
+		total,
+		data: workGroups.map((workGroup) => ({
+			id: workGroup.id,
+			name: workGroup.name,
+			operation: workGroup.operation.name,
+			operationGroup: workGroup.operation.operationGroup.name,
+			...(workGroup.description ? { description: workGroup.description } : {}),
+			isConst: [...workGroupTableMeta.isConst],
+			isRequired: [...workGroupTableMeta.isRequired],
+		})),
+	};
+};
+
 export const getOperationsTable = async (query: GetOperationsTableQuery) => {
 	const where = buildOperationsTableWhere(query.search);
 	const orderBy = buildOperationsTableOrderBy(query.sorting);
@@ -1228,6 +1473,19 @@ export const getBlankById = async (id: number) => {
 	}
 
 	return blank;
+};
+
+export const getWorkGroupById = async (id: number) => {
+	const workGroup = await prisma.workGroup.findUnique({
+		where: { id },
+		select: workGroupSelect,
+	});
+
+	if (!workGroup) {
+		throw new AppError(404, WORK_GROUP_NOT_FOUND_ERROR);
+	}
+
+	return workGroup;
 };
 
 export const getOperationById = async (id: number) => {
@@ -1350,6 +1608,24 @@ export const createBlank = async (data: CreateBlankData) => {
 			},
 		},
 		select: blankSelect,
+	});
+};
+
+export const createWorkGroup = async (data: CreateWorkGroupData) => {
+	await ensureWorkGroupNameIsUnique(data.name);
+	await getOperationById(data.operationId);
+
+	return prisma.workGroup.create({
+		data: {
+			name: data.name,
+			description: data.description,
+			operation: {
+				connect: {
+					id: data.operationId,
+				},
+			},
+		},
+		select: workGroupSelect,
 	});
 };
 
@@ -1507,6 +1783,36 @@ export const updateBlank = async (id: number, data: UpdateBlankData) => {
 				: {}),
 		},
 		select: blankSelect,
+	});
+};
+
+export const updateWorkGroup = async (id: number, data: UpdateWorkGroupData) => {
+	await getWorkGroupById(id);
+
+	if (typeof data.name === "string") {
+		await ensureWorkGroupNameIsUnique(data.name, id);
+	}
+
+	if (typeof data.operationId === "number") {
+		await getOperationById(data.operationId);
+	}
+
+	return prisma.workGroup.update({
+		where: { id },
+		data: {
+			name: data.name,
+			description: data.description,
+			...(typeof data.operationId === "number"
+				? {
+						operation: {
+							connect: {
+								id: data.operationId,
+							},
+						},
+					}
+				: {}),
+		},
+		select: workGroupSelect,
 	});
 };
 
@@ -1888,6 +2194,62 @@ export const updateBlanksTable = async (
 			result.success.push({
 				id,
 				description: UPDATE_BLANK_SUCCESS_DESCRIPTION,
+			});
+		} catch (error) {
+			if (error instanceof AppError) {
+				result.error.push({
+					id,
+					description: error.message,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const updateWorkGroupsTable = async (
+	payload: UpdateWorkGroupsTablePayload,
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const permissions = await getGuidePermissions(actorId);
+	const ids = Object.keys(payload).map((id) => Number(id));
+
+	if (!hasPermission(permissions, "/guide", "editing")) {
+		return {
+			success: [],
+			error: ids.map((id) => ({
+				id,
+				description: UPDATE_WORK_GROUP_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const [rawId, rawItem] of Object.entries(payload)) {
+		const id = Number(rawId);
+		const parsedItem = updateWorkGroupsTableItemSchema.safeParse(rawItem);
+
+		if (!parsedItem.success) {
+			result.error.push({
+				id,
+				description: getValidationErrorMessage(parsedItem.error.issues) || "Некорректные данные",
+			});
+			continue;
+		}
+
+		try {
+			await updateWorkGroup(id, parsedItem.data);
+			result.success.push({
+				id,
+				description: UPDATE_WORK_GROUP_SUCCESS_DESCRIPTION,
 			});
 		} catch (error) {
 			if (error instanceof AppError) {
@@ -2325,6 +2687,81 @@ export const deleteBlanks = async (
 				result.error.push({
 					id,
 					description: BLANK_NOT_FOUND_ERROR,
+				});
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	return result;
+};
+
+export const deleteWorkGroups = async (
+	ids: number[],
+	actorId: number,
+): Promise<ActionByTableResult> => {
+	const uniqueIds = getUniqueIds(ids);
+	const permissions = await getGuidePermissions(actorId);
+
+	if (!hasPermission(permissions, "/guide", "removing")) {
+		return {
+			success: [],
+			error: uniqueIds.map((id) => ({
+				id,
+				description: DELETE_WORK_GROUP_NO_RIGHTS_ERROR,
+			})),
+		};
+	}
+
+	const existingWorkGroups = await prisma.workGroup.findMany({
+		where: {
+			id: {
+				in: uniqueIds,
+			},
+		},
+		select: {
+			id: true,
+		},
+	});
+	const workGroupsById = new Map(existingWorkGroups.map((workGroup) => [workGroup.id, workGroup]));
+	const result: ActionByTableResult = {
+		success: [],
+		error: [],
+	};
+
+	for (const id of uniqueIds) {
+		if (!workGroupsById.has(id)) {
+			result.error.push({
+				id,
+				description: WORK_GROUP_NOT_FOUND_ERROR,
+			});
+			continue;
+		}
+
+		try {
+			await prisma.workGroup.delete({
+				where: { id },
+				select: { id: true },
+			});
+			result.success.push({
+				id,
+				description: "Удалено",
+			});
+		} catch (error) {
+			if (isPrismaDeleteConstraintError(error)) {
+				result.error.push({
+					id,
+					description: DELETE_WORK_GROUP_IN_USE_ERROR,
+				});
+				continue;
+			}
+
+			if (isPrismaRecordNotFoundError(error)) {
+				result.error.push({
+					id,
+					description: WORK_GROUP_NOT_FOUND_ERROR,
 				});
 				continue;
 			}

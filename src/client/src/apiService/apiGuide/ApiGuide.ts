@@ -12,34 +12,41 @@ import {
     GetByIdMaterialResponse,
     GetByIdOperationResponse,
     GetByIdOperationGroupResponse,
+    GetByIdWorkGroupResponse,
     GetByIdTypeProductsResponse,
     GetMaterialsResponse,
     GetMaterialGroupsResponse,
+    GetOperationsResponse,
     GetOperationGroupsResponse,
     BlankTableRow,
     MaterialGroupTableRow,
     MaterialTableRow,
     OperationTableRow,
     OperationGroupTableRow,
+    WorkGroupTableRow,
     PatchBlankTableOptions,
     PatchMaterialGroupTableOptions,
     PatchMaterialTableOptions,
     PatchOperationTableOptions,
     PatchOperationGroupTableOptions,
+    PatchWorkGroupTableOptions,
     PatchTypeProductsTableOptions,
     PathMaterialGroupOptions,
     PathBlankOptions,
     PathMaterialOptions,
     PathOperationOptions,
     PathOperationGroupOptions,
+    PathWorkGroupOptions,
     PathTypeProductsOptions,
     PostBlankOptions,
     PostMaterialGroupOptions,
     PostMaterialOptions,
     PostOperationOptions,
     PostOperationGroupOptions,
+    PostWorkGroupOptions,
     PostTypeProductsOptions,
-    TypeProductsTableRow
+    TypeProductsTableRow,
+    GetWorkGroupsTableFilters,
 } from "@/apiService/apiGuide/types";
 import {createOperationOptions} from "@/apiService/apiGuide/helpers";
 
@@ -257,6 +264,29 @@ export const ApiGuide = {
     },
 
     operation: {
+        get: async (options: ApiServiceOptions<{
+            options?: {
+                search?: string;
+                operationGroupId?: number;
+            };
+        }> = {}): Promise<ApiServiceResponse<GetOperationsResponse[]>> => {
+            return await api.get("/guide/operation", {
+                signal: options.controller?.signal,
+                params: {
+                    ...(options.options?.search?.trim() ? { search: options.options.search } : undefined),
+                    ...(typeof options.options?.operationGroupId === "number" && options.options.operationGroupId > 0
+                        ? { operationGroupId: options.options.operationGroupId }
+                        : undefined),
+                },
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && Array.isArray(response.data),
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
         getById: async (options: ApiServiceOptions<{
             id: number
         }>): Promise<ApiServiceResponse<GetByIdOperationResponse>> => {
@@ -537,6 +567,100 @@ export const ApiGuide = {
                 options: PatchBlankTableOptions;
             }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
                 return await api.patch("/guide/blank/table",
+                    options.options,
+                    { signal: options.controller?.signal }
+                ).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+        }
+    },
+
+    workGroup: {
+        getById: async (options: ApiServiceOptions<{
+            id: number
+        }>): Promise<ApiServiceResponse<GetByIdWorkGroupResponse>> => {
+            return await api.get(`/guide/workGroup/${options.id}`, {
+                signal: options.controller?.signal
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        post: async (options: ApiServiceOptions<{
+            options: PostWorkGroupOptions;
+        }>): Promise<ApiServiceResponse<GetByIdWorkGroupResponse>> => {
+            return await api.post("/guide/workGroup",
+                {...options.options},
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 201 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        patch: async (options: ApiServiceOptions<{
+            id: number,
+            options: PathWorkGroupOptions;
+        }>): Promise<ApiServiceResponse<GetByIdWorkGroupResponse>> => {
+            return await api.patch(`/guide/workGroup/${options.id}`,
+                {...options.options},
+                { signal: options.controller?.signal }
+            ).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        delete: async (options: ApiServiceOptions<{
+            ids: number[];
+        }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+            return await api.delete("/guide/workGroup", {
+                signal: options.controller?.signal,
+                data: options.ids,
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && response.data,
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
+        table: {
+            get: async (options: ApiServiceOptions<{
+                options?: GetTableOptions<GetWorkGroupsTableFilters>;
+            }>): Promise<ApiServiceResponse<GetTableResponse<WorkGroupTableRow[]>>> => {
+                return await api.get("/guide/workGroup/table", {
+                    signal: options.controller?.signal,
+                    params: buildTableOptions(options.options),
+                }).then((response) => {
+                    return handleApiSuccess(
+                        response.data,
+                        response.status === 200 && response.data,
+                        options.errorOptions?.placeholder,
+                    );
+                }).catch((error) => handleApiError(error, options.errorOptions));
+            },
+
+            patch: async (options: ApiServiceOptions<{
+                options: PatchWorkGroupTableOptions;
+            }>): Promise<ApiServiceResponse<ActionByTableResponse>> => {
+                return await api.patch("/guide/workGroup/table",
                     options.options,
                     { signal: options.controller?.signal }
                 ).then((response) => {

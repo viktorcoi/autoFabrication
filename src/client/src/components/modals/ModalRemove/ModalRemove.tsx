@@ -13,6 +13,7 @@ const urlList = {
     '/operationGroup': (id: number) => ApiService.guide.operationGroup.delete({ ids: [id] }),
     '/material': (id: number) => ApiService.guide.material.delete({ ids: [id] }),
     '/blank': (id: number) => ApiService.guide.blank.delete({ ids: [id] }),
+    '/workGroup': (id: number) => ApiService.guide.workGroup.delete({ ids: [id] }),
     '/operation': (id: number) => ApiService.guide.operation.delete({ ids: [id] }),
 };
 

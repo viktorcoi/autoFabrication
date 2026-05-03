@@ -15,6 +15,7 @@ const urlList = {
     '/operationGroup': ApiService.guide.operationGroup.delete,
     '/material': ApiService.guide.material.delete,
     '/blank': ApiService.guide.blank.delete,
+    '/workGroup': ApiService.guide.workGroup.delete,
     '/operation': ApiService.guide.operation.delete,
 };
 

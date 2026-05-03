@@ -96,8 +96,21 @@ model operation {
 	updatedAt        DateTime       @updatedAt
 	operationGroup   operationGroup @relation(fields: [operationGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 	files            operationFile[]
+	workGroups       workGroup[]
 
 	@@index([operationGroupId])
+}
+
+model workGroup {
+	id          Int       @id @default(autoincrement())
+	name        String    @unique
+	description String?
+	operationId Int
+	createdAt   DateTime  @default(now())
+	updatedAt   DateTime  @updatedAt
+	operation   operation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+	@@index([operationId])
 }
 
 model operationFile {
