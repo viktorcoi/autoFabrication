@@ -22,7 +22,10 @@ const SnackbarProvider = (props: PropsWithChildren) => {
 
     const { children } = props;
 
-    const snackbars = useSnackbarStore((state) => state.snackbars);
+    const {
+        snackbars,
+        placement
+    } = useSnackbarStore((state) => state);
     const removeSnackbar = useSnackbarStore((state) => state.removeSnackbar);
 
     const [heights, setHeights] = useState<Record<number, number>>({});
@@ -43,47 +46,51 @@ const SnackbarProvider = (props: PropsWithChildren) => {
     const visibleSnackbars = useMemo(() => {
         if (snackbars.length === 0) return null;
 
-        return snackbars.slice(0, 3).map((s, index, arr) => {
-            let offsetY = 0;
+        return (
+            <div>
+                {snackbars.slice(0, 3).map((s, index, arr) => {
+                    let offsetY = 0;
 
-            for (let i = 0; i < index; i++) {
-                offsetY += (heights[arr[i].id] ?? 0);
-            }
+                    for (let i = 0; i < index; i++) {
+                        offsetY += (heights[arr[i].id] ?? 0);
+                    }
 
-            return (
-                <Snackbar
-                    key={s.id}
-                    getRootRef={(el) => {
-                        refs.current[s.id] = el;
-                    }}
-                    duration={s.id === hovered ? null : 5000}
-                    onMouseLeave={() => setHovered(null)}
-                    onMouseMove={() => {
-                        if (hovered !== s.id) setHovered(s.id);
-                    }}
-                    onActionClick={s.onActionClick}
-                    offsetY={offsetY}
-                    placement="top-end"
-                    action={s.action}
-                    before={renderIconByType[s.type]}
-                    onClosed={() => {
-                        if (hovered === s.id) setHovered(null);
-                        removeSnackbar(s.id)
-                    }}
-                >
-                    <Icon16Cancel
-                        onClick={() => removeSnackbar(s.id)}
-                        className={styles.close}
-                        width={14}
-                        height={14}
-                    />
-                    <Text>
-                        {s.text}
-                    </Text>
-                </Snackbar>
-            );
-        });
-    }, [snackbars, hovered, heights]);
+                    return (
+                        <Snackbar
+                            key={s.id}
+                            getRootRef={(el) => {
+                                refs.current[s.id] = el;
+                            }}
+                            duration={s.id === hovered ? null : 5000}
+                            onMouseLeave={() => setHovered(null)}
+                            onMouseMove={() => {
+                                if (hovered !== s.id) setHovered(s.id);
+                            }}
+                            onActionClick={s.onActionClick}
+                            offsetY={offsetY}
+                            placement={placement}
+                            action={s.action}
+                            before={renderIconByType[s.type]}
+                            onClosed={() => {
+                                if (hovered === s.id) setHovered(null);
+                                removeSnackbar(s.id)
+                            }}
+                        >
+                            <Icon16Cancel
+                                onClick={() => removeSnackbar(s.id)}
+                                className={styles.close}
+                                width={14}
+                                height={14}
+                            />
+                            <Text>
+                                {s.text}
+                            </Text>
+                        </Snackbar>
+                    );
+                })}
+            </div>
+        )
+    }, [snackbars, hovered, heights, placement]);
 
     return (
         <>

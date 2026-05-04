@@ -34,20 +34,38 @@ body {
 
 .activated { pointer-events: none }
 
-.vkuiSnackbar__fixed .vkuiSnackbar__in {
-	padding: 12px 12px 0 12px;
-	.vkuiBasic__body {
-		padding-right: 20px;
+.vkuiSnackbar__fixed {
+	padding: 6px 12px;
+	&.vkuiSnackbar__placementTopStart,
+	&.vkuiSnackbar__placementTopEnd {
+		&:first-child {
+			padding-top: 12px;
+		}
 	}
-	.vkuiBasic__body {
-		position: relative;
+	&.vkuiSnackbar__placementBottomStart,
+	&.vkuiSnackbar__placementBottomEnd {
+		&:first-child {
+			padding-bottom: 12px;
+		}
 	}
-	.vkuiButton__content {
-		color: var(--vkui--color_text_accent);
-	}
-	.vkuiBasic__contentText {
-		-webkit-line-clamp: unset;
-		-webkit-box-orient: vertical;
+	.vkuiSnackbar__in {
+		padding: unset;
+		.vkuiBasic__body {
+			padding-right: 20px;
+		}
+
+		.vkuiBasic__body {
+			position: relative;
+		}
+
+		.vkuiButton__content {
+			color: var(--vkui--color_text_accent);
+		}
+
+		.vkuiBasic__contentText {
+			-webkit-line-clamp: unset;
+			-webkit-box-orient: vertical;
+		}
 	}
 }
 .search { margin-left: auto; width: 250px }

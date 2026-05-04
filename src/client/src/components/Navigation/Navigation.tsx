@@ -10,11 +10,15 @@ import {
 } from "@vkontakte/icons";
 import {usePathname} from "next/navigation";
 import {useAppStore} from "@/store/app/app";
-import {ReactNode, useMemo, useRef, useState} from "react";
+import React, {ReactNode, useMemo, useRef, useState} from "react";
 import {ApiService} from "@/apiService/apiService";
 import styles from './Navigation.module.scss';
 import ModalShowErrors from "@/components/modals/ModalShowErrors/ModalShowErrors";
 import {useShowErrors} from "@/store/showErrors/showErrors";
+import {OpenModalsType} from "@/components/modals/types";
+import ModalFiltersUsers from "@/components/modals/ModalFilters/ModalFiltersUsers/ModalFiltersUsers";
+import ModalSettings from "@/components/modals/ModalSettings/ModalSettings";
+import {mergeState} from "@/shared/helpers";
 
 const Navigation = () => {
 
@@ -32,6 +36,9 @@ const Navigation = () => {
 
     const pathname = usePathname();
 
+    const [modals, setModals] = useState<OpenModalsType<
+        'modal-settings'
+    >>({id: null, show: false, data: null});
     const [actionSheet, setActionSheet] = useState<ReactNode>(null);
     const menuRef = useRef(null);
 
@@ -62,6 +69,7 @@ const Navigation = () => {
 
                 <ActionSheetItem
                     before={<Icon28SettingsOutline width={20} height={20}/>}
+                    onClick={() => mergeState({id: 'modal-settings', show: true}, setModals)}
                 >
                     Настройки
                 </ActionSheetItem>
@@ -85,6 +93,13 @@ const Navigation = () => {
 
     return (
         <>
+            {'modal-settings' === modals.id && (
+                <ModalSettings
+                    open={modals.show}
+                    onClose={() => mergeState({show: false}, setModals)}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                />
+            )}
             {showErrors.render && (
                 <ModalShowErrors open={showErrors.show}/>
             )}

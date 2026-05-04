@@ -220,7 +220,7 @@ const DetailInfoRole = (props: DetailInfoRoleProps) => {
     return (
         <div className={styles.wrap}>
             <div className={styles.head}>
-                <Title level={'2'}>Управление доступом</Title>
+                <Title level={'3'} weight={'2'}>Управление доступом</Title>
             </div>
             <div className={classNames('scroll', styles.access)}>
                 {loading.get ? <Spinner size={'xl'} /> : (
