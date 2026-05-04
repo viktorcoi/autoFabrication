@@ -1,4 +1,5 @@
 import {
+    ActionSheet, ActionSheetItem,
     Button,
     ButtonGroup, classNames,
     CustomSelectOptionInterface,
@@ -11,7 +12,7 @@ import {
     Spinner,
     Textarea
 } from "@vkontakte/vkui";
-import {SubmitEvent, useEffect, useMemo, useState} from "react";
+import {ReactNode, SubmitEvent, useEffect, useMemo, useRef, useState} from "react";
 import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
@@ -20,6 +21,8 @@ import {OperationFileItem, PathOperationOptions, PostOperationOptions} from "@/a
 import UploadFile from "@/components/UploadFile/UploadFile";
 import {ModalManageOperationProps} from "@/components/modals/ModalGuide/ModalManageOperation/types";
 import styles from './ModalManageOperation.module.scss';
+import {Icon24Done, Icon28SettingsOutline} from "@vkontakte/icons";
+import ActionSheetIconPlug from "@/components/ActionSheetIconPlug";
 
 type ManageOperationData = {
     operationGroupId: number;
@@ -46,6 +49,7 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
         preventClose,
         onLoading,
         onClose = () => {},
+        updateData = () => {},
         ...restProps
     } = props;
 
@@ -60,6 +64,10 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
         send: false
     });
 
+    const [actionSheet, setActionSheet] = useState<ReactNode>(null);
+    const [typeSave, setTypeSave] = useState(1);
+
+    const saveAsRef = useRef(null);
     const { createController } = useController([]);
 
     useEffect(() => {
@@ -125,7 +133,8 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                         type: 'success',
                         text: `Успешно добавлено: "${data.name}"`
                     });
-                    onClose('updated-data');
+                    if (typeSave) onClose('updated-data');
+                    else updateData();
                 }
             } else {
                 const options: PathOperationOptions = {};
@@ -167,7 +176,28 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
             mergeState({send: false}, setLoading);
             onLoading(false);
         }
-    }
+    };
+
+    const openSaveAs = () => {
+        setActionSheet(
+            <ActionSheet
+                placement={'top-end'}
+                popupOffsetDistance={8}
+                toggleRef={saveAsRef}
+                onClosed={() => setActionSheet(null)}
+            >
+                {['и остаться', 'и выйти'].map((i, key) => (
+                    <ActionSheetItem
+                        key={key}
+                        onClick={() => setTypeSave(key)}
+                        after={typeSave === key ? <Icon24Done width={21} height={21}/> : <ActionSheetIconPlug/>}
+                    >
+                        {`Сохранить ${i}`}
+                    </ActionSheetItem>
+                ))}
+            </ActionSheet>,
+        );
+    };
 
     const title = useMemo(
         () => `${idOperation === null ? 'Добавление' : 'Редактирование'} операции`,
@@ -214,20 +244,36 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                         >
                             Отмена
                         </Button>
-                        <Button
-                            form={'save-operation'}
-                            type={'submit'}
-                            disabled={disabledSave || loading.get}
-                            loading={loading.send}
-                            size={'m'}
+                        <ButtonGroup
+                            gap={'none'}
                         >
-                            Сохранить
-                        </Button>
+                            <Button
+                                form={'save-operation'}
+                                type={'submit'}
+                                className={classNames(idOperation === null && styles.save)}
+                                disabled={disabledSave || loading.get}
+                                loading={loading.send}
+                                size={'m'}
+                            >
+                                {`Сохранить${idOperation === null ? (!!typeSave ? ' и выйти' : ' и остаться') : ''}`}
+                            </Button>
+                            {idOperation === null && (
+                                <Button
+                                    getRootRef={saveAsRef}
+                                    onClick={openSaveAs}
+                                    className={styles.as}
+                                    disabled={loading.send}
+                                    after={<Icon28SettingsOutline width={24} height={24}/>}
+                                    size={'m'}
+                                />
+                            )}
+                        </ButtonGroup>
                     </ButtonGroup>
                 </div>
             )}
             {...restProps}
         >
+            {actionSheet}
             {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
                 <form id={'save-operation'} className={'modalForm'} onSubmit={saveOperation}>
                     <FormItem

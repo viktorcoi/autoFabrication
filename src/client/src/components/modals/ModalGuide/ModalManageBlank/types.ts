@@ -5,5 +5,6 @@ import {ModalPageCloseReasonType} from "@/components/modals/types";
 export interface ModalManageBlankProps extends Omit<ModalPageProps, 'onClose'> {
     idBlank: number | null;
     onClose(reason: ModalPageCloseReasonType, event?:  React.UIEvent<HTMLElement>): void;
+    updateData?(): void;
     onLoading(v: boolean): void;
 }

@@ -5,3 +5,14 @@
 .textarea {
     min-height: 124px;
 }
+
+.save {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.as {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 1px solid var(--vkui--color_background_modal);
+}

@@ -9,7 +9,7 @@ import {
     ModalPageHeader,
     PlatformProvider,
     Select,
-    Spinner, Tappable,
+    Spinner,
     Textarea
 } from "@vkontakte/vkui";
 import {ReactNode, SubmitEvent, useEffect, useMemo, useRef, useState} from "react";
@@ -22,11 +22,7 @@ import {PathWorkOptions, PostWorkOptions, WorkFileItem} from "@/apiService/apiGu
 import UploadFile from "@/components/UploadFile/UploadFile";
 import styles from './ModalManageWork.module.scss';
 import {
-    Icon16Lock,
-    Icon16LockOpen, Icon20DoorArrowRightOutline,
-    Icon20MoonOutline,
-    Icon20SunOutline,
-    Icon24ChevronDown, Icon24Done,
+    Icon24Done,
     Icon28SettingsOutline
 } from "@vkontakte/icons";
 import ActionSheetIconPlug from "@/components/ActionSheetIconPlug";
@@ -332,7 +328,7 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
                         onClick={() => setTypeSave(key)}
                         after={typeSave === key ? <Icon24Done width={21} height={21}/> : <ActionSheetIconPlug/>}
                     >
-                        {i}
+                        {`Сохранить ${i}`}
                     </ActionSheetItem>
                 ))}
             </ActionSheet>,

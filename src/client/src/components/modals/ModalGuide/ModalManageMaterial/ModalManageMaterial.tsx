@@ -1,4 +1,5 @@
 import {
+    ActionSheet, ActionSheetItem,
     Button,
     ButtonGroup, classNames,
     CustomSelectOptionInterface,
@@ -11,7 +12,7 @@ import {
     Spinner,
     Textarea
 } from "@vkontakte/vkui";
-import {SubmitEvent, useEffect, useMemo, useState} from "react";
+import {ReactNode, SubmitEvent, useEffect, useMemo, useRef, useState} from "react";
 import styles from './ModalManageMaterial.module.scss'
 import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
@@ -19,6 +20,8 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useController, useSelectFilter} from "@/shared/hooks";
 import {ModalManageMaterialProps} from "@/components/modals/ModalGuide/ModalManageMaterial/types";
 import {PostMaterialOptions} from "@/apiService/apiGuide/types";
+import {Icon24Done, Icon28SettingsOutline} from "@vkontakte/icons";
+import ActionSheetIconPlug from "@/components/ActionSheetIconPlug";
 
 const initialData: PostMaterialOptions = {
     materialGroupId: 0,
@@ -32,6 +35,7 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
         idMaterial,
         preventClose,
         onLoading,
+        updateData = () => {},
         onClose = () => {},
         ...restProps
     } = props;
@@ -46,7 +50,10 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
         get: true,
         send: false
     });
+    const [actionSheet, setActionSheet] = useState<ReactNode>(null);
+    const [typeSave, setTypeSave] = useState(1);
 
+    const saveAsRef = useRef(null);
     const { createController } = useController([]);
 
     useEffect(() => {
@@ -111,13 +118,35 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
                     text: `Успешно ${idMaterial === null ? 'добавлено' : 'отредактировано'}: "${data.name}"`
                 });
 
-                onClose('updated-data');
+                if (typeSave) onClose('updated-data');
+                else updateData();
             }
         } finally {
             mergeState({send: false}, setLoading);
             onLoading(false);
         }
-    }
+    };
+
+    const openSaveAs = () => {
+        setActionSheet(
+            <ActionSheet
+                placement={'top-end'}
+                popupOffsetDistance={8}
+                toggleRef={saveAsRef}
+                onClosed={() => setActionSheet(null)}
+            >
+                {['и остаться', 'и выйти'].map((i, key) => (
+                    <ActionSheetItem
+                        key={key}
+                        onClick={() => setTypeSave(key)}
+                        after={typeSave === key ? <Icon24Done width={21} height={21}/> : <ActionSheetIconPlug/>}
+                    >
+                        {`Сохранить ${i}`}
+                    </ActionSheetItem>
+                ))}
+            </ActionSheet>,
+        );
+    };
 
     const title = useMemo(
         () => `${idMaterial === null ? 'Добавление' : 'Редактирование'} материала`,
@@ -162,20 +191,36 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
                         >
                             Отмена
                         </Button>
-                        <Button
-                            form={'save-material'}
-                            type={'submit'}
-                            disabled={disabledSave || loading.get}
-                            loading={loading.send}
-                            size={'m'}
+                        <ButtonGroup
+                            gap={'none'}
                         >
-                            Сохранить
-                        </Button>
+                            <Button
+                                form={'save-material'}
+                                type={'submit'}
+                                className={classNames(idMaterial === null && styles.save)}
+                                disabled={disabledSave || loading.get}
+                                loading={loading.send}
+                                size={'m'}
+                            >
+                                {`Сохранить${idMaterial === null ? (!!typeSave ? ' и выйти' : ' и остаться') : ''}`}
+                            </Button>
+                            {idMaterial === null && (
+                                <Button
+                                    getRootRef={saveAsRef}
+                                    onClick={openSaveAs}
+                                    className={styles.as}
+                                    disabled={loading.send}
+                                    after={<Icon28SettingsOutline width={24} height={24}/>}
+                                    size={'m'}
+                                />
+                            )}
+                        </ButtonGroup>
                     </ButtonGroup>
                 </div>
             )}
             {...restProps}
         >
+            {actionSheet}
             {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
                 <form id={'save-material'} className={'modalForm'} onSubmit={saveMaterial}>
                     <FormItem

@@ -1,4 +1,5 @@
 import {
+    ActionSheet, ActionSheetItem,
     Button,
     ButtonGroup, classNames,
     CustomSelectOptionInterface,
@@ -11,7 +12,7 @@ import {
     Spinner,
     Textarea
 } from "@vkontakte/vkui";
-import {SubmitEvent, useEffect, useMemo, useState} from "react";
+import {ReactNode, SubmitEvent, useEffect, useMemo, useRef, useState} from "react";
 import styles from './ModalManageWorkGroup.module.scss'
 import {mergeState} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
@@ -19,6 +20,8 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useController, useSelectFilter} from "@/shared/hooks";
 import {ModalManageWorkGroupProps} from "@/components/modals/ModalGuide/ModalManageWorkGroup/types";
 import {PostWorkGroupOptions} from "@/apiService/apiGuide/types";
+import {Icon24Done, Icon28SettingsOutline} from "@vkontakte/icons";
+import ActionSheetIconPlug from "@/components/ActionSheetIconPlug";
 
 const initialData: PostWorkGroupOptions = {
     operationId: 0,
@@ -32,6 +35,7 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
         idWorkGroup,
         preventClose,
         onLoading,
+        updateData = () => {},
         onClose = () => {},
         ...restProps
     } = props;
@@ -53,7 +57,10 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
         operationGroup: [],
         operation: []
     });
+    const [actionSheet, setActionSheet] = useState<ReactNode>(null);
+    const [typeSave, setTypeSave] = useState(1);
 
+    const saveAsRef = useRef(null);
     const {
         controllerRef,
         createController,
@@ -157,13 +164,35 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
                     text: `Успешно ${idWorkGroup === null ? 'добавлено' : 'отредактировано'}: "${data.name}"`
                 });
 
-                onClose('updated-data');
+                if (typeSave) onClose('updated-data');
+                else updateData();
             }
         } finally {
             mergeState({send: false}, setLoading);
             onLoading(false);
         }
-    }
+    };
+
+    const openSaveAs = () => {
+        setActionSheet(
+            <ActionSheet
+                placement={'top-end'}
+                popupOffsetDistance={8}
+                toggleRef={saveAsRef}
+                onClosed={() => setActionSheet(null)}
+            >
+                {['и остаться', 'и выйти'].map((i, key) => (
+                    <ActionSheetItem
+                        key={key}
+                        onClick={() => setTypeSave(key)}
+                        after={typeSave === key ? <Icon24Done width={21} height={21}/> : <ActionSheetIconPlug/>}
+                    >
+                        {`Сохранить ${i}`}
+                    </ActionSheetItem>
+                ))}
+            </ActionSheet>,
+        );
+    };
 
     const title = useMemo(
         () => `${idWorkGroup === null ? 'Добавление' : 'Редактирование'} группы работ`,
@@ -208,20 +237,36 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
                         >
                             Отмена
                         </Button>
-                        <Button
-                            form={'save-work-group'}
-                            type={'submit'}
-                            disabled={disabledSave || loading.get}
-                            loading={loading.send}
-                            size={'m'}
+                        <ButtonGroup
+                            gap={'none'}
                         >
-                            Сохранить
-                        </Button>
+                            <Button
+                                form={'save-work-group'}
+                                type={'submit'}
+                                className={classNames(idWorkGroup === null && styles.save)}
+                                disabled={disabledSave || loading.get}
+                                loading={loading.send}
+                                size={'m'}
+                            >
+                                {`Сохранить${idWorkGroup === null ? (!!typeSave ? ' и выйти' : ' и остаться') : ''}`}
+                            </Button>
+                            {idWorkGroup === null && (
+                                <Button
+                                    getRootRef={saveAsRef}
+                                    onClick={openSaveAs}
+                                    className={styles.as}
+                                    disabled={loading.send}
+                                    after={<Icon28SettingsOutline width={24} height={24}/>}
+                                    size={'m'}
+                                />
+                            )}
+                        </ButtonGroup>
                     </ButtonGroup>
                 </div>
             )}
             {...restProps}
         >
+            {actionSheet}
             {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
                 <form id={'save-work-group'} className={'modalForm'} onSubmit={saveWorkGroup}>
                     <FormItem

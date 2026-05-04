@@ -315,6 +315,9 @@ const Blank = (
                     open={modals.show}
                     onClose={closeModal}
                     onLoading={v => mergeState({modal: v}, setLoading)}
+                    updateData={() => {
+                        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                    }}
                     onClosed={() => setModals({id: null,  show: false, data: null})}
                 />
             )}

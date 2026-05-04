@@ -337,6 +337,9 @@ const Operation = (
                     preventClose={loading.modal}
                     open={modals.show}
                     onClose={closeModal}
+                    updateData={() => {
+                        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                    }}
                     onLoading={v => mergeState({modal: v}, setLoading)}
                     onClosed={() => setModals({id: null,  show: false, data: null})}
                 />
