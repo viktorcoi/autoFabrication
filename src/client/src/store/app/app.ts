@@ -1,17 +1,109 @@
 import { create } from "zustand";
-import {AppStore} from "@/store/app/types";
+import {AppStore, PageStorageSettings, StorageSettings} from "@/store/app/types";
 import {ColorSchemeType} from "@vkontakte/vkui";
 import {ApiService} from "@/apiService/apiService";
 import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
 import {allUrl} from "@/shared/navigations";
 
 const THEME_STORAGE_KEY = "theme";
+const STORAGE_SETTINGS_KEY = "storageSettings";
+const PAGE_STORAGE_KEY = "pageStorage";
+
+const DEFAULT_STORAGE_SETTINGS: StorageSettings = {
+    saveSearch: false,
+    saveFilters: true,
+    saveTableSettings: true,
+    saveTableRows: true,
+};
 
 const autoDetectAppearance = (): 'dark' | 'light' => {
     if (typeof window !== 'undefined' && window.matchMedia) {
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     return 'light';
+};
+
+const safeJsonParse = <T, >(value: string | null, fallback: T): T => {
+    if (!value) {
+        return fallback;
+    }
+
+    try {
+        return JSON.parse(value) as T;
+    } catch {
+        return fallback;
+    }
+};
+
+const getStoredStorageSettings = (): StorageSettings => {
+    if (typeof window === "undefined") {
+        return DEFAULT_STORAGE_SETTINGS;
+    }
+
+    const storedSettings = safeJsonParse<Partial<StorageSettings>>(
+        window.localStorage.getItem(STORAGE_SETTINGS_KEY),
+        {},
+    );
+
+    return {
+        saveSearch: typeof storedSettings.saveSearch === "boolean"
+            ? storedSettings.saveSearch
+            : DEFAULT_STORAGE_SETTINGS.saveSearch,
+        saveFilters: typeof storedSettings.saveFilters === "boolean"
+            ? storedSettings.saveFilters
+            : DEFAULT_STORAGE_SETTINGS.saveFilters,
+        saveTableSettings: typeof storedSettings.saveTableSettings === "boolean"
+            ? storedSettings.saveTableSettings
+            : DEFAULT_STORAGE_SETTINGS.saveTableSettings,
+        saveTableRows: typeof storedSettings.saveTableRows === "boolean"
+            ? storedSettings.saveTableRows
+            : DEFAULT_STORAGE_SETTINGS.saveTableRows,
+    };
+};
+
+const saveStorageSettings = (settings: StorageSettings) => {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    try {
+        window.localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings));
+    } catch {
+        // Ignore storage errors.
+    }
+};
+
+const getStoredPageSettings = (): Record<string, PageStorageSettings> => {
+    if (typeof window === "undefined") {
+        return {};
+    }
+
+    const value = safeJsonParse<unknown>(window.localStorage.getItem(PAGE_STORAGE_KEY), {});
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return {};
+    }
+
+    return Object.entries(value).reduce<Record<string, PageStorageSettings>>((result, [key, settings]) => {
+        if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+            return result;
+        }
+
+        result[key] = settings as PageStorageSettings;
+        return result;
+    }, {});
+};
+
+const savePageSettings = (settings: Record<string, PageStorageSettings>) => {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    try {
+        window.localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(settings));
+    } catch {
+        // Ignore storage errors.
+    }
 };
 
 const parseUser = (user: GetAuthMeResponse) => {
@@ -63,6 +155,7 @@ export const useAppStore = create<AppStore>((
     appReady: false,
     theme: "light",
     delaySearch: 500,
+    storageSettings: DEFAULT_STORAGE_SETTINGS,
     permissions: new Map(),
     navigations: [],
     // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
@@ -84,6 +177,7 @@ export const useAppStore = create<AppStore>((
 
         set({
             theme: theme as ColorSchemeType,
+            storageSettings: getStoredStorageSettings(),
             appReady: true,
         });
     },
@@ -125,5 +219,36 @@ export const useAppStore = create<AppStore>((
 
     setDelaySearch: (delay: number) => {
         set({ delaySearch: delay });
-    }
+    },
+
+    setStorageSetting: (key, value) => {
+        const nextSettings = {
+            ...get().storageSettings,
+            [key]: value,
+        };
+
+        set({storageSettings: nextSettings});
+        saveStorageSettings(nextSettings);
+    },
+
+    getPageStorage: <T extends PageStorageSettings>(pageKey: string): T => {
+        if (!pageKey) {
+            return {} as T;
+        }
+
+        return (getStoredPageSettings()[pageKey] ?? {}) as T;
+    },
+
+    setPageStorage: <T extends PageStorageSettings>(pageKey: string, value: Partial<T>) => {
+        if (!pageKey) {
+            return;
+        }
+
+        const currentSettings = getStoredPageSettings();
+        currentSettings[pageKey] = {
+            ...currentSettings[pageKey],
+            ...value,
+        };
+        savePageSettings(currentSettings);
+    },
 }));

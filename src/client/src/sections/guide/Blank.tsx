@@ -1,7 +1,7 @@
 import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Counter, Search, Tooltip} from "@vkontakte/vkui";
 import Table from "@/components/Table/Table";
 import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
-import {useController, useFilersCount, useSearch} from "@/shared/hooks";
+import {useController, useFilersCount, useSearch, useStoredFilters} from "@/shared/hooks";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 import {useAppStore} from "@/store/app/app";
@@ -40,7 +40,7 @@ const Blank = (
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page);
+    } = useSearch(loading.page, 'blank');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<BlankTableRow[]>>({
@@ -57,7 +57,7 @@ const Blank = (
         editMode: false,
         actionSheet: null
     });
-    const [tableFilters, setTableFilters] = useState<GetBlanksTableFilters>({
+    const [tableFilters, setTableFilters] = useStoredFilters<GetBlanksTableFilters>('blank', {
         materialGroupId: 0,
         materialId: 0,
     });

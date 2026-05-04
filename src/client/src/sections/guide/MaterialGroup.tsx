@@ -38,7 +38,7 @@ const MaterialGroup = (
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page);
+    } = useSearch(loading.page, 'materialGroup');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<MaterialGroupTableRow[]>>({

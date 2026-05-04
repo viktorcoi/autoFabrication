@@ -38,7 +38,7 @@ const TypeProducts = (
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page);
+    } = useSearch(loading.page, 'typeProducts');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<TypeProductsTableRow[]>>({

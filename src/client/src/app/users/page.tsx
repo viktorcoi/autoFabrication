@@ -11,7 +11,7 @@ import {
 } from "@vkontakte/icons";
 import Container from "@/components/Container/Container";
 import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
-import {useController, useFilersCount, useSearch} from "@/shared/hooks";
+import {useController, useFilersCount, useSearch, useStoredFilters} from "@/shared/hooks";
 import {mergeState} from "@/shared/helpers";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import Table from "@/components/Table/Table";
@@ -49,7 +49,7 @@ const UsersPage = () => {
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page);
+    } = useSearch(loading.page, 'users');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<UserTableRow[]>>({
@@ -66,7 +66,7 @@ const UsersPage = () => {
         editMode: false,
         actionSheet: null
     });
-    const [tableFilters, setTableFilters] = useState<GetUsersTableFilters>({
+    const [tableFilters, setTableFilters] = useStoredFilters<GetUsersTableFilters>('users', {
         roleId: 0,
     });
     const [modals, setModals] = useState<OpenModalsType<

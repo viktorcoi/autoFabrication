@@ -38,7 +38,7 @@ const OperationGroup = (
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page);
+    } = useSearch(loading.page, 'operationGroup');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<OperationGroupTableRow[]>>({

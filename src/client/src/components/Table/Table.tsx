@@ -68,6 +68,7 @@ import TableBody from './TableBody/TableBody';
 import TableFooter from './TableFooter/TableFooter';
 import TableHeader from './TableHeader/TableHeader';
 import headerStyles from './TableHeader/TableHeader.module.scss';
+import {useAppStore} from '@/store/app/app';
 import type {
     ColumnDragInteraction,
     ColumnResizeInteraction,
@@ -107,6 +108,11 @@ const Table = (props: TableProps) => {
             icon: <Icon20ListDeleteOutline width={62} height={62} />
         },
     } = props;
+
+    const {
+        saveTableSettings,
+        saveTableRows,
+    } = useAppStore(state => state.storageSettings);
 
     const storageId = useMemo(() => getStorageId(tableId, componentName), [componentName, tableId]);
     const settingsKey = useMemo(() => `table_settings_${storageId}`, [storageId]);
@@ -518,6 +524,10 @@ const Table = (props: TableProps) => {
     }, [columnSizing, columns]);
 
     useEffect(() => {
+        if (!saveTableRows) {
+            return;
+        }
+
         const storedTableRows = getStoredTableRows();
         const nextRows = storedTableRows[componentName];
 
@@ -535,9 +545,25 @@ const Table = (props: TableProps) => {
             rows: nextRows,
             target: null,
         });
-    }, [componentName, safeRows]);
+    }, [componentName, safeRows, saveTableRows]);
 
     useEffect(() => {
+        if (!saveTableSettings) {
+            const defaultColumnOrder = [...availableColumnIds];
+
+            setSettingsReady(false);
+            sortingRef.current = null;
+            resolvedColumnOrderRef.current = defaultColumnOrder;
+            previewColumnOrderRef.current = defaultColumnOrder;
+            committedColumnSizingRef.current = {};
+            liveColumnSizingRef.current = {};
+            setSorting(null);
+            setColumnOrder(defaultColumnOrder);
+            setColumnSizing({});
+            setSettingsReady(true);
+            return;
+        }
+
         const storedSettings = getStoredSettings(settingsKey);
         const nextSorting = storedSettings.reduce<TableSorting>((result, item) => {
             if (result) {
@@ -592,10 +618,10 @@ const Table = (props: TableProps) => {
         selectionStateRef.current.active = false;
         selectionStateRef.current.dirty = false;
         setSettingsReady(true);
-    }, [availableColumnIds, columnMap, settingsKey]);
+    }, [availableColumnIds, columnMap, saveTableSettings, settingsKey]);
 
     useEffect(() => {
-        if (!settingsReady) {
+        if (!settingsReady || !saveTableSettings) {
             return;
         }
 
@@ -612,7 +638,7 @@ const Table = (props: TableProps) => {
         }, 180);
 
         return () => window.clearTimeout(timeoutId);
-    }, [columnSizing, resolvedColumnOrder, settingsKey, settingsReady, sorting]);
+    }, [columnSizing, resolvedColumnOrder, saveTableSettings, settingsKey, settingsReady, sorting]);
 
     useEffect(() => {
         const visibleRowIdSet = new Set(visibleRowIds);
@@ -1660,7 +1686,10 @@ const Table = (props: TableProps) => {
                     onCancelEdit={cancelEditing}
                     onSaveEdit={saveEditing}
                     onRowsChange={(nextRows, target) => {
-                        saveStoredTableRows(componentName, nextRows);
+                        if (saveTableRows) {
+                            saveStoredTableRows(componentName, nextRows);
+                        }
+
                         onEventRef.current({
                             type: 'rowsChange',
                             rows: nextRows,

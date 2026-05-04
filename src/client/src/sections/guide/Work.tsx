@@ -10,7 +10,7 @@ import {
 } from "@vkontakte/vkui";
 import Table from "@/components/Table/Table";
 import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
-import {useController, useFilersCount, useSearch} from "@/shared/hooks";
+import {useController, useFilersCount, useSearch, useStoredFilters} from "@/shared/hooks";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 import {useAppStore} from "@/store/app/app";
@@ -53,7 +53,7 @@ const Work = (
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page);
+    } = useSearch(loading.page, 'work');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<WorkTableRow[]>>({
@@ -70,7 +70,7 @@ const Work = (
         editMode: false,
         actionSheet: null
     });
-    const [tableFilters, setTableFilters] = useState<GetWorksTableFilters>({
+    const [tableFilters, setTableFilters] = useStoredFilters<GetWorksTableFilters>('work', {
         operationGroupId: 0,
         operationId: 0,
         workGroupId: 0,

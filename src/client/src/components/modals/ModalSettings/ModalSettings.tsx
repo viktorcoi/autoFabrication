@@ -1,30 +1,37 @@
 import {
     Button,
     classNames,
-    FormItem, FormLayoutGroup, Text,
+    FormItem,
+    FormLayoutGroup,
     ModalPage,
     ModalPageHeader,
-    ModalPageProps,
-    PlatformProvider, Select,
-    SimpleCell, Switch
+    PlatformProvider,
+    Select,
+    SimpleCell,
+    Switch
 } from "@vkontakte/vkui";
 import styles from './ModalSettings.module.scss';
-import {useState} from "react";
+import {SubmitEvent, useState} from "react";
 import {useAppStore} from "@/store/app/app";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {SnackbarPlacementType} from "@/store/snackbar/types";
-import {Icon24View} from "@vkontakte/icons";
 import NumberPicker from "@/components/NumberPicker/NumberPicker";
+import {initField, isValidConfirmPassword, isValidPassword} from "@/components/modals/ModalSettings/helpers";
+import PasswordInput from "@/components/PasswordInput/PasswordInput";
+import {ModalSettingsProps} from "@/components/modals/ModalSettings/types";
 
-const ModalSettings = (props: ModalPageProps) => {
+const ModalSettings = (props: ModalSettingsProps) => {
 
     const {
+        onLoading = () => {},
         ...restProps
     } = props;
 
     const {
         theme,
         toggleTheme,
+        storageSettings,
+        setStorageSetting,
     } = useAppStore(s => s);
 
     const {
@@ -37,11 +44,30 @@ const ModalSettings = (props: ModalPageProps) => {
         changePlacement
     } = useSnackbarStore(s => s);
 
+    const [loading, setLoading] = useState(false);
     const [activeSection, setActiveSection] = useState(0);
+    const [password, setPassword] = useState(initField);
+    const [newPassword, setNewPassword] = useState(initField);
+    const [confirmNewPassword, setConfirmNewPassword] = useState(initField);
+
+    const savePassword = async (e: SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        console.log('a')
+
+        if (!password.isValid || !newPassword.isValid || !confirmNewPassword.isValid) return;
+        console.log('b')
+        setLoading(true);
+        onLoading(true);
+
+
+    };
 
     return (
         <ModalPage
-            height={500}
+            height={640}
+            hideCloseButton={loading}
+            preventClose={loading}
             className={styles.modal}
             header={
                 <PlatformProvider value={'ios'}>
@@ -54,7 +80,10 @@ const ModalSettings = (props: ModalPageProps) => {
                 {['Настройки системы', 'Изменить пароль'].map((s, key) => (
                     <SimpleCell
                         activated={activeSection === key}
-                        className={classNames(activeSection === key && 'activated')}
+                        className={classNames(
+                            activeSection === key && 'activated',
+                            loading && 'disabled',
+                        )}
                         key={key}
                         onClick={() => setActiveSection(key)}
                     >
@@ -63,7 +92,7 @@ const ModalSettings = (props: ModalPageProps) => {
                 ))}
             </div>
 
-                {activeSection === 0 && (
+                {activeSection === 0 ? (
                     <div className={styles.settings}>
                         <FormItem
                             top={'Настройка темы'}
@@ -165,7 +194,12 @@ const ModalSettings = (props: ModalPageProps) => {
                                     stretched={true}
                                     Component={'label'}
                                     size={'m'}
-                                    after={<Switch/>}
+                                    after={(
+                                        <Switch
+                                            checked={storageSettings.saveSearch}
+                                            onChange={(event) => setStorageSetting('saveSearch', event.target.checked)}
+                                        />
+                                    )}
                                     mode={'secondary'}
                                 >
                                     Сохранять поиск по совпадениям
@@ -176,7 +210,12 @@ const ModalSettings = (props: ModalPageProps) => {
                                 stretched={true}
                                 Component={'label'}
                                 size={'m'}
-                                after={<Switch/>}
+                                after={(
+                                    <Switch
+                                        checked={storageSettings.saveFilters}
+                                        onChange={(event) => setStorageSetting('saveFilters', event.target.checked)}
+                                    />
+                                )}
                                 mode={'secondary'}
                             >
                                 Сохранять фильтры для таблиц
@@ -186,7 +225,12 @@ const ModalSettings = (props: ModalPageProps) => {
                                 stretched={true}
                                 Component={'label'}
                                 size={'m'}
-                                after={<Switch/>}
+                                after={(
+                                    <Switch
+                                        checked={storageSettings.saveTableSettings}
+                                        onChange={(event) => setStorageSetting('saveTableSettings', event.target.checked)}
+                                    />
+                                )}
                                 mode={'secondary'}
                             >
                                 Сохранять сортировку колонок для таблиц
@@ -196,13 +240,79 @@ const ModalSettings = (props: ModalPageProps) => {
                                 stretched={true}
                                 Component={'label'}
                                 size={'m'}
-                                after={<Switch/>}
+                                after={(
+                                    <Switch
+                                        checked={storageSettings.saveTableRows}
+                                        onChange={(event) => setStorageSetting('saveTableRows', event.target.checked)}
+                                    />
+                                )}
                                 mode={'secondary'}
                             >
                                 Сохранять лимит строк для таблиц
                             </Button>
                         </div>
                     </div>
+                ) : activeSection === 1 && (
+                    <>
+                        <form
+                            className={styles.settings}
+                            onSubmit={savePassword}
+                            id={'save-password'}
+                        >
+                            <FormItem
+                                top={'Текущий пароль'}
+                                noPadding={true}
+                                status={!password.isValid ? 'error' : 'default'}
+                                bottom={password.textError}
+                            >
+                                <PasswordInput
+                                    disabled={loading}
+                                    placeholder={'Введите текущий пароль'}
+                                    value={password.value}
+                                    onChange={({target: {value}}) => setPassword(isValidPassword(value))}
+                                />
+                            </FormItem>
+                            <FormItem
+                                top={'Новый пароль'}
+                                noPadding={true}
+                                bottom={newPassword.textError}
+                                status={!newPassword.isValid ? 'error' : 'default'}
+                            >
+                                <PasswordInput
+                                    disabled={loading}
+                                    placeholder={'Введите новый пароль'}
+                                    value={newPassword.value}
+                                    onChange={({target: {value}}) => {
+                                        if (confirmNewPassword.value.length)
+                                        setConfirmNewPassword(isValidConfirmPassword(confirmNewPassword.value, value))
+                                        setNewPassword(isValidPassword(value))
+                                    }}
+                                />
+                            </FormItem>
+                            <FormItem
+                                top={'Повторите новый пароль'}
+                                noPadding={true}
+                                bottom={confirmNewPassword.textError}
+                                status={!confirmNewPassword.isValid ? 'error' : 'default'}
+                            >
+                                <PasswordInput
+                                    disabled={loading}
+                                    placeholder={'Введите новый пароль еще раз'}
+                                    value={confirmNewPassword.value}
+                                    onChange={({target: {value}}) => setConfirmNewPassword(
+                                        isValidConfirmPassword(value, newPassword.value)
+                                    )}
+                                />
+                            </FormItem>
+                            <Button
+                                type={'submit'}
+                                size={'m'}
+                                loading={loading}
+                            >
+                                ХУЙ
+                            </Button>
+                        </form>
+                    </>
                 )}
         </ModalPage>
     )

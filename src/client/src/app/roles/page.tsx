@@ -50,7 +50,7 @@ const RolesPage = () => {
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page);
+    } = useSearch(loading.page, 'roles');
 
     // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
     const { TEST, permissions } = useAppStore(s => s);

@@ -1,7 +1,7 @@
 import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Counter, Search, Tooltip} from "@vkontakte/vkui";
 import Table from "@/components/Table/Table";
 import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
-import {useController, useFilersCount, useSearch} from "@/shared/hooks";
+import {useController, useFilersCount, useSearch, useStoredFilters} from "@/shared/hooks";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 import {useAppStore} from "@/store/app/app";
@@ -41,7 +41,7 @@ const Operation = (
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page);
+    } = useSearch(loading.page, 'operation');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<OperationTableRow[]>>({
@@ -58,7 +58,7 @@ const Operation = (
         editMode: false,
         actionSheet: null
     });
-    const [tableFilters, setTableFilters] = useState<GetOperationsTableFilters>({
+    const [tableFilters, setTableFilters] = useStoredFilters<GetOperationsTableFilters>('operation', {
         operationGroupId: 0,
     });
     const [modals, setModals] = useState<OpenModalsType<

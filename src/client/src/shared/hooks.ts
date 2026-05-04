@@ -1,12 +1,32 @@
-import {ChangeEvent, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {
+    ChangeEvent,
+    Dispatch,
+    SetStateAction,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState
+} from "react";
 import {CustomSelectOptionInterface, filterFnForSelect} from "@vkontakte/vkui";
 import {useAppStore} from "@/store/app/app";
 
-export const useSearch = (loading: boolean) => {
+export const useSearch = (loading: boolean, storageKey?: string) => {
     const delay = useAppStore(state => state.delaySearch);
+    const saveSearch = useAppStore(state => state.storageSettings.saveSearch);
+    const getPageStorage = useAppStore(state => state.getPageStorage);
+    const setPageStorage = useAppStore(state => state.setPageStorage);
 
-    const [search, setSearch] = useState('');
-    const [delaySearch, setDelaySearch] = useState('');
+    const [search, setSearch] = useState(() => {
+        if (!storageKey || !saveSearch) {
+            return '';
+        }
+
+        const storedSearch = getPageStorage<{search?: string}>(storageKey).search;
+
+        return typeof storedSearch === 'string' ? storedSearch : '';
+    });
+    const [delaySearch, setDelaySearch] = useState(search);
 
     const inputRef = useRef<HTMLInputElement | null>(null);
     const shouldRestoreFocusRef = useRef(false);
@@ -38,12 +58,71 @@ export const useSearch = (loading: boolean) => {
         }
     }, [loading]);
 
+    useEffect(() => {
+        if (!storageKey || !saveSearch) {
+            return;
+        }
+
+        setPageStorage(storageKey, {search});
+    }, [saveSearch, search, setPageStorage, storageKey]);
+
     return {
         search,
         setSearch,
         delaySearch,
         inputRef,
     };
+};
+
+const getStoredFilters = <T extends Record<string, number>>(
+    storedFilters: unknown,
+    defaultFilters: T,
+): T => {
+    if (!storedFilters || typeof storedFilters !== 'object' || Array.isArray(storedFilters)) {
+        return defaultFilters;
+    }
+
+    return Object.entries(defaultFilters).reduce<T>((result, [key, defaultValue]) => {
+        const value = (storedFilters as Record<string, unknown>)[key];
+
+        result[key as keyof T] = (
+            typeof value === 'number' && Number.isFinite(value)
+                ? value
+                : defaultValue
+        ) as T[keyof T];
+
+        return result;
+    }, {...defaultFilters});
+};
+
+export const useStoredFilters = <T extends Record<string, number>>(
+    storageKey: string,
+    defaultFilters: T,
+): [T, Dispatch<SetStateAction<T>>] => {
+    const saveFilters = useAppStore(state => state.storageSettings.saveFilters);
+    const getPageStorage = useAppStore(state => state.getPageStorage);
+    const setPageStorage = useAppStore(state => state.setPageStorage);
+
+    const [filters, setFilters] = useState<T>(() => {
+        if (!saveFilters) {
+            return defaultFilters;
+        }
+
+        return getStoredFilters(
+            getPageStorage<{filters?: unknown}>(storageKey).filters,
+            defaultFilters,
+        );
+    });
+
+    useEffect(() => {
+        if (!saveFilters) {
+            return;
+        }
+
+        setPageStorage(storageKey, {filters});
+    }, [filters, saveFilters, setPageStorage, storageKey]);
+
+    return [filters, setFilters];
 };
 
 type UseSelectFilterType<Option extends CustomSelectOptionInterface> = {
