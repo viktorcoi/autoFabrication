@@ -4,6 +4,8 @@ import {SnackbarStore} from "@/store/snackbar/types";
 export const useSnackbarStore = create<SnackbarStore>((set) => ({
     snackbars: [],
     placement: 'top-end',
+    time: 5000,
+    count: 3,
 
     addSnackbar: (snackbar) => {
         let newId = 1;
@@ -20,6 +22,14 @@ export const useSnackbarStore = create<SnackbarStore>((set) => ({
         });
 
         return newId;
+    },
+
+    changeCount: (count) => {
+        set(() => ({count}));
+    },
+
+    changeTime: (time) => {
+        set(() => ({time}));
     },
 
     changePlacement: (placement) => {

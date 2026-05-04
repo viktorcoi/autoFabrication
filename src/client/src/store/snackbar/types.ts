@@ -14,7 +14,11 @@ export type SnackbarItem = {
 export type SnackbarStore = {
     snackbars: SnackbarItem[];
     placement: SnackbarPlacementType;
-    changePlacement: (placement: SnackbarPlacementType) => void;
+    time: number;
+    count: number;
+    changePlacement(placement: SnackbarPlacementType): void;
+    changeCount(count: number): void;
+    changeTime(time: number): void;
     addSnackbar(snackbar: Omit<SnackbarItem, 'id'>): number;
     removeSnackbar(id: number): void;
 };

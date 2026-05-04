@@ -24,7 +24,9 @@ const SnackbarProvider = (props: PropsWithChildren) => {
 
     const {
         snackbars,
-        placement
+        placement,
+        count,
+        time,
     } = useSnackbarStore((state) => state);
     const removeSnackbar = useSnackbarStore((state) => state.removeSnackbar);
 
@@ -36,7 +38,7 @@ const SnackbarProvider = (props: PropsWithChildren) => {
     useEffect(() => {
         const nextHeights: Record<number, number> = {};
 
-        snackbars.slice(0, 3).forEach((s) => {
+        snackbars.slice(0, count).forEach((s) => {
             nextHeights[s.id] = refs.current[s.id]?.offsetHeight ?? 0;
         });
 
@@ -48,7 +50,7 @@ const SnackbarProvider = (props: PropsWithChildren) => {
 
         return (
             <div>
-                {snackbars.slice(0, 3).map((s, index, arr) => {
+                {snackbars.slice(0, count).map((s, index, arr) => {
                     let offsetY = 0;
 
                     for (let i = 0; i < index; i++) {
@@ -61,7 +63,7 @@ const SnackbarProvider = (props: PropsWithChildren) => {
                             getRootRef={(el) => {
                                 refs.current[s.id] = el;
                             }}
-                            duration={s.id === hovered ? null : 5000}
+                            duration={s.id === hovered ? null : time}
                             onMouseLeave={() => setHovered(null)}
                             onMouseMove={() => {
                                 if (hovered !== s.id) setHovered(s.id);
@@ -90,7 +92,7 @@ const SnackbarProvider = (props: PropsWithChildren) => {
                 })}
             </div>
         )
-    }, [snackbars, hovered, heights, placement]);
+    }, [snackbars, hovered, heights, placement, count, time]);
 
     return (
         <>

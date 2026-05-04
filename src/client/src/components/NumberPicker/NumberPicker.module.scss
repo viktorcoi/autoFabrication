@@ -1,0 +1,13 @@
+.root {
+    width: 100%;
+
+    :global(.vkuiUnstyledTextField__host) {
+        text-align: center;
+    }
+}
+
+.slot {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
