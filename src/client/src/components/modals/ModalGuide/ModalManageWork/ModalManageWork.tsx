@@ -1,4 +1,5 @@
 import {
+    ActionSheet, ActionSheetItem,
     Button,
     ButtonGroup, classNames,
     CustomSelectOptionInterface,
@@ -8,10 +9,10 @@ import {
     ModalPageHeader,
     PlatformProvider,
     Select,
-    Spinner,
+    Spinner, Tappable,
     Textarea
 } from "@vkontakte/vkui";
-import {SubmitEvent, useEffect, useMemo, useState} from "react";
+import {ReactNode, SubmitEvent, useEffect, useMemo, useRef, useState} from "react";
 import {mergeState, sanitizeSingleDecimalInput} from "@/shared/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
@@ -20,6 +21,15 @@ import {ModalManageWorkProps} from "@/components/modals/ModalGuide/ModalManageWo
 import {PathWorkOptions, PostWorkOptions, WorkFileItem} from "@/apiService/apiGuide/types";
 import UploadFile from "@/components/UploadFile/UploadFile";
 import styles from './ModalManageWork.module.scss';
+import {
+    Icon16Lock,
+    Icon16LockOpen, Icon20DoorArrowRightOutline,
+    Icon20MoonOutline,
+    Icon20SunOutline,
+    Icon24ChevronDown, Icon24Done,
+    Icon28SettingsOutline
+} from "@vkontakte/icons";
+import ActionSheetIconPlug from "@/components/ActionSheetIconPlug";
 
 type ManageWorkData = {
     workGroupId: number;
@@ -75,6 +85,7 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
         preventClose,
         onLoading,
         onClose = () => {},
+        updateData = () => {},
         ...restProps
     } = props;
 
@@ -99,7 +110,10 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
         operation: [],
         workGroup: []
     });
+    const [actionSheet, setActionSheet] = useState<ReactNode>(null);
+    const [typeSave, setTypeSave] = useState(1);
 
+    const saveAsRef = useRef(null);
     const {
         controllerRef,
         createController,
@@ -251,7 +265,8 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
                         type: 'success',
                         text: `Успешно добавлено: "${data.name}"`
                     });
-                    onClose('updated-data');
+                    if (typeSave) onClose('updated-data');
+                    else updateData();
                 }
             } else {
                 const options: PathWorkOptions = {};
@@ -301,7 +316,28 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
             mergeState({send: false}, setLoading);
             onLoading(false);
         }
-    }
+    };
+
+    const openSaveAs = () => {
+        setActionSheet(
+            <ActionSheet
+                placement={'top-end'}
+                popupOffsetDistance={8}
+                toggleRef={saveAsRef}
+                onClosed={() => setActionSheet(null)}
+            >
+                {['и остаться', 'и выйти'].map((i, key) => (
+                    <ActionSheetItem
+                        key={key}
+                        onClick={() => setTypeSave(key)}
+                        after={typeSave === key ? <Icon24Done width={21} height={21}/> : <ActionSheetIconPlug/>}
+                    >
+                        {i}
+                    </ActionSheetItem>
+                ))}
+            </ActionSheet>,
+        );
+    };
 
     const title = useMemo(
         () => `${idWork === null ? 'Добавление' : 'Редактирование'} работы`,
@@ -328,7 +364,7 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
             height={640}
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={preventClose || actionSheet !== null}
             header={(
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -351,20 +387,36 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
                         >
                             Отмена
                         </Button>
-                        <Button
-                            form={'save-work'}
-                            type={'submit'}
-                            disabled={disabledSave || loading.get}
-                            loading={loading.send}
-                            size={'m'}
+                        <ButtonGroup
+                            gap={'none'}
                         >
-                            Сохранить
-                        </Button>
+                            <Button
+                                form={'save-work'}
+                                type={'submit'}
+                                className={classNames(idWork === null && styles.save)}
+                                disabled={disabledSave || loading.get}
+                                loading={loading.send}
+                                size={'m'}
+                            >
+                                {`Сохранить${idWork === null ? (!!typeSave ? ' и выйти' : ' и остаться') : ''}`}
+                            </Button>
+                            {idWork === null && (
+                                <Button
+                                    getRootRef={saveAsRef}
+                                    onClick={openSaveAs}
+                                    className={styles.as}
+                                    disabled={loading.send}
+                                    after={<Icon28SettingsOutline width={24} height={24}/>}
+                                    size={'m'}
+                                />
+                            )}
+                        </ButtonGroup>
                     </ButtonGroup>
                 </div>
             )}
             {...restProps}
         >
+            {actionSheet}
             {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
                 <form id={'save-work'} className={'modalForm'} onSubmit={saveWork}>
                     <FormItem

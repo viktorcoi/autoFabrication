@@ -41,37 +41,75 @@ const ModalManageBlank = (props: ModalManageBlankProps) => {
 
     const [savedData, setSavedData] = useState({...initialData});
     const [data, setData] = useState({...initialData});
-    const [materials, setMaterials] = useState<CustomSelectOptionInterface[]>([]);
     const [loading, setLoading] = useState({
         get: true,
+        material: false,
         send: false
     });
+    const [filter, setFilter] = useState({
+        materialGroupId: 0,
+    });
+    const [options, setOptions] = useState<Record<string, CustomSelectOptionInterface[]>>({
+        materialGroup: [],
+        material: []
+    });
 
-    const { createController } = useController([]);
+    const {
+        controllerRef,
+        createController,
+        cancelRef
+    } = useController([]);
+
+    const getMaterials = async (id: number) => {
+        mergeState({material: true}, setLoading);
+
+        controllerRef.current?.abort();
+        const controller = createController();
+
+        await ApiService.guide.material.get({
+            controller,
+            options: { materialGroupId: id },
+        }).then(({status, data}) => {
+            if (status === 'success') {
+                mergeState({material: data.map(({id, name}) => ({
+                    value: id,
+                    label: name,
+                }))}, setOptions);
+                cancelRef.current = false;
+            } else if (data === 'canceled') {
+                cancelRef.current = true;
+            } else if (idBlank === null) {
+                onClose('error')
+            }
+        });
+    };
 
     useEffect(() => {
         const controller = createController();
 
-        ApiService.guide.material.get({
+        ApiService.guide.materialGroup.get({
             controller
         }).then(async ({status, data}) => {
             if (status === 'success') {
-                setMaterials(data.map(({id, name}) => ({
+                mergeState({materialGroup: data.map(({id, name}) => ({
                     value: id,
                     label: name,
-                })));
+                }))}, setOptions);
 
                 if (idBlank !== null) {
                     await ApiService.guide.blank.getById({
                         id: idBlank,
                         controller
-                    }).then(({status, data}) => {
+                    }).then(async ({status, data}) => {
                         if (status === 'success') {
                             const init = {
                                 materialId: data.materialId,
                                 name: data.name,
                                 description: data.description ?? '',
                             };
+
+                            mergeState({materialGroupId: data.material.materialGroupId}, setFilter);
+                            await getMaterials(data.material.materialGroupId).finally(() => mergeState({material: false}, setLoading));
 
                             setSavedData(init);
                             setData(init);
@@ -81,6 +119,14 @@ const ModalManageBlank = (props: ModalManageBlankProps) => {
             } else onClose('error')
         }).finally(() => mergeState({get: false}, setLoading));
     }, [idBlank])
+
+    const handleChangeMaterialGroupId = async (id: number) => {
+        mergeState({materialGroupId: id}, setFilter);
+        mergeState({materialId: 0}, setData);
+        if (id === 0) return;
+
+        await getMaterials(id).finally(() => mergeState({material: cancelRef.current}, setLoading));
+    };
 
     const saveBlank = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -179,15 +225,36 @@ const ModalManageBlank = (props: ModalManageBlankProps) => {
             {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
                 <form id={'save-blank'} className={'modalForm'} onSubmit={saveBlank}>
                     <FormItem
+                        top={'Группа материалов'}
+                        noPadding={true}
+                    >
+                        <Select
+                            disabled={loading.send}
+                            className={classNames(loading.send && 'disabled')}
+                            filterFn={selectFilter.filterFn}
+                            options={options.materialGroup}
+                            searchable={true}
+                            allowClearButton={true}
+                            value={filter.materialGroupId}
+                            onChange={(e) => handleChangeMaterialGroupId(Number(e.target.value))}
+                            placeholder={'Выберите группу материалов'}
+                            onInputChange={selectFilter.onInputChange}
+                            onOpen={selectFilter.onOpen}
+                            onClose={selectFilter.onClose}
+                            status={filter.materialGroupId !== 0 ? 'default' : 'error'}
+                        />
+                    </FormItem>
+                    <FormItem
                         top={'Материал'}
                         noPadding={true}
                     >
                         <Select
                             filterFn={selectFilter.filterFn}
-                            options={materials}
+                            options={options.material}
                             searchable={true}
-                            disabled={loading.send}
-                            className={classNames(loading.send && 'disabled')}
+                            fetching={loading.material}
+                            disabled={loading.send || filter.materialGroupId === 0}
+                            className={classNames((loading.send || filter.materialGroupId === 0) && 'disabled')}
                             value={data.materialId}
                             onChange={(e) => mergeState({materialId: Number(e.target.value)}, setData)}
                             placeholder={'Выберите материал'}

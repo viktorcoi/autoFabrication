@@ -41,37 +41,75 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
 
     const [savedData, setSavedData] = useState({...initialData});
     const [data, setData] = useState({...initialData});
-    const [operations, setOperations] = useState<CustomSelectOptionInterface[]>([]);
     const [loading, setLoading] = useState({
         get: true,
+        operation: false,
         send: false
     });
+    const [filter, setFilter] = useState({
+        operationGroupId: 0,
+    });
+    const [options, setOptions] = useState<Record<string, CustomSelectOptionInterface[]>>({
+        operationGroup: [],
+        operation: []
+    });
 
-    const { createController } = useController([]);
+    const {
+        controllerRef,
+        createController,
+        cancelRef
+    } = useController([]);
+
+    const getOperations = async (id: number) => {
+        mergeState({operation: true}, setLoading);
+
+        controllerRef.current?.abort();
+        const controller = createController();
+
+        await ApiService.guide.operation.get({
+            controller,
+            options: { operationGroupId: id },
+        }).then(async ({status, data}) => {
+            if (status === 'success') {
+                mergeState({operation: data.map(({id, name}) => ({
+                    value: id,
+                    label: name,
+                }))}, setOptions);
+                cancelRef.current = false;
+            } else if (data === 'canceled') {
+                cancelRef.current = true;
+            } else if (idWorkGroup === null) {
+                onClose('error')
+            }
+        });
+    };
 
     useEffect(() => {
         const controller = createController();
 
-        ApiService.guide.operation.get({
+        ApiService.guide.operationGroup.get({
             controller
         }).then(async ({status, data}) => {
             if (status === 'success') {
-                setOperations(data.map(({id, name}) => ({
+                mergeState({operationGroup: data.map(({id, name}) => ({
                     value: id,
                     label: name,
-                })));
+                }))}, setOptions);
 
                 if (idWorkGroup !== null) {
                     await ApiService.guide.workGroup.getById({
                         id: idWorkGroup,
                         controller
-                    }).then(({status, data}) => {
+                    }).then(async ({status, data}) => {
                         if (status === 'success') {
                             const init = {
                                 operationId: data.operationId,
                                 name: data.name,
                                 description: data.description ?? '',
                             };
+
+                            mergeState({operationGroupId: data.operation.operationGroupId}, setFilter);
+                            await getOperations(data.operation.operationGroupId).finally(() => mergeState({operation: false}, setLoading));
 
                             setSavedData(init);
                             setData(init);
@@ -81,6 +119,14 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
             } else onClose('error')
         }).finally(() => mergeState({get: false}, setLoading));
     }, [idWorkGroup])
+
+    const handleChangeOperationGroupId = async (id: number) => {
+        mergeState({operationGroupId: id}, setFilter);
+        mergeState({operationId: 0}, setData);
+        if (id === 0) return;
+
+        await getOperations(id).finally(() => mergeState({operation: cancelRef.current}, setLoading));
+    };
 
     const saveWorkGroup = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -179,15 +225,36 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
             {loading.get ? <Spinner size={'xl'} className={styles.plug}/> : (
                 <form id={'save-work-group'} className={'modalForm'} onSubmit={saveWorkGroup}>
                     <FormItem
+                        top={'Группа операций'}
+                        noPadding={true}
+                    >
+                        <Select
+                            disabled={loading.send}
+                            className={classNames(loading.send && 'disabled')}
+                            filterFn={selectFilter.filterFn}
+                            options={options.operationGroup}
+                            searchable={true}
+                            allowClearButton={true}
+                            value={filter.operationGroupId}
+                            onChange={(e) => handleChangeOperationGroupId(Number(e.target.value))}
+                            placeholder={'Выберите группу операций'}
+                            onInputChange={selectFilter.onInputChange}
+                            onOpen={selectFilter.onOpen}
+                            onClose={selectFilter.onClose}
+                            status={filter.operationGroupId !== 0 ? 'default' : 'error'}
+                        />
+                    </FormItem>
+                    <FormItem
                         top={'Операция'}
                         noPadding={true}
                     >
                         <Select
                             filterFn={selectFilter.filterFn}
-                            options={operations}
+                            options={options.operation}
                             searchable={true}
-                            disabled={loading.send}
-                            className={classNames(loading.send && 'disabled')}
+                            fetching={loading.operation}
+                            disabled={loading.send || filter.operationGroupId === 0}
+                            className={classNames((loading.send || filter.operationGroupId === 0) && 'disabled')}
                             value={data.operationId}
                             onChange={(e) => mergeState({operationId: Number(e.target.value)}, setData)}
                             placeholder={'Выберите операцию'}

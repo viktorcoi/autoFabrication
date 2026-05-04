@@ -357,6 +357,9 @@ const Work = (
                     onClose={closeModal}
                     onLoading={v => mergeState({modal: v}, setLoading)}
                     onClosed={() => setModals({id: null,  show: false, data: null})}
+                    updateData={() => {
+                        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                    }}
                 />
             )}
             <div className={styles.wrap}>
