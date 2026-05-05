@@ -34,7 +34,6 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
     const {
         idWorkGroup,
         preventClose,
-        onLoading,
         updateData = () => {},
         onClose = () => {},
         ...restProps
@@ -140,7 +139,6 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
         if (disabledSave || loading.send) return;
 
         mergeState({send: true}, setLoading);
-        onLoading(true);
 
         try {
             const { status } = idWorkGroup === null ? await ApiService.guide.workGroup.post({
@@ -169,7 +167,6 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
             }
         } finally {
             mergeState({send: false}, setLoading);
-            onLoading(false);
         }
     };
 
@@ -214,7 +211,7 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
         <ModalPage
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={loading.send || preventClose || actionSheet !== null}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -230,10 +227,7 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

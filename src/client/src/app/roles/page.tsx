@@ -38,7 +38,6 @@ const RolesPage = () => {
     const [selectedRole, setSelectedRole] = useState<number | null>(null);
     const [loading, setLoading] = useState({
         page: true,
-        modal: false,
         permissions: false
     });
     const [modals, setModals] = useState<OpenModalsType<
@@ -131,17 +130,13 @@ const RolesPage = () => {
                     mode={'list'}
                     name={modals.data?.name}
                     url={'/roles'}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-manage-role' === modals.id && (
                 <ModalManageRole
                     idRole={modals.data}
-                    preventClose={loading.modal}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     open={modals.show}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null,  show: false, data: null})}

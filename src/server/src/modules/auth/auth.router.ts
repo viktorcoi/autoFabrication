@@ -14,8 +14,8 @@ import {
 	normalizePermissionPath,
 } from "../../shared/http/permissions.js";
 import { validate } from "../../shared/http/validate.js";
-import { accessSchema, loginSchema } from "./auth.schemas.js";
-import { getAuthUserById, loginUser } from "./auth.service.js";
+import { accessSchema, changePasswordSchema, loginSchema } from "./auth.schemas.js";
+import { changeAuthUserPassword, getAuthUserById, loginUser } from "./auth.service.js";
 
 export const authRouter = Router();
 
@@ -65,6 +65,18 @@ authRouter.get(
 		response.json({
 			...user,
 		});
+	}),
+);
+
+authRouter.patch(
+	"/password",
+	asyncHandler(async (request, response) => {
+		const auth = requireAuth(request, response);
+		const payload = validate(changePasswordSchema, request.body ?? {});
+
+		await changeAuthUserPassword(auth.userId, payload.oldPassword, payload.newPassword);
+
+		response.status(204).send();
 	}),
 );
 

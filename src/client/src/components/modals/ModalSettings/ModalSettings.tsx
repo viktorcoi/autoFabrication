@@ -4,7 +4,7 @@ import {
     FormItem,
     FormLayoutGroup,
     ModalPage,
-    ModalPageHeader,
+    ModalPageHeader, ModalPageProps,
     PlatformProvider,
     Select,
     SimpleCell,
@@ -16,14 +16,18 @@ import {useAppStore} from "@/store/app/app";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {SnackbarPlacementType} from "@/store/snackbar/types";
 import NumberPicker from "@/components/NumberPicker/NumberPicker";
-import {initField, isValidConfirmPassword, isValidPassword} from "@/components/modals/ModalSettings/helpers";
+import {
+    initField,
+    isValidConfirmPassword,
+    isValidPassword
+} from "@/components/modals/ModalSettings/helpers";
 import PasswordInput from "@/components/PasswordInput/PasswordInput";
-import {ModalSettingsProps} from "@/components/modals/ModalSettings/types";
+import {ApiService} from "@/apiService/apiService";
 
-const ModalSettings = (props: ModalSettingsProps) => {
+const ModalSettings = (props: ModalPageProps) => {
 
     const {
-        onLoading = () => {},
+        preventClose,
         ...restProps
     } = props;
 
@@ -53,21 +57,33 @@ const ModalSettings = (props: ModalSettingsProps) => {
     const savePassword = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        console.log('a')
-
         if (!password.isValid || !newPassword.isValid || !confirmNewPassword.isValid) return;
-        console.log('b')
+
         setLoading(true);
-        onLoading(true);
 
-
+        await ApiService.auth.changePassword({
+            options: {
+                oldPassword: password.value,
+                newPassword: newPassword.value,
+            },
+        }).then(({status}) => {
+            if (status === 'success') {
+                addSnackbar({
+                    type: 'success',
+                    text: 'Пароль успешно изменен',
+                });
+                setPassword(initField);
+                setNewPassword(initField);
+                setConfirmNewPassword(initField);
+            }
+        }).finally(() => setLoading(false));
     };
 
     return (
         <ModalPage
             height={640}
             hideCloseButton={loading}
-            preventClose={loading}
+            preventClose={preventClose || loading}
             className={styles.modal}
             header={
                 <PlatformProvider value={'ios'}>
@@ -266,6 +282,7 @@ const ModalSettings = (props: ModalSettingsProps) => {
                                 bottom={password.textError}
                             >
                                 <PasswordInput
+                                    maxLength={15}
                                     disabled={loading}
                                     placeholder={'Введите текущий пароль'}
                                     value={password.value}
@@ -282,6 +299,7 @@ const ModalSettings = (props: ModalSettingsProps) => {
                                     disabled={loading}
                                     placeholder={'Введите новый пароль'}
                                     value={newPassword.value}
+                                    maxLength={15}
                                     onChange={({target: {value}}) => {
                                         if (confirmNewPassword.value.length)
                                         setConfirmNewPassword(isValidConfirmPassword(confirmNewPassword.value, value))
@@ -299,6 +317,7 @@ const ModalSettings = (props: ModalSettingsProps) => {
                                     disabled={loading}
                                     placeholder={'Введите новый пароль еще раз'}
                                     value={confirmNewPassword.value}
+                                    maxLength={15}
                                     onChange={({target: {value}}) => setConfirmNewPassword(
                                         isValidConfirmPassword(value, newPassword.value)
                                     )}
@@ -308,8 +327,9 @@ const ModalSettings = (props: ModalSettingsProps) => {
                                 type={'submit'}
                                 size={'m'}
                                 loading={loading}
+                                disabled={!password.isValid || !newPassword.isValid || !confirmNewPassword.isValid}
                             >
-                                ХУЙ
+                                Сохранить
                             </Button>
                         </form>
                     </>

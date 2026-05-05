@@ -39,17 +39,14 @@ import ModalFiltersUsers from "@/components/modals/ModalFilters/ModalFiltersUser
 
 const UsersPage = () => {
 
-    const [loading, setLoading] = useState({
-        page: true,
-        modal: false,
-    });
+    const [loading, setLoading] = useState(true);
 
     const {
         search,
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page, 'users');
+    } = useSearch(loading, 'users');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<UserTableRow[]>>({
@@ -97,7 +94,7 @@ const UsersPage = () => {
     }, [delaySearch]);
 
     const getData = async () => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
 
         const controller = createController();
         const filterOptions: Partial<GetUsersTableFilters> = {
@@ -123,18 +120,18 @@ const UsersPage = () => {
     };
 
     useEffect(() => {
-        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+        getData().finally(() => setLoading(cancelRef.current));
     }, [tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows, tableFilters.roleId]);
 
     const closeModal = (r: ModalPageCloseReasonType) => {
         mergeState({show: false}, setModals);
         if (r === 'updated-data') {
-            getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+            getData().finally(() => setLoading(cancelRef.current));
         }
     };
 
     const handleTableSave = async (changes: PatchUsersTableOptions) => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
 
         const ids = Object.keys(changes);
 
@@ -227,7 +224,7 @@ const UsersPage = () => {
             if (Object.keys(e.changes).length === 0) return;
 
             handleTableSave(e.changes).finally(() => {
-                getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                getData().finally(() => setLoading(cancelRef.current));
             });
         }
         if (e.type === 'contextMenu') {
@@ -321,29 +318,23 @@ const UsersPage = () => {
                     url={'/users'}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-change-login' === modals.id ? (
                 <ModalChangeLogin
                     userId={modals.data?.id}
                     name={modals.data?.name}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-change-password' === modals.id ? (
                 <ModalChangePassword
                     userId={modals.data?.id}
                     name={modals.data?.name}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-remove-user' === modals.id ? (
                 <ModalRemove
@@ -351,11 +342,9 @@ const UsersPage = () => {
                     mode={'table'}
                     name={modals.data?.name}
                     url={'/users'}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-create-user' === modals.id ? (
                 <ModalCreateUser
@@ -363,21 +352,17 @@ const UsersPage = () => {
                     open={modals.show}
                     onBack={id => mergeState({id}, setModals)}
                     onClose={closeModal}
-                    preventClose={loading.modal}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClosed={() => setModals({id: null,  show: false, data: null})}
                 />
             ) : 'modal-manage-user' === modals.id && (
                 <ModalManageUser
                     user={modals.data}
                     idUser={modals.data}
-                    preventClose={loading.modal}
                     open={modals.show}
                     onClose={closeModal}
                     onCreate={(id, data) => {
                         mergeState({id, data}, setModals);
                     }}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClosed={() => setModals({id: null,  show: false, data: null})}
                 />
             )}
@@ -389,7 +374,7 @@ const UsersPage = () => {
                                 {access.adding && (
                                     <Button
                                         size={'m'}
-                                        disabled={loading.page || tableManage.editMode}
+                                        disabled={loading || tableManage.editMode}
                                         before={<Icon24Add/>}
                                         onClick={() => mergeState({id: 'modal-manage-user', show: true}, setModals)}
                                     >
@@ -401,7 +386,7 @@ const UsersPage = () => {
                                         <Button
                                             size={'m'}
                                             appearance={'negative'}
-                                            disabled={loading.page || !selected.length || tableManage.editMode}
+                                            disabled={loading || !selected.length || tableManage.editMode}
                                             before={<Icon24TrashSimpleOutline/>}
                                             onClick={handleRemove}
                                         >
@@ -417,7 +402,7 @@ const UsersPage = () => {
                                             <Button
                                                 size={'m'}
                                                 appearance={'negative'}
-                                                disabled={loading.page || !selected.length || tableManage.editMode}
+                                                disabled={loading || !selected.length || tableManage.editMode}
                                                 before={<Icon24TrashSimpleOutline/>}
                                                 onClick={handleRemove}
                                             />
@@ -430,7 +415,7 @@ const UsersPage = () => {
                             <Search
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
-                                disabled={loading.page || tableManage.editMode}
+                                disabled={loading || tableManage.editMode}
                                 noPadding={true}
                                 className={'search'}
                                 slotProps={{ input: { getRootRef: inputRef } }}
@@ -443,7 +428,7 @@ const UsersPage = () => {
                             >
                                 <div className={'filter'}>
                                     <Button
-                                        disabled={loading.page || tableManage.editMode}
+                                        disabled={loading || tableManage.editMode}
                                         onClick={() => mergeState({id: 'modal-filters-users', show: true}, setModals)}
                                         mode={'secondary'}
                                         size={'m'}
@@ -472,7 +457,7 @@ const UsersPage = () => {
                     total={table.total}
                     page={tableOptions.page}
                     rows={tableOptions.rows}
-                    loading={loading.page}
+                    loading={loading}
                     selected={selected}
                     onEvent={onEventTable}
                     emptyState={{

@@ -62,3 +62,8 @@ export type GetAuthMeResponse = {
     };
     mainUrl: string;
 }
+
+export type ChangePasswordOptions = {
+    oldPassword: string;
+    newPassword: string;
+};

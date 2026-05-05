@@ -6,5 +6,4 @@ export interface ModalManageMaterialProps extends Omit<ModalPageProps, 'onClose'
     idMaterial: number | null;
     onClose(reason: ModalPageCloseReasonType, event?:  React.UIEvent<HTMLElement>): void;
     updateData?(): void;
-    onLoading(v: boolean): void;
 }

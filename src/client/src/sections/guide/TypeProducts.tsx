@@ -28,17 +28,14 @@ const TypeProducts = (
     {onLoading}: {onLoading(value: boolean): void}
 ) => {
 
-    const [loading, setLoading] = useState({
-        page: true,
-        modal: false,
-    });
+    const [loading, setLoading] = useState(true);
 
     const {
         search,
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page, 'typeProducts');
+    } = useSearch(loading, 'typeProducts');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<TypeProductsTableRow[]>>({
@@ -76,7 +73,7 @@ const TypeProducts = (
     }, [delaySearch]);
 
     const getData = async () => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
 
         const controller = createController();
 
@@ -99,18 +96,18 @@ const TypeProducts = (
     };
 
     useEffect(() => {
-        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+        getData().finally(() => setLoading(cancelRef.current));
     }, [tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows]);
 
     const closeModal = (r: ModalPageCloseReasonType) => {
         mergeState({show: false}, setModals);
         if (r === 'updated-data') {
-            getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+            getData().finally(() => setLoading(cancelRef.current));
         }
     };
 
     const handleTableSave = async (changes: PatchTypeProductsTableOptions) => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
         onLoading(true);
 
         const ids = Object.keys(changes);
@@ -201,7 +198,7 @@ const TypeProducts = (
 
             handleTableSave(e.changes).finally(() => {
                 onLoading(false);
-                getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                getData().finally(() => setLoading(cancelRef.current));
             });
         }
         if (e.type === 'contextMenu') {
@@ -276,9 +273,7 @@ const TypeProducts = (
                     url={'/typeProducts'}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-remove-type-product' === modals.id ? (
                 <ModalRemove
@@ -286,19 +281,15 @@ const TypeProducts = (
                     mode={'table'}
                     name={modals.data?.name}
                     url={'/typeProducts'}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-manage-type-product' === modals.id && (
                 <ModalManageTypeProducts
                     idTypeProducts={modals.data}
-                    preventClose={loading.modal}
                     open={modals.show}
                     onClose={closeModal}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                 />
             )}
@@ -309,7 +300,7 @@ const TypeProducts = (
                             {access.adding && (
                                 <Button
                                     size={'m'}
-                                    disabled={loading.page || tableManage.editMode}
+                                    disabled={loading || tableManage.editMode}
                                     before={<Icon24Add/>}
                                     onClick={() => mergeState({id: 'modal-manage-type-product', show: true}, setModals)}
                                 >
@@ -321,7 +312,7 @@ const TypeProducts = (
                                     <Button
                                         size={'m'}
                                         appearance={'negative'}
-                                        disabled={loading.page || !selected.length || tableManage.editMode}
+                                        disabled={loading || !selected.length || tableManage.editMode}
                                         before={<Icon24TrashSimpleOutline/>}
                                         onClick={handleRemove}
                                     >
@@ -337,7 +328,7 @@ const TypeProducts = (
                                         <Button
                                             size={'m'}
                                             appearance={'negative'}
-                                            disabled={loading.page || !selected.length || tableManage.editMode}
+                                            disabled={loading || !selected.length || tableManage.editMode}
                                             before={<Icon24TrashSimpleOutline/>}
                                             onClick={handleRemove}
                                         />
@@ -349,7 +340,7 @@ const TypeProducts = (
                     <Search
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        disabled={loading.page || tableManage.editMode}
+                        disabled={loading || tableManage.editMode}
                         noPadding={true}
                         className={'search'}
                         slotProps={{input: {getRootRef: inputRef}}}
@@ -364,7 +355,7 @@ const TypeProducts = (
                     total={table.total}
                     page={tableOptions.page}
                     rows={tableOptions.rows}
-                    loading={loading.page}
+                    loading={loading}
                     selected={selected}
                     onEvent={onEventTable}
                     emptyState={!delaySearch.trim() ? undefined : {

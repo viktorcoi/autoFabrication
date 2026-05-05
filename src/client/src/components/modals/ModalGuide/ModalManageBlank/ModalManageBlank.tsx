@@ -34,7 +34,6 @@ const ModalManageBlank = (props: ModalManageBlankProps) => {
     const {
         idBlank,
         preventClose,
-        onLoading,
         onClose = () => {},
         updateData = () => {},
         ...restProps
@@ -141,7 +140,6 @@ const ModalManageBlank = (props: ModalManageBlankProps) => {
         if (disabledSave || loading.send) return;
 
         mergeState({send: true}, setLoading);
-        onLoading(true);
 
         try {
             const { status } = idBlank === null ? await ApiService.guide.blank.post({
@@ -170,7 +168,6 @@ const ModalManageBlank = (props: ModalManageBlankProps) => {
             }
         } finally {
             mergeState({send: false}, setLoading);
-            onLoading(false);
         }
     };
 
@@ -215,7 +212,7 @@ const ModalManageBlank = (props: ModalManageBlankProps) => {
         <ModalPage
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={loading.send || preventClose || actionSheet !== null}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -231,10 +228,7 @@ const ModalManageBlank = (props: ModalManageBlankProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

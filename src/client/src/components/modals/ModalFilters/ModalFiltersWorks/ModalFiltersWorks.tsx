@@ -19,7 +19,6 @@ const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
 
     const {
         data: dataProps,
-        preventClose,
         onChangeFilters,
         onClose = () => {},
         ...restProps
@@ -155,7 +154,6 @@ const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
         <ModalPage
             height={344}
             onClose={onClose}
-            preventClose={preventClose}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>Фильтры</ModalPageHeader>
@@ -187,10 +185,7 @@ const ModalFiltersWorks = (props: ModalFiltersWorksProps) => {
                         <Button
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

@@ -19,7 +19,6 @@ const ModalFiltersBlank = (props: ModalFiltersBlankProps) => {
 
     const {
         data: dataProps,
-        preventClose,
         onChangeFilters,
         onClose = () => {},
         ...restProps
@@ -118,7 +117,6 @@ const ModalFiltersBlank = (props: ModalFiltersBlankProps) => {
         <ModalPage
             height={266}
             onClose={onClose}
-            preventClose={preventClose}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>Фильтры</ModalPageHeader>
@@ -149,10 +147,7 @@ const ModalFiltersBlank = (props: ModalFiltersBlankProps) => {
                         <Button
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

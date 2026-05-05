@@ -19,7 +19,6 @@ const ModalFiltersWorkGroup = (props: ModalFiltersWorkGroupProps) => {
 
     const {
         data: dataProps,
-        preventClose,
         onChangeFilters,
         onClose = () => {},
         ...restProps
@@ -115,7 +114,6 @@ const ModalFiltersWorkGroup = (props: ModalFiltersWorkGroupProps) => {
         <ModalPage
             height={266}
             onClose={onClose}
-            preventClose={preventClose}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>Фильтры</ModalPageHeader>
@@ -146,10 +144,7 @@ const ModalFiltersWorkGroup = (props: ModalFiltersWorkGroupProps) => {
                         <Button
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

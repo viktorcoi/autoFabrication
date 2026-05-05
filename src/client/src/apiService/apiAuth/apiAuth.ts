@@ -1,6 +1,6 @@
 import {api, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {ApiServiceOptions, ApiServiceResponse} from "@/apiService/types";
-import {GetAuthMeResponse} from "@/apiService/apiAuth/types";
+import {ChangePasswordOptions, GetAuthMeResponse} from "@/apiService/apiAuth/types";
 
 export const ApiAuth = {
     login: async (options: ApiServiceOptions<{
@@ -32,6 +32,21 @@ export const ApiAuth = {
                 options.errorOptions?.placeholder
             );
         }).catch((e) => handleApiError(e, options.errorOptions, 'me'));
+    },
+
+    changePassword: async (options: ApiServiceOptions<{
+        options: ChangePasswordOptions;
+    }>): Promise<ApiServiceResponse<{}>> => {
+        return await api.patch("/auth/password",
+            options.options,
+            { signal: options.controller?.signal }
+        ).then(r => {
+            return handleApiSuccess(
+                r.data,
+                r.status === 204,
+                options.errorOptions?.placeholder
+            );
+        }).catch((e) => handleApiError(e, options.errorOptions));
     },
 
     logout: async (options: ApiServiceOptions): Promise<ApiServiceResponse<{}>> => {

@@ -8,5 +8,4 @@ export interface ModalManageRoleProps extends Omit<ModalCardProps, 'onClose'> {
     url: '/roles' | '/users' | '/typeProducts' | '/materialGroup' | '/operationGroup' | '/material' | '/blank' | '/workGroup' | '/operation' | '/work';
     mode: 'list' | 'table';
     onClose(reason: ModalPageCloseReasonType, event?:  React.UIEvent<HTMLElement>): void;
-    onLoading(v: boolean): void;
 }

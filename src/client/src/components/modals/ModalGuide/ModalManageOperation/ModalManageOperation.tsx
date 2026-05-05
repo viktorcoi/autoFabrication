@@ -47,7 +47,6 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
     const {
         idOperation,
         preventClose,
-        onLoading,
         onClose = () => {},
         updateData = () => {},
         ...restProps
@@ -115,7 +114,6 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
         if (disabledSave || loading.send) return;
 
         mergeState({send: true}, setLoading);
-        onLoading(true);
 
         try {
             if (idOperation === null) {
@@ -174,7 +172,6 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
             }
         } finally {
             mergeState({send: false}, setLoading);
-            onLoading(false);
         }
     };
 
@@ -221,7 +218,7 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
         <ModalPage
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={preventClose || loading.send}
             header={(
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -237,10 +234,7 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

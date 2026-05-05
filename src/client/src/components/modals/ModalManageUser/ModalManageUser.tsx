@@ -43,7 +43,6 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         idUser,
         user,
         preventClose,
-        onLoading,
         onCreate,
         onClose = () => {},
         ...restProps
@@ -125,7 +124,6 @@ const ModalManageUser = (props: ModalManageUserProps) => {
 
         if (typeof idUser === 'number') {
             mergeState({send: true}, setLoading);
-            onLoading(true);
 
             let options = {...data};
 
@@ -156,10 +154,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                     }
                     onClose('updated-data');
                 }
-            }).finally(() => {
-                mergeState({send: false}, setLoading);
-                onLoading(false);
-            })
+            }).finally(() => mergeState({send: false}, setLoading));
         } else {
             onCreate('modal-create-user', data as PostUserOptions);
         }
@@ -195,7 +190,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
             height={604}
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose || openAvatar || modals.id !== null}
+            preventClose={preventClose || loading.send || openAvatar || modals.id !== null}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -211,10 +206,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

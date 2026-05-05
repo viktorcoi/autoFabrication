@@ -23,7 +23,6 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
         user,
         preventClose,
         onBack,
-        onLoading,
         onClose = () => {},
         ...restProps
     } = props;
@@ -73,7 +72,6 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
         }
 
         setLoading(true);
-        onLoading(true);
 
         await ApiService.users.post({
             options: {
@@ -89,17 +87,14 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
                 });
                 onClose('updated-data');
             }
-        }).finally(() => {
-            setLoading(false);
-            onLoading(false);
-        })
+        }).finally(() => setLoading(false))
     };
 
     return (
         <ModalPage
             hideCloseButton={loading}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={preventClose || loading}
             header={
                 <PlatformProvider
                     value={'ios'}
@@ -128,10 +123,7 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
                             disabled={loading}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

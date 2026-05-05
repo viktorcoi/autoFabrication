@@ -6,5 +6,4 @@ export interface ModalChangeLoginProps extends Omit<ModalPageProps, 'onClose'> {
     userId: number;
     name: string;
     onClose(reason: ModalPageCloseReasonType, event?:  React.UIEvent<HTMLElement>): void;
-    onLoading(v: boolean): void;
 }

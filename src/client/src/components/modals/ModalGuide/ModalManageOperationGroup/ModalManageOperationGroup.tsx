@@ -27,7 +27,6 @@ const ModalManageOperationGroup = (props: ModalManageOperationGroupProps) => {
     const {
         idOperationGroup,
         preventClose,
-        onLoading,
         onClose = () => {},
         ...restProps
     } = props;
@@ -72,7 +71,6 @@ const ModalManageOperationGroup = (props: ModalManageOperationGroupProps) => {
         if (disabledSave || loading.send) return;
 
         mergeState({send: true}, setLoading);
-        onLoading(true);
 
         try {
             const { status } = idOperationGroup === null ? await ApiService.guide.operationGroup.post({
@@ -98,7 +96,6 @@ const ModalManageOperationGroup = (props: ModalManageOperationGroupProps) => {
             }
         } finally {
             mergeState({send: false}, setLoading);
-            onLoading(false);
         }
     }
 
@@ -121,7 +118,7 @@ const ModalManageOperationGroup = (props: ModalManageOperationGroupProps) => {
         <ModalPage
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={preventClose || loading.send}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -137,10 +134,7 @@ const ModalManageOperationGroup = (props: ModalManageOperationGroupProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

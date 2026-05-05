@@ -46,15 +46,16 @@ const ModalFiles = (props: ModalFilesProps) => {
         name,
         url,
         files,
+        preventClose,
         onClose = () => {},
         ...restProps
     } = props;
 
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
-    const [loadingFileId, setLoadingFileId] = useState<number | null>(null);
+    const [loading, setLoading] = useState<number | null>(null);
 
     const handleDownloadAll = async () => {
-        setLoadingFileId(DOWNLOAD_ALL_ID);
+        setLoading(DOWNLOAD_ALL_ID);
 
         try {
             await downloadMap[url].all(itemId, name);
@@ -69,12 +70,12 @@ const ModalFiles = (props: ModalFilesProps) => {
                 text: error instanceof Error ? error.message : 'Не удалось скачать файлы'
             });
         } finally {
-            setLoadingFileId(null);
+            setLoading(null);
         }
     };
 
     const handleDownload = async (fileId: number, fileName: string) => {
-        setLoadingFileId(fileId);
+        setLoading(fileId);
 
         try {
             await downloadMap[url].one(fileId, fileName);
@@ -84,15 +85,15 @@ const ModalFiles = (props: ModalFilesProps) => {
                 text: error instanceof Error ? error.message : 'Не удалось скачать файл'
             });
         } finally {
-            setLoadingFileId(null);
+            setLoading(null);
         }
     };
 
     return (
         <ModalPage
             onClose={onClose}
-            hideCloseButton={loadingFileId !== null}
-            preventClose={loadingFileId !== null}
+            hideCloseButton={loading !== null}
+            preventClose={preventClose || loading !== null}
             header={(
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader
@@ -106,8 +107,8 @@ const ModalFiles = (props: ModalFilesProps) => {
                                 <Button
                                     mode={'secondary'}
                                     size={'m'}
-                                    loading={loadingFileId === DOWNLOAD_ALL_ID}
-                                    disabled={loadingFileId !== null || files.length === 0}
+                                    loading={loading === DOWNLOAD_ALL_ID}
+                                    disabled={loading !== null || files.length === 0}
                                     before={<Icon16DownloadOutline />}
                                     onClick={handleDownloadAll}
                                 />
@@ -152,8 +153,8 @@ const ModalFiles = (props: ModalFilesProps) => {
                                     <Button
                                         mode={'secondary'}
                                         size={'m'}
-                                        loading={loadingFileId === file.id}
-                                        disabled={loadingFileId !== null}
+                                        loading={loading === file.id}
+                                        disabled={loading !== null}
                                         before={<Icon16DownloadOutline />}
                                         onClick={() => handleDownload(file.id, file.name)}
                                     />

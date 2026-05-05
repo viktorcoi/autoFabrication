@@ -22,7 +22,6 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
         userId,
         name,
         preventClose,
-        onLoading,
         onClose = () => {},
         ...restProps
     } = props;
@@ -50,7 +49,6 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
         }
 
         setLoading(true);
-        onLoading(true);
 
         await ApiService.users.patch({
             id: userId,
@@ -63,17 +61,14 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
                 });
                 onClose('updated-data');
             }
-        }).finally(() => {
-            setLoading(false);
-            onLoading(false);
-        })
+        }).finally(() => setLoading(false))
     };
 
     return (
         <ModalPage
             hideCloseButton={loading}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={preventClose || loading}
             header={
                 <PlatformProvider
                     value={'ios'}
@@ -93,10 +88,7 @@ const ModalManageUser = (props: ModalChangePasswordProps) => {
                             disabled={loading}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

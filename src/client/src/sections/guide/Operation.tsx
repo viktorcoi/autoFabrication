@@ -31,17 +31,14 @@ const Operation = (
     {onLoading}: {onLoading(value: boolean): void}
 ) => {
 
-    const [loading, setLoading] = useState({
-        page: true,
-        modal: false,
-    });
+    const [loading, setLoading] = useState(true);
 
     const {
         search,
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page, 'operation');
+    } = useSearch(loading, 'operation');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<OperationTableRow[]>>({
@@ -88,7 +85,7 @@ const Operation = (
     }, [delaySearch]);
 
     const getData = async () => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
 
         const controller = createController();
         const filterOptions: Partial<GetOperationsTableFilters> = {
@@ -114,18 +111,18 @@ const Operation = (
     };
 
     useEffect(() => {
-        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+        getData().finally(() => setLoading(cancelRef.current));
     }, [tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows, tableFilters.operationGroupId]);
 
     const closeModal = (r: ModalPageCloseReasonType) => {
         mergeState({show: false}, setModals);
         if (r === 'updated-data') {
-            getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+            getData().finally(() => setLoading(cancelRef.current));
         }
     };
 
     const handleTableSave = async (changes: PatchOperationTableOptions) => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
         onLoading(true);
 
         const ids = Object.keys(changes);
@@ -216,7 +213,7 @@ const Operation = (
 
             handleTableSave(e.changes).finally(() => {
                 onLoading(false);
-                getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                getData().finally(() => setLoading(cancelRef.current));
             });
         }
         if (e.type === 'download') {
@@ -305,9 +302,7 @@ const Operation = (
                     url={'/operation'}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-remove-operation' === modals.id ? (
                 <ModalRemove
@@ -315,11 +310,9 @@ const Operation = (
                     mode={'table'}
                     name={modals.data?.name}
                     url={'/operation'}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-operation-files' === modals.id ? (
                 <ModalFiles
@@ -334,13 +327,11 @@ const Operation = (
             ) : 'modal-manage-operation' === modals.id && (
                 <ModalManageOperation
                     idOperation={modals.data}
-                    preventClose={loading.modal}
                     open={modals.show}
                     onClose={closeModal}
                     updateData={() => {
-                        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                        getData().finally(() => setLoading(cancelRef.current));
                     }}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClosed={() => setModals({id: null,  show: false, data: null})}
                 />
             )}
@@ -351,7 +342,7 @@ const Operation = (
                             {access.adding && (
                                 <Button
                                     size={'m'}
-                                    disabled={loading.page || tableManage.editMode}
+                                    disabled={loading || tableManage.editMode}
                                     before={<Icon24Add/>}
                                     onClick={() => mergeState({id: 'modal-manage-operation', show: true}, setModals)}
                                 >
@@ -363,7 +354,7 @@ const Operation = (
                                     <Button
                                         size={'m'}
                                         appearance={'negative'}
-                                        disabled={loading.page || !selected.length || tableManage.editMode}
+                                        disabled={loading || !selected.length || tableManage.editMode}
                                         before={<Icon24TrashSimpleOutline/>}
                                         onClick={handleRemove}
                                     >
@@ -379,7 +370,7 @@ const Operation = (
                                         <Button
                                             size={'m'}
                                             appearance={'negative'}
-                                            disabled={loading.page || !selected.length || tableManage.editMode}
+                                            disabled={loading || !selected.length || tableManage.editMode}
                                             before={<Icon24TrashSimpleOutline/>}
                                             onClick={handleRemove}
                                         />
@@ -392,7 +383,7 @@ const Operation = (
                         <Search
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            disabled={loading.page || tableManage.editMode}
+                            disabled={loading || tableManage.editMode}
                             noPadding={true}
                             className={'search'}
                             slotProps={{ input: { getRootRef: inputRef } }}
@@ -405,7 +396,7 @@ const Operation = (
                         >
                             <div className={'filter'}>
                                 <Button
-                                    disabled={loading.page || tableManage.editMode}
+                                    disabled={loading || tableManage.editMode}
                                     onClick={() => mergeState({id: 'modal-filters-operation', show: true}, setModals)}
                                     mode={'secondary'}
                                     size={'m'}
@@ -433,7 +424,7 @@ const Operation = (
                     total={table.total}
                     page={tableOptions.page}
                     rows={tableOptions.rows}
-                    loading={loading.page}
+                    loading={loading}
                     selected={selected}
                     onEvent={onEventTable}
                     emptyState={!delaySearch.trim() ? undefined :{

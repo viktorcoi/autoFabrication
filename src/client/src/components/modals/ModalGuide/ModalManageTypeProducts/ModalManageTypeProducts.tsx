@@ -27,7 +27,6 @@ const ModalManageTypeProducts = (props: ModalManageTypeProductsProps) => {
     const {
         idTypeProducts,
         preventClose,
-        onLoading,
         onClose = () => {},
         ...restProps
     } = props;
@@ -72,7 +71,6 @@ const ModalManageTypeProducts = (props: ModalManageTypeProductsProps) => {
         if (disabledSave || loading.send) return;
 
         mergeState({send: true}, setLoading);
-        onLoading(true);
 
         try {
             const { status } = idTypeProducts === null ? await ApiService.guide.typeProducts.post({
@@ -98,7 +96,6 @@ const ModalManageTypeProducts = (props: ModalManageTypeProductsProps) => {
             }
         } finally {
             mergeState({send: false}, setLoading);
-            onLoading(false);
         }
     }
 
@@ -121,7 +118,7 @@ const ModalManageTypeProducts = (props: ModalManageTypeProductsProps) => {
         <ModalPage
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={preventClose || loading.send}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -137,10 +134,7 @@ const ModalManageTypeProducts = (props: ModalManageTypeProductsProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

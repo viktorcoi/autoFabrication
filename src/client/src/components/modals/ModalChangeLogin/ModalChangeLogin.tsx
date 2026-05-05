@@ -25,7 +25,6 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
         userId,
         name,
         preventClose,
-        onLoading,
         onClose = () => {},
         ...restProps
     } = props;
@@ -82,7 +81,6 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
         }
 
         mergeState({send: true}, setLoading);
-        onLoading(true);
 
         await ApiService.users.patch({
             id: userId,
@@ -98,17 +96,14 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
                 }
                 onClose('updated-data');
             }
-        }).finally(() => {
-            mergeState({send: false}, setLoading);
-            onLoading(false);
-        })
+        }).finally(() => mergeState({send: false}, setLoading))
     };
 
     return (
         <ModalPage
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={preventClose || loading.send}
             height={188}
             header={
                 <PlatformProvider
@@ -129,10 +124,7 @@ const ModalManageUser = (props: ModalChangeLoginProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

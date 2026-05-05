@@ -28,7 +28,6 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
     const {
         idRole,
         preventClose,
-        onLoading,
         onClose = () => {},
         ...restProps
     } = props;
@@ -74,7 +73,6 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
         if (disabledSave || loading.send) return;
 
         mergeState({send: true}, setLoading);
-        onLoading(true);
 
         try {
             const { status, data: result } = idRole === null ? await ApiService.roles.post({
@@ -104,9 +102,8 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
             }
         } finally {
             mergeState({send: false}, setLoading);
-            onLoading(false);
         }
-    }
+    };
 
     const title = useMemo(
         () => `${idRole === null ? 'Добавление' : 'Редактирование'} роли`,
@@ -127,7 +124,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
         <ModalPage
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={preventClose || loading.send}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -143,10 +140,7 @@ const ModalManageRole = (props: ModalManageRoleProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

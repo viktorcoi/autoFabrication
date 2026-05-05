@@ -20,7 +20,6 @@ const ModalFiltersUsers = (props: ModalFiltersUsersProps) => {
 
     const {
         data: dataProps,
-        preventClose,
         onChangeFilters,
         onClose = () => {},
         ...restProps
@@ -74,7 +73,6 @@ const ModalFiltersUsers = (props: ModalFiltersUsersProps) => {
     return (
         <ModalPage
             onClose={onClose}
-            preventClose={preventClose}
             height={188}
             header={
                 <PlatformProvider value={'ios'}>
@@ -105,10 +103,7 @@ const ModalFiltersUsers = (props: ModalFiltersUsersProps) => {
                         <Button
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

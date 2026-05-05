@@ -82,3 +82,41 @@ export const loginUser = async (login: string, password: string) => {
 
 	return getAuthUserById(user.id);
 };
+
+export const changeAuthUserPassword = async (
+	userId: number,
+	oldPassword: string,
+	newPassword: string,
+) => {
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+		select: {
+			id: true,
+			passwordHash: true,
+		},
+	});
+
+	if (!user) {
+		throw new AppError(404, "Пользователь не найден");
+	}
+
+	const oldPasswordMatches = await bcrypt.compare(oldPassword, user.passwordHash);
+
+	if (!oldPasswordMatches) {
+		throw new AppError(400, "Текущий пароль указан неверно");
+	}
+
+	const newPasswordMatchesOld = await bcrypt.compare(newPassword, user.passwordHash);
+
+	if (newPasswordMatchesOld) {
+		throw new AppError(400, "Новый пароль должен отличаться от текущего");
+	}
+
+	const passwordHash = await bcrypt.hash(newPassword, 12);
+
+	await prisma.user.update({
+		where: { id: user.id },
+		data: { passwordHash },
+		select: { id: true },
+	});
+};

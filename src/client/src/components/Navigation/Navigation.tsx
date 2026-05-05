@@ -35,7 +35,6 @@ const Navigation = () => {
     const showErrors = useShowErrors(state => state);
 
     const pathname = usePathname();
-    const [loading, setLoading] = useState(false);
 
     const [modals, setModals] = useState<OpenModalsType<
         'modal-settings'
@@ -96,11 +95,9 @@ const Navigation = () => {
         <>
             {'modal-settings' === modals.id && (
                 <ModalSettings
-                    onLoading={setLoading}
                     open={modals.show}
                     onClose={() => mergeState({show: false}, setModals)}
                     onClosed={() => setModals({id: null, show: false, data: null})}
-
                 />
             )}
             {showErrors.render && (

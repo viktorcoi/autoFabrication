@@ -43,17 +43,14 @@ const Work = (
     {onLoading}: {onLoading(value: boolean): void}
 ) => {
 
-    const [loading, setLoading] = useState({
-        page: true,
-        modal: false,
-    });
+    const [loading, setLoading] = useState(true);
 
     const {
         search,
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page, 'work');
+    } = useSearch(loading, 'work');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<WorkTableRow[]>>({
@@ -104,7 +101,7 @@ const Work = (
     }, [delaySearch]);
 
     const getData = async () => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
 
         const controller = createController();
         const filterOptions: Partial<GetWorksTableFilters> = {
@@ -132,18 +129,18 @@ const Work = (
     };
 
     useEffect(() => {
-        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+        getData().finally(() => setLoading(cancelRef.current));
     }, [tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows, tableFilters.operationGroupId, tableFilters.operationId, tableFilters.workGroupId]);
 
     const closeModal = (r: ModalPageCloseReasonType) => {
         mergeState({show: false}, setModals);
         if (r === 'updated-data') {
-            getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+            getData().finally(() => setLoading(cancelRef.current));
         }
     };
 
     const handleTableSave = async (changes: PatchWorkTableOptions) => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
         onLoading(true);
 
         const ids = Object.keys(changes);
@@ -234,7 +231,7 @@ const Work = (
 
             handleTableSave(e.changes).finally(() => {
                 onLoading(false);
-                getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                getData().finally(() => setLoading(cancelRef.current));
             });
         }
         if (e.type === 'download') {
@@ -323,9 +320,7 @@ const Work = (
                     url={'/work'}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-remove-work' === modals.id ? (
                 <ModalRemove
@@ -333,11 +328,9 @@ const Work = (
                     mode={'table'}
                     name={modals.data?.name}
                     url={'/work'}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-work-files' === modals.id ? (
                 <ModalFiles
@@ -352,13 +345,11 @@ const Work = (
             ) : 'modal-manage-work' === modals.id && (
                 <ModalManageWork
                     idWork={modals.data}
-                    preventClose={loading.modal}
                     open={modals.show}
                     onClose={closeModal}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClosed={() => setModals({id: null,  show: false, data: null})}
                     updateData={() => {
-                        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                        getData().finally(() => setLoading(cancelRef.current));
                     }}
                 />
             )}
@@ -369,7 +360,7 @@ const Work = (
                             {access.adding && (
                                 <Button
                                     size={'m'}
-                                    disabled={loading.page || tableManage.editMode}
+                                    disabled={loading || tableManage.editMode}
                                     before={<Icon24Add/>}
                                     onClick={() => mergeState({id: 'modal-manage-work', show: true}, setModals)}
                                 >
@@ -381,7 +372,7 @@ const Work = (
                                     <Button
                                         size={'m'}
                                         appearance={'negative'}
-                                        disabled={loading.page || !selected.length || tableManage.editMode}
+                                        disabled={loading || !selected.length || tableManage.editMode}
                                         before={<Icon24TrashSimpleOutline/>}
                                         onClick={handleRemove}
                                     >
@@ -397,7 +388,7 @@ const Work = (
                                         <Button
                                             size={'m'}
                                             appearance={'negative'}
-                                            disabled={loading.page || !selected.length || tableManage.editMode}
+                                            disabled={loading || !selected.length || tableManage.editMode}
                                             before={<Icon24TrashSimpleOutline/>}
                                             onClick={handleRemove}
                                         />
@@ -410,7 +401,7 @@ const Work = (
                         <Search
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            disabled={loading.page || tableManage.editMode}
+                            disabled={loading || tableManage.editMode}
                             noPadding={true}
                             className={'search'}
                             slotProps={{ input: { getRootRef: inputRef } }}
@@ -423,7 +414,7 @@ const Work = (
                         >
                             <div className={'filter'}>
                                 <Button
-                                    disabled={loading.page || tableManage.editMode}
+                                    disabled={loading || tableManage.editMode}
                                     onClick={() => mergeState({id: 'modal-filters-works', show: true}, setModals)}
                                     mode={'secondary'}
                                     size={'m'}
@@ -450,7 +441,7 @@ const Work = (
                     total={table.total}
                     page={tableOptions.page}
                     rows={tableOptions.rows}
-                    loading={loading.page}
+                    loading={loading}
                     selected={selected}
                     onEvent={onEventTable}
                     emptyState={!delaySearch.trim() ? undefined :{

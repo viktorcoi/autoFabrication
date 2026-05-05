@@ -23,10 +23,9 @@ const ModalRemove = (props: ModalManageRoleProps) => {
     const {
         name,
         url,
-        preventClose,
         removeId,
         mode,
-        onLoading,
+        preventClose,
         onClose = () => {},
         ...restProps
     } = props;
@@ -37,7 +36,6 @@ const ModalRemove = (props: ModalManageRoleProps) => {
 
     const onRemove = async () => {
         setLoading(true);
-        onLoading(true);
 
         await urlList[url](removeId).then(({status, data}) => {
             if (status === 'success') {
@@ -55,17 +53,14 @@ const ModalRemove = (props: ModalManageRoleProps) => {
                 });
                 onClose('updated-data');
             }
-        }).finally(() => {
-            setLoading(false);
-            onLoading(false);
-        });
+        }).finally(() => setLoading(false));
     };
 
     return (
         <ModalCard
             onClose={onClose}
             icon={<Icon24TrashSimpleOutline width={56} height={56} fill={'var(--vkui--color_icon_negative)'} />}
-            preventClose={preventClose}
+            preventClose={preventClose || loading}
             dismissButtonMode={loading ? 'none' : undefined}
             title={`Вы действительно хотите удалить "${name}"?`}
             actions={
@@ -74,10 +69,7 @@ const ModalRemove = (props: ModalManageRoleProps) => {
                     <ButtonGroup gap="m" stretched>
                         <Button
                             disabled={loading}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                             mode={'secondary'}
                             stretched={true}
                             size={'l'}

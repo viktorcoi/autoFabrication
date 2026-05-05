@@ -30,17 +30,14 @@ const Material = (
     {onLoading}: {onLoading(value: boolean): void}
 ) => {
 
-    const [loading, setLoading] = useState({
-        page: true,
-        modal: false,
-    });
+    const [loading, setLoading] = useState(true);
 
     const {
         search,
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading.page, 'material');
+    } = useSearch(loading, 'material');
 
     const [selected, setSelected] = useState<number[]>([]);
     const [table, setTable] = useState<GetTableResponse<MaterialTableRow[]>>({
@@ -87,7 +84,7 @@ const Material = (
     }, [delaySearch]);
 
     const getData = async () => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
 
         const controller = createController();
         const filterOptions: Partial<GetMaterialsTableFilters> = {
@@ -113,18 +110,18 @@ const Material = (
     };
 
     useEffect(() => {
-        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+        getData().finally(() => setLoading(cancelRef.current));
     }, [tableOptions.sorting, tableOptions.search, tableOptions.page, tableOptions.rows, tableFilters.materialGroupId]);
 
     const closeModal = (r: ModalPageCloseReasonType) => {
         mergeState({show: false}, setModals);
         if (r === 'updated-data') {
-            getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+            getData().finally(() => setLoading(cancelRef.current));
         }
     };
 
     const handleTableSave = async (changes: PatchMaterialTableOptions) => {
-        mergeState({page: true}, setLoading);
+        setLoading(true);
         onLoading(true);
 
         const ids = Object.keys(changes);
@@ -215,7 +212,7 @@ const Material = (
 
             handleTableSave(e.changes).finally(() => {
                 onLoading(false);
-                getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                getData().finally(() => setLoading(cancelRef.current));
             });
         }
         if (e.type === 'contextMenu') {
@@ -289,9 +286,7 @@ const Material = (
                     url={'/material'}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-remove-material' === modals.id ? (
                 <ModalRemove
@@ -299,22 +294,18 @@ const Material = (
                     mode={'table'}
                     name={modals.data?.name}
                     url={'/material'}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
-                    preventClose={loading.modal}
                 />
             ) : 'modal-manage-material' === modals.id && (
                 <ModalManageMaterial
                     idMaterial={modals.data}
-                    preventClose={loading.modal}
                     open={modals.show}
                     onClose={closeModal}
                     updateData={() => {
-                        getData().finally(() => mergeState({page: cancelRef.current}, setLoading));
+                        getData().finally(() => setLoading(cancelRef.current));
                     }}
-                    onLoading={v => mergeState({modal: v}, setLoading)}
                     onClosed={() => setModals({id: null,  show: false, data: null})}
                 />
             )}
@@ -325,7 +316,7 @@ const Material = (
                             {access.adding && (
                                 <Button
                                     size={'m'}
-                                    disabled={loading.page || tableManage.editMode}
+                                    disabled={loading || tableManage.editMode}
                                     before={<Icon24Add/>}
                                     onClick={() => mergeState({id: 'modal-manage-material', show: true}, setModals)}
                                 >
@@ -337,7 +328,7 @@ const Material = (
                                     <Button
                                         size={'m'}
                                         appearance={'negative'}
-                                        disabled={loading.page || !selected.length || tableManage.editMode}
+                                        disabled={loading || !selected.length || tableManage.editMode}
                                         before={<Icon24TrashSimpleOutline/>}
                                         onClick={handleRemove}
                                     >
@@ -353,7 +344,7 @@ const Material = (
                                         <Button
                                             size={'m'}
                                             appearance={'negative'}
-                                            disabled={loading.page || !selected.length || tableManage.editMode}
+                                            disabled={loading || !selected.length || tableManage.editMode}
                                             before={<Icon24TrashSimpleOutline/>}
                                             onClick={handleRemove}
                                         />
@@ -366,7 +357,7 @@ const Material = (
                         <Search
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            disabled={loading.page || tableManage.editMode}
+                            disabled={loading || tableManage.editMode}
                             noPadding={true}
                             className={'search'}
                             slotProps={{ input: { getRootRef: inputRef } }}
@@ -379,7 +370,7 @@ const Material = (
                         >
                             <div className={'filter'}>
                                 <Button
-                                    disabled={loading.page || tableManage.editMode}
+                                    disabled={loading || tableManage.editMode}
                                     onClick={() => mergeState({id: 'modal-filters-material', show: true}, setModals)}
                                     mode={'secondary'}
                                     size={'m'}
@@ -407,7 +398,7 @@ const Material = (
                     total={table.total}
                     page={tableOptions.page}
                     rows={tableOptions.rows}
-                    loading={loading.page}
+                    loading={loading}
                     selected={selected}
                     onEvent={onEventTable}
                     emptyState={!delaySearch.trim() ? undefined :{

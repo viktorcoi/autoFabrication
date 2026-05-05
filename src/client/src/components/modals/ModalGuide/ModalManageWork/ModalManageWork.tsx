@@ -79,7 +79,6 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
     const {
         idWork,
         preventClose,
-        onLoading,
         onClose = () => {},
         updateData = () => {},
         ...restProps
@@ -241,7 +240,6 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
         if (disabledSave || loading.send || !parsedTpz || !parsedTsht) return;
 
         mergeState({send: true}, setLoading);
-        onLoading(true);
 
         try {
             if (idWork === null) {
@@ -310,7 +308,6 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
             }
         } finally {
             mergeState({send: false}, setLoading);
-            onLoading(false);
         }
     };
 
@@ -360,7 +357,7 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
             height={640}
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose || actionSheet !== null}
+            preventClose={loading.send || preventClose || actionSheet !== null}
             header={(
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -376,10 +373,7 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

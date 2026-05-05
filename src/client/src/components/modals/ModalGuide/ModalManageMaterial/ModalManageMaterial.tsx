@@ -34,7 +34,6 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
     const {
         idMaterial,
         preventClose,
-        onLoading,
         updateData = () => {},
         onClose = () => {},
         ...restProps
@@ -94,7 +93,6 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
         if (disabledSave || loading.send) return;
 
         mergeState({send: true}, setLoading);
-        onLoading(true);
 
         try {
             const { status } = idMaterial === null ? await ApiService.guide.material.post({
@@ -123,7 +121,6 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
             }
         } finally {
             mergeState({send: false}, setLoading);
-            onLoading(false);
         }
     };
 
@@ -168,7 +165,7 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
         <ModalPage
             hideCloseButton={loading.send}
             onClose={onClose}
-            preventClose={preventClose}
+            preventClose={preventClose || loading.send}
             header={
                 <PlatformProvider value={'ios'}>
                     <ModalPageHeader>{title}</ModalPageHeader>
@@ -184,10 +181,7 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
                             disabled={loading.send}
                             size={'m'}
                             mode={'secondary'}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                         >
                             Отмена
                         </Button>

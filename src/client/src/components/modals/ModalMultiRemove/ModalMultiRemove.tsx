@@ -26,7 +26,6 @@ const ModalMultiRemove = (props: ModalMultiRemoveProps) => {
         data,
         url,
         preventClose,
-        onLoading,
         onClose = () => {},
         ...restProps
     } = props;
@@ -38,7 +37,6 @@ const ModalMultiRemove = (props: ModalMultiRemoveProps) => {
 
     const onRemove = async () => {
         setLoading(true);
-        onLoading(true);
 
         await urlList[url]({
             ids: data.map(({id}) => id)
@@ -70,17 +68,14 @@ const ModalMultiRemove = (props: ModalMultiRemoveProps) => {
                 }
                 addSnackbar(snackbar);
             }
-        }).finally(() => {
-            setLoading(false);
-            onLoading(false);
-        });
+        }).finally(() => setLoading(false));
     };
 
     return (
         <ModalCard
             onClose={onClose}
             icon={<Icon24TrashSimpleOutline width={56} height={56} fill={'var(--vkui--color_icon_negative)'} />}
-            preventClose={preventClose}
+            preventClose={preventClose || loading}
             dismissButtonMode={loading ? 'none' : undefined}
             title={`Вы действительно хотите удалить?`}
             actions={
@@ -89,10 +84,7 @@ const ModalMultiRemove = (props: ModalMultiRemoveProps) => {
                     <ButtonGroup gap="m" stretched>
                         <Button
                             disabled={loading}
-                            onClick={(e) => {
-                                if (preventClose) return;
-                                onClose('cancel', e);
-                            }}
+                            onClick={(e) => onClose('cancel', e)}
                             mode={'secondary'}
                             stretched={true}
                             size={'l'}
