@@ -16,7 +16,6 @@ import styles from './Navigation.module.scss';
 import ModalShowErrors from "@/components/modals/ModalShowErrors/ModalShowErrors";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 import {OpenModalsType} from "@/components/modals/types";
-import ModalFiltersUsers from "@/components/modals/ModalFilters/ModalFiltersUsers/ModalFiltersUsers";
 import ModalSettings from "@/components/modals/ModalSettings/ModalSettings";
 import {mergeState} from "@/shared/helpers";
 
