@@ -73,6 +73,7 @@ const ModalManageOperation = (props: ModalManageOperationProps) => {
         const controller = createController();
 
         ApiService.guide.operationGroup.get({
+            options: {sorting: {id: 'name', sort: 'asc'}},
             controller
         }).then(async ({status, data}) => {
             if (status === 'success') {

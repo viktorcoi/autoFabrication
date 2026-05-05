@@ -45,6 +45,7 @@ const ModalFiltersMaterial = (props: ModalFiltersMaterialProps) => {
         const controller = createController();
 
         ApiService.guide.materialGroup.get({
+            options: {sorting: {id: 'name', sort: 'asc'}},
             controller,
         }).then(({status, data}) => {
             if (status === 'success') {

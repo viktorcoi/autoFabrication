@@ -71,7 +71,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
 
         ApiService.roles.get({
             controller,
-            options: { forSelect: true},
+            options: { forSelect: true, sorting: {id: 'name', sort: 'asc'}},
         }).then(async ({data, status}) => {
             if (status === 'success') {
 

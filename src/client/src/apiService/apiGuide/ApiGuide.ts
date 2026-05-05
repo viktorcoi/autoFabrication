@@ -2,10 +2,11 @@ import {
     ActionByTableResponse,
     ApiServiceOptions,
     ApiServiceResponse,
+    GetListOptions,
     GetTableOptions,
     GetTableResponse
 } from "@/apiService/types";
-import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
+import {api, buildGetOptions, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {
     GetByIdMaterialGroupResponse,
     GetByIdBlankResponse,
@@ -62,9 +63,12 @@ import {createOperationOptions, createWorkOptions} from "@/apiService/apiGuide/h
 
 export const ApiGuide = {
     materialGroup: {
-        get: async (options: ApiServiceOptions = {}): Promise<ApiServiceResponse<GetMaterialGroupsResponse[]>> => {
+        get: async (options: ApiServiceOptions<{
+            options?: GetListOptions;
+        }> = {}): Promise<ApiServiceResponse<GetMaterialGroupsResponse[]>> => {
             return await api.get("/guide/materialGroup", {
                 signal: options.controller?.signal,
+                params: buildGetOptions(options.options),
             }).then((response) => {
                 return handleApiSuccess(
                     response.data,
@@ -168,9 +172,12 @@ export const ApiGuide = {
     },
 
     operationGroup: {
-        get: async (options: ApiServiceOptions = {}): Promise<ApiServiceResponse<GetOperationGroupsResponse[]>> => {
+        get: async (options: ApiServiceOptions<{
+            options?: GetListOptions;
+        }> = {}): Promise<ApiServiceResponse<GetOperationGroupsResponse[]>> => {
             return await api.get("/guide/operationGroup", {
                 signal: options.controller?.signal,
+                params: buildGetOptions(options.options),
             }).then((response) => {
                 return handleApiSuccess(
                     response.data,
@@ -275,19 +282,19 @@ export const ApiGuide = {
 
     operation: {
         get: async (options: ApiServiceOptions<{
-            options?: {
-                search?: string;
+            options?: GetListOptions<{
                 operationGroupId?: number;
-            };
+            }>;
         }> = {}): Promise<ApiServiceResponse<GetOperationsResponse[]>> => {
             return await api.get("/guide/operation", {
                 signal: options.controller?.signal,
-                params: {
-                    ...(options.options?.search?.trim() ? { search: options.options.search } : undefined),
+                params: buildGetOptions({
                     ...(typeof options.options?.operationGroupId === "number" && options.options.operationGroupId > 0
                         ? { operationGroupId: options.options.operationGroupId }
                         : undefined),
-                },
+                    search: options.options?.search,
+                    sorting: options.options?.sorting,
+                }),
             }).then((response) => {
                 return handleApiSuccess(
                     response.data,
@@ -392,19 +399,19 @@ export const ApiGuide = {
 
     material: {
         get: async (options: ApiServiceOptions<{
-            options?: {
-                search?: string;
+            options?: GetListOptions<{
                 materialGroupId?: number;
-            };
+            }>;
         }> = {}): Promise<ApiServiceResponse<GetMaterialsResponse[]>> => {
             return await api.get("/guide/material", {
                 signal: options.controller?.signal,
-                params: {
-                    ...(options.options?.search?.trim() ? { search: options.options.search } : undefined),
+                params: buildGetOptions({
                     ...(typeof options.options?.materialGroupId === "number" && options.options.materialGroupId > 0
                         ? { materialGroupId: options.options.materialGroupId }
                         : undefined),
-                },
+                    search: options.options?.search,
+                    sorting: options.options?.sorting,
+                }),
             }).then((response) => {
                 return handleApiSuccess(
                     response.data,
@@ -603,23 +610,23 @@ export const ApiGuide = {
 
     workGroup: {
         get: async (options: ApiServiceOptions<{
-            options?: {
-                search?: string;
+            options?: GetListOptions<{
                 operationGroupId?: number;
                 operationId?: number;
-            };
+            }>;
         }> = {}): Promise<ApiServiceResponse<GetWorkGroupsResponse[]>> => {
             return await api.get("/guide/workGroup", {
                 signal: options.controller?.signal,
-                params: {
-                    ...(options.options?.search?.trim() ? { search: options.options.search } : undefined),
+                params: buildGetOptions({
                     ...(typeof options.options?.operationGroupId === "number" && options.options.operationGroupId > 0
                         ? { operationGroupId: options.options.operationGroupId }
                         : undefined),
                     ...(typeof options.options?.operationId === "number" && options.options.operationId > 0
                         ? { operationId: options.options.operationId }
                         : undefined),
-                },
+                    search: options.options?.search,
+                    sorting: options.options?.sorting,
+                }),
             }).then((response) => {
                 return handleApiSuccess(
                     response.data,

@@ -1,3 +1,5 @@
+import type {TableSorting} from "@/components/Table/types";
+
 export type RolePermissionFlags = {
     view: boolean;
     adding: boolean;
@@ -69,6 +71,7 @@ export interface GetRolesResponse {
 export interface GetRolesOptions {
     search?: string;
     forSelect?: boolean;
+    sorting?: TableSorting;
 }
 
 export interface PostRolesOptions {

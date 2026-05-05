@@ -45,6 +45,7 @@ const ModalFiltersOperation = (props: ModalFiltersOperationProps) => {
         const controller = createController();
 
         ApiService.guide.operationGroup.get({
+            options: {sorting: {id: 'name', sort: 'asc'}},
             controller,
         }).then(({status, data}) => {
             if (status === 'success') {

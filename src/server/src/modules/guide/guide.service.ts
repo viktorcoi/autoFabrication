@@ -30,11 +30,16 @@ import {
 } from "./guide.schemas.js";
 import type {
 	GetBlanksTableQuery,
+	GetMaterialGroupsQuery,
 	GetMaterialGroupsTableQuery,
+	GetMaterialsQuery,
 	GetMaterialsTableQuery,
+	GetOperationsQuery,
 	GetOperationsTableQuery,
+	GetOperationGroupsQuery,
 	GetOperationGroupsTableQuery,
 	GetWorksTableQuery,
+	GetWorkGroupsQuery,
 	GetWorkGroupsTableQuery,
 	GetTypeProductsTableQuery,
 	UpdateBlanksTablePayload,
@@ -1553,118 +1558,117 @@ const getGuidePermissions = async (actorId: number) => {
 	return actor.role.permissions as RolePermissions;
 };
 
-export const listMaterialGroups = async (search?: string) =>
+type NameListSorting = GetMaterialGroupsQuery["sorting"];
+
+const buildNameListOrderBy = <OrderByInput>(sorting: NameListSorting): OrderByInput[] => {
+	if (!sorting) {
+		return [{ id: "asc" } as OrderByInput];
+	}
+
+	return [
+		{ [sorting.id]: sorting.sort } as OrderByInput,
+		...(sorting.id === "id" ? [] : [{ id: "asc" } as OrderByInput]),
+	];
+};
+
+export const listMaterialGroups = async (query: GetMaterialGroupsQuery) =>
 	prisma.materialGroup.findMany({
-		where: search
+		where: query.search
 			? {
 					name: {
-						contains: search,
+						contains: query.search,
 						mode: "insensitive",
 					},
 				}
 			: undefined,
 		select: materialGroupListSelect,
-		orderBy: {
-			id: "asc",
-		},
+		orderBy: buildNameListOrderBy<Prisma.materialGroupOrderByWithRelationInput>(query.sorting),
 	});
 
-export const listMaterials = async (search?: string, materialGroupId?: number) =>
+export const listMaterials = async (query: GetMaterialsQuery) =>
 	prisma.material.findMany({
 		where: {
-			...(search
+			...(query.search
 				? {
 						name: {
-							contains: search,
+							contains: query.search,
 							mode: "insensitive",
 						},
 					}
 				: {}),
-			...(typeof materialGroupId === "number"
+			...(typeof query.materialGroupId === "number"
 				? {
-						materialGroupId,
+						materialGroupId: query.materialGroupId,
 					}
 				: {}),
 		},
 		select: materialListSelect,
-		orderBy: {
-			id: "asc",
-		},
+		orderBy: buildNameListOrderBy<Prisma.materialOrderByWithRelationInput>(query.sorting),
 	});
 
-export const listOperations = async (search?: string, operationGroupId?: number) =>
+export const listOperations = async (query: GetOperationsQuery) =>
 	prisma.operation.findMany({
 		where: {
-			...(search
+			...(query.search
 				? {
 						name: {
-							contains: search,
+							contains: query.search,
 							mode: "insensitive",
 						},
 					}
 				: {}),
-			...(typeof operationGroupId === "number"
+			...(typeof query.operationGroupId === "number"
 				? {
-						operationGroupId,
+						operationGroupId: query.operationGroupId,
 					}
 				: {}),
 		},
 		select: operationListSelect,
-		orderBy: {
-			id: "asc",
-		},
+		orderBy: buildNameListOrderBy<Prisma.operationOrderByWithRelationInput>(query.sorting),
 	});
 
-export const listOperationGroups = async (search?: string) =>
+export const listOperationGroups = async (query: GetOperationGroupsQuery) =>
 	prisma.operationGroup.findMany({
-		where: search
+		where: query.search
 			? {
 					name: {
-						contains: search,
+						contains: query.search,
 						mode: "insensitive",
 					},
 				}
 			: undefined,
 		select: operationGroupListSelect,
-		orderBy: {
-			id: "asc",
-		},
+		orderBy: buildNameListOrderBy<Prisma.operationGroupOrderByWithRelationInput>(query.sorting),
 	});
 
-export const listWorkGroups = async (
-	search?: string,
-	operationGroupId?: number,
-	operationId?: number,
-) =>
+export const listWorkGroups = async (query: GetWorkGroupsQuery) =>
 	prisma.workGroup.findMany({
 		where: {
-			...(search
+			...(query.search
 				? {
 						name: {
-							contains: search,
+							contains: query.search,
 							mode: "insensitive",
 						},
 					}
 				: {}),
-			...(typeof operationId === "number"
+			...(typeof query.operationId === "number"
 				? {
-						operationId,
+						operationId: query.operationId,
 					}
 				: {}),
-			...(typeof operationGroupId === "number"
+			...(typeof query.operationGroupId === "number"
 				? {
 						operation: {
 							is: {
-								operationGroupId,
+								operationGroupId: query.operationGroupId,
 							},
 						},
 					}
 				: {}),
 		},
 		select: workGroupListSelect,
-		orderBy: {
-			id: "asc",
-		},
+		orderBy: buildNameListOrderBy<Prisma.workGroupOrderByWithRelationInput>(query.sorting),
 	});
 
 export const getTypeProductsTable = async (query: GetTypeProductsTableQuery) => {

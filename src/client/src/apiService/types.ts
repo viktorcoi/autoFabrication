@@ -1,4 +1,4 @@
-import {TableSorting} from "@/components/Table/types";
+import type {TableSorting} from "@/components/Table/types";
 
 export type ApiServiceErrorOptions = {
     show: boolean;
@@ -26,6 +26,11 @@ export interface GetTableResponse <T> {
 export type GetTableOptions <T extends object = {}> = T & {
     page?: number;
     rows?: number;
+    search?: string;
+    sorting?: TableSorting;
+}
+
+export type GetListOptions <T extends object = {}> = T & {
     search?: string;
     sorting?: TableSorting;
 }

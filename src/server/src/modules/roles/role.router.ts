@@ -10,6 +10,7 @@ import {
 import { validate } from "../../shared/http/validate.js";
 import {
 	createRoleSchema,
+	getRolesSchema,
 	updateRoleDetailsSchema,
 	updateRolePermissionsSchema,
 } from "./role.schemas.js";
@@ -55,10 +56,8 @@ roleRouter.get(
 			assertPermission(permissions, "/roles", "view");
 		}
 
-		const searchValue = typeof request.query.search === "string"
-			? request.query.search.trim()
-			: "";
-		const roles = await listRoles(searchValue || undefined);
+		const query = validate(getRolesSchema, request.query);
+		const roles = await listRoles(query);
 
 		response.json(roles);
 	}),

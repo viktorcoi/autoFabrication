@@ -46,7 +46,7 @@ const ModalFiltersUsers = (props: ModalFiltersUsersProps) => {
 
         ApiService.roles.get({
             controller,
-            options: {forSelect: true},
+            options: {forSelect: true, sorting: {id: 'name', sort: 'asc'}},
         }).then(({status, data}) => {
             if (status === 'success') {
                 mergeState({role: data.map(({id, name}) => ({

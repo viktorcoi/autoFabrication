@@ -1,5 +1,5 @@
 import {ApiServiceOptions, ApiServiceResponse} from "@/apiService/types";
-import {api, handleApiError, handleApiSuccess} from "@/apiService/apiService";
+import {api, buildGetOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {
     GetByIdRoleResponse,
     GetRolesOptions,
@@ -28,7 +28,7 @@ export const ApiRoles = {
     }>): Promise<ApiServiceResponse<GetRolesResponse[]>> => {
         return await api.get("/roles", {
             signal: options.controller?.signal,
-            params: {...options.options}
+            params: buildGetOptions(options.options)
         }).then(r => {
             return handleApiSuccess(
                 r.data,

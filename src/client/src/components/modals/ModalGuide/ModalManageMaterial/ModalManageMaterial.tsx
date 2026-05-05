@@ -59,6 +59,7 @@ const ModalManageMaterial = (props: ModalManageMaterialProps) => {
         const controller = createController();
 
         ApiService.guide.materialGroup.get({
+            options: {sorting: {id: 'name', sort: 'asc'}},
             controller
         }).then(async ({status, data}) => {
             if (status === 'success') {

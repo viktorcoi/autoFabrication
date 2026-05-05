@@ -3,7 +3,7 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {ApiAuth} from "@/apiService/apiAuth/apiAuth";
 import {ApiRoles} from "@/apiService/apiRoles/apiRoles";
 import {ApiUsers} from "@/apiService/apiUsers/apiUsers";
-import {ApiServiceErrorOptions, ApiServiceResponse, GetTableOptions} from "@/apiService/types";
+import {ApiServiceErrorOptions, ApiServiceResponse, GetListOptions, GetTableOptions} from "@/apiService/types";
 import {ApiGuide} from "@/apiService/apiGuide/ApiGuide";
 
 const resolveApiBaseUrl = () => process.env.NEXT_PUBLIC_API_URL ?? "/api/";
@@ -20,19 +20,32 @@ export const ApiService = {
     guide: ApiGuide,
 };
 
+export const buildGetOptions = <T extends object = {}>(options?: GetListOptions<T>) => {
+    if (!options) {
+        return undefined;
+    }
+
+    const {search, sorting, ...restOptions} = options;
+
+    return {
+        ...restOptions,
+        ...(!!search?.trim() ? { search } : undefined),
+        ...(sorting ? { sorting: JSON.stringify(sorting) } : undefined),
+    };
+};
+
 export const buildTableOptions = (options?: GetTableOptions) => {
     if (!options) {
         return undefined;
     }
 
-    const {page, rows, search, sorting, ...restOptions} = options;
+    const {page, rows, ...listOptions} = options;
+    const params = buildGetOptions(listOptions);
 
     return {
-        ...restOptions,
+        ...(params ?? {}),
         ...(typeof page === 'number' ? { page } : undefined),
         ...(typeof rows === 'number' ? { rows } : undefined),
-        ...(!!search?.trim() ? { search } : undefined),
-        ...(sorting ? { sorting: JSON.stringify(sorting) } : undefined),
     };
 };
 

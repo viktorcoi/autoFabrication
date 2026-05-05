@@ -201,6 +201,11 @@ const worksTableSortingSchema = z.object({
 	sort: z.enum(["asc", "desc"]),
 }).strict();
 
+const nameListSortingSchema = z.object({
+	id: z.enum(["id", "name"]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
 const parseTableSorting = (value: unknown) => {
 	if (value === null || value === undefined || value === "" || value === "null") {
 		return null;
@@ -270,6 +275,38 @@ const parseOptionalId = (value: unknown) => {
 
 	return value;
 };
+
+const searchQuerySchema = z.preprocess(
+	(value) => typeof value === "string" ? value.trim() : undefined,
+	z.string().optional(),
+).transform((value) => value && value.length > 0 ? value : undefined);
+
+const listSortingQuerySchema = z
+	.preprocess(parseTableSorting, nameListSortingSchema.nullable())
+	.optional()
+	.transform((value) => value ?? null);
+
+const getNameListSchema = z.object({
+	search: searchQuerySchema,
+	sorting: listSortingQuerySchema,
+});
+
+export const getMaterialGroupsSchema = getNameListSchema;
+
+export const getOperationGroupsSchema = getNameListSchema;
+
+export const getMaterialsSchema = getNameListSchema.extend({
+	materialGroupId: z.preprocess(parseOptionalId, materialGroupIdSchema.optional()),
+});
+
+export const getOperationsSchema = getNameListSchema.extend({
+	operationGroupId: z.preprocess(parseOptionalId, operationGroupIdSchema.optional()),
+});
+
+export const getWorkGroupsSchema = getNameListSchema.extend({
+	operationGroupId: z.preprocess(parseOptionalId, operationGroupIdSchema.optional()),
+	operationId: z.preprocess(parseOptionalId, operationIdSchema.optional()),
+});
 
 export const createTypeProductSchema = z.object({
 	name: typeProductNameSchema,
@@ -786,16 +823,21 @@ export const getWorksTableSchema = z.object({
 
 export type GetTypeProductsTableQuery = z.infer<typeof getTypeProductsTableSchema>;
 export type UpdateTypeProductsTablePayload = z.infer<typeof updateTypeProductsTableSchema>;
+export type GetMaterialGroupsQuery = z.infer<typeof getMaterialGroupsSchema>;
 export type GetMaterialGroupsTableQuery = z.infer<typeof getMaterialGroupsTableSchema>;
 export type UpdateMaterialGroupsTablePayload = z.infer<typeof updateMaterialGroupsTableSchema>;
+export type GetOperationGroupsQuery = z.infer<typeof getOperationGroupsSchema>;
 export type GetOperationGroupsTableQuery = z.infer<typeof getOperationGroupsTableSchema>;
 export type UpdateOperationGroupsTablePayload = z.infer<typeof updateOperationGroupsTableSchema>;
+export type GetMaterialsQuery = z.infer<typeof getMaterialsSchema>;
 export type GetMaterialsTableQuery = z.infer<typeof getMaterialsTableSchema>;
 export type UpdateMaterialsTablePayload = z.infer<typeof updateMaterialsTableSchema>;
 export type GetBlanksTableQuery = z.infer<typeof getBlanksTableSchema>;
 export type UpdateBlanksTablePayload = z.infer<typeof updateBlanksTableSchema>;
+export type GetWorkGroupsQuery = z.infer<typeof getWorkGroupsSchema>;
 export type GetWorkGroupsTableQuery = z.infer<typeof getWorkGroupsTableSchema>;
 export type UpdateWorkGroupsTablePayload = z.infer<typeof updateWorkGroupsTableSchema>;
+export type GetOperationsQuery = z.infer<typeof getOperationsSchema>;
 export type GetOperationsTableQuery = z.infer<typeof getOperationsTableSchema>;
 export type UpdateOperationsTablePayload = z.infer<typeof updateOperationsTableSchema>;
 export type GetWorksTableQuery = z.infer<typeof getWorksTableSchema>;

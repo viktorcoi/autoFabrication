@@ -23,6 +23,44 @@ const guidePermissionFlagsSchema = z.object({
 	removing: z.boolean(),
 });
 
+const roleListSortingSchema = z.object({
+	id: z.enum(["id", "name"]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
+const parseListSorting = (value: unknown) => {
+	if (value === null || value === undefined || value === "" || value === "null") {
+		return null;
+	}
+
+	if (typeof value !== "string") {
+		return value;
+	}
+
+	const normalizedValue = value.trim();
+
+	if (normalizedValue.length === 0 || normalizedValue === "null") {
+		return null;
+	}
+
+	try {
+		return JSON.parse(normalizedValue) as unknown;
+	} catch {
+		return value;
+	}
+};
+
+export const getRolesSchema = z.object({
+	search: z.preprocess(
+		(value) => typeof value === "string" ? value.trim() : undefined,
+		z.string().optional(),
+	).transform((value) => value && value.length > 0 ? value : undefined),
+	sorting: z
+		.preprocess(parseListSorting, roleListSortingSchema.nullable())
+		.optional()
+		.transform((value) => value ?? null),
+});
+
 export const rolePermissionsSchema = z.object({
 	1: z.object({
 		url: z.literal("/roles"),
@@ -56,3 +94,5 @@ export const updateRoleDetailsSchema = z
 export const updateRolePermissionsSchema = z.object({
 	permissions: rolePermissionsSchema,
 });
+
+export type GetRolesQuery = z.infer<typeof getRolesSchema>;

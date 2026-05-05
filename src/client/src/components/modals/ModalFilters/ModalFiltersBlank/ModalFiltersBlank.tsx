@@ -53,7 +53,7 @@ const ModalFiltersBlank = (props: ModalFiltersBlankProps) => {
 
         await ApiService.guide.material.get({
             controller,
-            options: { materialGroupId: id },
+            options: { materialGroupId: id, sorting: {id: 'name', sort: 'asc'} },
         }).then(({status, data}) => {
             if (status === 'success') {
                 mergeState({material: data.map(({id, name}) => ({
@@ -73,6 +73,7 @@ const ModalFiltersBlank = (props: ModalFiltersBlankProps) => {
         const controller = createController();
 
         ApiService.guide.materialGroup.get({
+            options: {sorting: {id: 'name', sort: 'asc'}},
             controller,
         }).then(async ({status, data}) => {
             if (status === 'success') {

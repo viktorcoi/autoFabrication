@@ -38,11 +38,16 @@ import {
 	deleteWorkGroupIdsSchema,
 	deleteTypeProductIdsSchema,
 	getBlanksTableSchema,
+	getMaterialGroupsSchema,
 	getMaterialGroupsTableSchema,
+	getMaterialsSchema,
 	getMaterialsTableSchema,
+	getOperationsSchema,
 	getOperationsTableSchema,
+	getOperationGroupsSchema,
 	getOperationGroupsTableSchema,
 	getWorksTableSchema,
+	getWorkGroupsSchema,
 	getWorkGroupsTableSchema,
 	getTypeProductsTableSchema,
 	updateBlankSchema,
@@ -127,30 +132,6 @@ const parseId = (value: string) => {
 
 	if (!Number.isInteger(id) || id <= 0) {
 		throw new AppError(400, `Некорректный id`);
-	}
-
-	return id;
-};
-
-const parseOptionalQueryId = (value: unknown, label: string) => {
-	if (value === undefined || value === null) {
-		return undefined;
-	}
-
-	if (typeof value !== "string") {
-		throw new AppError(400, `Некорректный ${label}`);
-	}
-
-	const normalizedValue = value.trim();
-
-	if (!normalizedValue.length) {
-		return undefined;
-	}
-
-	const id = Number(normalizedValue);
-
-	if (!Number.isInteger(id) || id <= 0) {
-		throw new AppError(400, `Некорректный ${label}`);
 	}
 
 	return id;
@@ -374,10 +355,8 @@ guideRouter.get(
 	"/materialGroup",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const searchValue = typeof request.query.search === "string"
-			? request.query.search.trim()
-			: "";
-		const materialGroups = await listMaterialGroups(searchValue || undefined);
+		const query = validate(getMaterialGroupsSchema, request.query);
+		const materialGroups = await listMaterialGroups(query);
 
 		response.json(materialGroups);
 	}),
@@ -454,10 +433,8 @@ guideRouter.get(
 	"/operationGroup",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const searchValue = typeof request.query.search === "string"
-			? request.query.search.trim()
-			: "";
-		const operationGroups = await listOperationGroups(searchValue || undefined);
+		const query = validate(getOperationGroupsSchema, request.query);
+		const operationGroups = await listOperationGroups(query);
 
 		response.json(operationGroups);
 	}),
@@ -534,11 +511,8 @@ guideRouter.get(
 	"/material",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const searchValue = typeof request.query.search === "string"
-			? request.query.search.trim()
-			: "";
-		const materialGroupId = parseOptionalQueryId(request.query.materialGroupId, "id группы материала");
-		const materials = await listMaterials(searchValue || undefined, materialGroupId);
+		const query = validate(getMaterialsSchema, request.query);
+		const materials = await listMaterials(query);
 
 		response.json(materials);
 	}),
@@ -682,12 +656,8 @@ guideRouter.get(
 	"/workGroup",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const searchValue = typeof request.query.search === "string"
-			? request.query.search.trim()
-			: "";
-		const operationGroupId = parseOptionalQueryId(request.query.operationGroupId, "id группы операций");
-		const operationId = parseOptionalQueryId(request.query.operationId, "id операции");
-		const workGroups = await listWorkGroups(searchValue || undefined, operationGroupId, operationId);
+		const query = validate(getWorkGroupsSchema, request.query);
+		const workGroups = await listWorkGroups(query);
 
 		response.json(workGroups);
 	}),
@@ -764,11 +734,8 @@ guideRouter.get(
 	"/operation",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
-		const searchValue = typeof request.query.search === "string"
-			? request.query.search.trim()
-			: "";
-		const operationGroupId = parseOptionalQueryId(request.query.operationGroupId, "id группы операций");
-		const operations = await listOperations(searchValue || undefined, operationGroupId);
+		const query = validate(getOperationsSchema, request.query);
+		const operations = await listOperations(query);
 
 		response.json(operations);
 	}),

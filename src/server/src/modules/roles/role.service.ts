@@ -1,6 +1,7 @@
 import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../shared/errors/app-error.js";
+import type { GetRolesQuery } from "./role.schemas.js";
 import { defaultRolePermissions, type RolePermissions } from "./role.types.js";
 
 const byList = {
@@ -44,20 +45,29 @@ const ensureRoleIsMutable = (isAdmin: boolean) => {
 	}
 };
 
-export const listRoles = async (search?: string) =>
+const buildRolesListOrderBy = (sorting: GetRolesQuery["sorting"]): Prisma.RoleOrderByWithRelationInput[] => {
+	if (!sorting) {
+		return [{ id: "asc" }];
+	}
+
+	return [
+		{ [sorting.id]: sorting.sort } as Prisma.RoleOrderByWithRelationInput,
+		...(sorting.id === "id" ? [] : [{ id: "asc" } as Prisma.RoleOrderByWithRelationInput]),
+	];
+};
+
+export const listRoles = async (query: GetRolesQuery) =>
 	prisma.role.findMany({
-		where: search
+		where: query.search
 			? {
 					name: {
-						contains: search,
+						contains: query.search,
 						mode: "insensitive",
 					},
 				}
 			: undefined,
 		select: byList,
-		orderBy: {
-			id: "asc",
-		},
+		orderBy: buildRolesListOrderBy(query.sorting),
 	});
 
 export const getRoleById = async (id: number) => {

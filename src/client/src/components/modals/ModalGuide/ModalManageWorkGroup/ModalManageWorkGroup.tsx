@@ -74,7 +74,7 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
 
         await ApiService.guide.operation.get({
             controller,
-            options: { operationGroupId: id },
+            options: { operationGroupId: id, sorting: {id: 'name', sort: 'asc'} },
         }).then(async ({status, data}) => {
             if (status === 'success') {
                 mergeState({operation: data.map(({id, name}) => ({
@@ -94,6 +94,7 @@ const ModalManageWorkGroup = (props: ModalManageWorkGroupProps) => {
         const controller = createController();
 
         ApiService.guide.operationGroup.get({
+            options: {sorting: {id: 'name', sort: 'asc'}},
             controller
         }).then(async ({status, data}) => {
             if (status === 'success') {
