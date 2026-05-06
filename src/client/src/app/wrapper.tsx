@@ -27,6 +27,18 @@ const Wrapper = ({ children }: PropsWithChildren) => {
     }, []);
 
     useEffect(() => {
+        const favicon = document.querySelector<HTMLLinkElement>("#favicon");
+
+        if (!favicon) {
+            return;
+        }
+
+        favicon.href = theme === "dark"
+            ? "/favicons/favicon-dark.ico"
+            : "/favicons/favicon-light.ico";
+    }, [theme]);
+
+    useEffect(() => {
         if (!appReady) {
             return;
         }
