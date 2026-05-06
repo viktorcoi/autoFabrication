@@ -476,7 +476,7 @@ const ModalManageWork = (props: ModalManageWorkProps) => {
                         noPadding={true}
                     >
                         <Input
-                            maxLength={30}
+                            maxLength={50}
                             disabled={loading.send}
                             value={data.name}
                             onChange={(e) => mergeState({name: e.target.value}, setData)}

@@ -4,7 +4,7 @@ const typeProductNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название типа изделия обязательно")
-	.max(30, "Название типа изделия слишком длинное");
+	.max(50, "Название типа изделия слишком длинное");
 
 const typeProductDescriptionSchema = z
 	.string()
@@ -21,7 +21,7 @@ const materialGroupNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название группы материала обязательно")
-	.max(30, "Название группы материала слишком длинное");
+	.max(50, "Название группы материала слишком длинное");
 
 const materialGroupDescriptionSchema = z
 	.string()
@@ -38,7 +38,7 @@ const operationGroupNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название группы операций обязательно")
-	.max(30, "Название группы операций слишком длинное");
+	.max(50, "Название группы операций слишком длинное");
 
 const operationGroupDescriptionSchema = z
 	.string()
@@ -55,12 +55,12 @@ const materialNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название материала обязательно")
-	.max(30, "Название материала слишком длинное");
+	.max(50, "Название материала слишком длинное");
 
 const materialDescriptionSchema = z
 	.string()
 	.trim()
-	.max(30, "Описание материала слишком длинное")
+	.max(255, "Описание материала слишком длинное")
 	.transform((value) => value.length > 0 ? value : null);
 
 const materialGroupIdSchema = z.coerce
@@ -77,7 +77,7 @@ const blankNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название заготовки обязательно")
-	.max(30, "Название заготовки слишком длинное");
+	.max(50, "Название заготовки слишком длинное");
 
 const blankDescriptionSchema = z
 	.string()
@@ -99,7 +99,7 @@ const workGroupNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название группы работ обязательно")
-	.max(30, "Название группы работ слишком длинное");
+	.max(50, "Название группы работ слишком длинное");
 
 const workGroupDescriptionSchema = z
 	.string()
@@ -111,7 +111,7 @@ const operationNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название операции обязательно")
-	.max(30, "Название операции слишком длинное");
+	.max(50, "Название операции слишком длинное");
 
 const operationDescriptionSchema = z
 	.string()
@@ -188,7 +188,7 @@ const workNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название работы обязательно")
-	.max(30, "Название работы слишком длинное");
+	.max(50, "Название работы слишком длинное");
 
 const workDescriptionSchema = z
 	.string()

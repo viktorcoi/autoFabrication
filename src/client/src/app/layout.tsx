@@ -25,7 +25,7 @@ const LayoutRoot = ({children}: PropsWithChildren) => {
                 name="viewport"
                 content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no, viewport-fit=cover"
             />
-            <link id="favicon" rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16"/>
+            <link id="favicon" rel="icon" type="image/x-icon" href="/favicons/favicon-light.ico" />
         </head>
         <body className="vkui__root">
         <Wrapper>

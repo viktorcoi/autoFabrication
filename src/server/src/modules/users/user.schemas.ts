@@ -13,7 +13,7 @@ const loginSchema = z
 const passwordSchema = z
 	.string()
 	.min(6, "Пароль должен содержать не менее 6 символов.")
-	.max(15, 'Пароль должен быть не более 15 символов');
+	.max(30, 'Пароль должен быть не более 30 символов');
 
 const roleIdSchema = z.coerce
 	.number()

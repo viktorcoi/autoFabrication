@@ -77,7 +77,7 @@ export const rolePermissionsSchema = z.object({
 });
 
 export const createRoleSchema = z.object({
-	name: z.string().trim().min(1, "Название роли обязательно").max(30, 'Название роли слишком длинное'),
+	name: z.string().trim().min(1, "Название роли обязательно").max(50, 'Название роли слишком длинное'),
 	description: z.string().trim().max(255, "Описание роли слишком длинное").optional(),
 	permissions: rolePermissionsSchema.optional(),
 });

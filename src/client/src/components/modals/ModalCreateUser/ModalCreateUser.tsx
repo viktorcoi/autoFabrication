@@ -170,7 +170,7 @@ const ModalManageUser = (props: ModalCreateUserProps) => {
                         onChange={(e) => mergeState({password: e.target.value}, setData)}
                         placeholder={'Введите пароль'}
                         status={!data.password.trim() ? 'error' : 'default'}
-                        maxLength={15}
+                        maxLength={30}
                         after={(
                             <Tooltip
                                 description={`Сгенерировать пароль`}

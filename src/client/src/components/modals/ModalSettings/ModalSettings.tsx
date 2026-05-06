@@ -283,7 +283,7 @@ const ModalSettings = (props: ModalPageProps) => {
                             >
                                 <PasswordInput
                                     tabIndex={1}
-                                    maxLength={15}
+                                    maxLength={30}
                                     disabled={loading}
                                     placeholder={'Введите текущий пароль'}
                                     value={password.value}
@@ -301,7 +301,7 @@ const ModalSettings = (props: ModalPageProps) => {
                                     disabled={loading}
                                     placeholder={'Введите новый пароль'}
                                     value={newPassword.value}
-                                    maxLength={15}
+                                    maxLength={30}
                                     onChange={({target: {value}}) => {
                                         if (confirmNewPassword.value.length)
                                         setConfirmNewPassword(isValidConfirmPassword(confirmNewPassword.value, value))
@@ -320,7 +320,7 @@ const ModalSettings = (props: ModalPageProps) => {
                                     disabled={loading}
                                     placeholder={'Введите новый пароль еще раз'}
                                     value={confirmNewPassword.value}
-                                    maxLength={15}
+                                    maxLength={30}
                                     onChange={({target: {value}}) => setConfirmNewPassword(
                                         isValidConfirmPassword(value, newPassword.value)
                                     )}

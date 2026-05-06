@@ -164,7 +164,7 @@ const ModalManageTypeProducts = (props: ModalManageTypeProductsProps) => {
                             onChange={(e) => mergeState({name: e.target.value}, setData)}
                             placeholder={'Введите название'}
                             status={!data.name.trim() ? 'error' : 'default'}
-                            maxLength={30}
+                            maxLength={50}
                         />
                     </FormItem>
                     <FormItem
