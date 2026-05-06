@@ -20,7 +20,7 @@ const LayoutRoot = ({children}: PropsWithChildren) => {
                 data-element-for-preload="true"
                 dangerouslySetInnerHTML={{__html: "<style>body{opacity:1}</style>"}}
             />
-            <title>Автоматизация производства</title>
+            <title>Информационная производственная система</title>
             <meta
                 name="viewport"
                 content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no, viewport-fit=cover"
