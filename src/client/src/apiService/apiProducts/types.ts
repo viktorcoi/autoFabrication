@@ -28,27 +28,32 @@ export interface ProductRelatedItem {
             id: number;
             name: string;
             description?: string | null;
-        };
+        } | null;
     };
 }
 
-export interface GetProductsResponse {
+export type GetProductsResponse = {
     id: number;
     name: string;
-    typeProduct: {
-        name: string;
-    };
-    material: {
-        name: string;
-    };
-}
+};
+
+export type GetProductsListFilters = {
+    typeProductId: number;
+    materialId: number;
+};
+
+export type RelatedProductFormItem = {
+    id: number;
+    name: string;
+    count: number;
+};
 
 export interface GetByIdProductResponse {
     id: number;
     name: string;
     description?: string | null;
     typeProductId: number;
-    materialId: number;
+    materialId: number | null;
     creatorId: number;
     createdAt: string;
     updatedAt: string;
@@ -67,7 +72,7 @@ export interface GetByIdProductResponse {
             name: string;
             description?: string | null;
         };
-    };
+    } | null;
     creator: {
         id: number;
         firstName: string;
@@ -85,7 +90,7 @@ export interface PostProductOptions {
     name: string;
     description?: string;
     typeProductId: number;
-    materialId: number;
+    materialId?: number;
     files?: File[];
     images?: File[];
     relatedProducts?: Array<{
@@ -98,7 +103,7 @@ export interface PathProductOptions {
     name?: string;
     description?: string;
     typeProductId?: number;
-    materialId?: number;
+    materialId?: number | null;
     files?: File[];
     images?: File[];
     removedFileIds?: number[];

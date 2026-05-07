@@ -1,0 +1,132 @@
+.modal {
+    max-width: 900px;
+}
+
+.wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    padding: var(--app-default-padding);
+    min-height: 100%;
+}
+
+.left {
+    background-color: var(--vkui--color_background_content);
+    padding: var(--app-default-padding);
+    border-radius: var(--app-border-radius);
+    gap: 12px;
+}
+
+.left, .right {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.right {
+    gap: 4px;
+    position: sticky;
+    top: var(--app-default-padding);
+    height: fit-content;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    &__bond {
+        flex-grow: 1;
+    }
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 8px 12px;
+}
+
+.label {
+    color: var(--vkui--color_text_secondary);
+}
+
+.description {
+    white-space: pre-wrap;
+}
+
+.relatedList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cell {
+    background: var(--vkui--color_background_secondary);
+    max-height: 44px;
+}
+
+.gallery {
+    overflow: hidden;
+    border-radius: var(--app-border-radius);
+    background: var(--vkui--color_background_content);
+}
+
+.slide {
+    height: 300px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: zoom-in;
+}
+
+.image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.imageName {
+    min-height: 20px;
+    color: var(--vkui--color_text_secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.thumb {
+    width: 96px;
+    flex: 0 0 96px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--vkui--color_background_secondary);
+    cursor: pointer;
+    &:not(:last-child) {
+        margin-right: 4px;
+    }
+}
+
+.thumbActive {
+    border-color: var(--vkui--color_stroke_accent);
+}
+
+.thumbImage {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1.45;
+    object-fit: cover;
+}
+
+.thumbName {
+    display: block;
+    padding: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--vkui--color_text_subhead);
+}
+
+.spinner {
+    height: 100%;
+}

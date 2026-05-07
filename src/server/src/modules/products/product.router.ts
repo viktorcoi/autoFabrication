@@ -20,6 +20,7 @@ import {
 import {
 	createProductSchema,
 	deleteProductIdsSchema,
+	getProductsSchema,
 	getProductsTableSchema,
 	updateProductSchema,
 	updateProductsTableSchema,
@@ -172,8 +173,8 @@ productRouter.get(
 	"/",
 	requirePermission("/products", "view"),
 	asyncHandler(async (request, response) => {
-		const search = typeof request.query.search === "string" ? request.query.search.trim() : undefined;
-		const products = await listProducts(search || undefined);
+		const query = validate(getProductsSchema, request.query);
+		const products = await listProducts(query);
 
 		response.json(products);
 	}),

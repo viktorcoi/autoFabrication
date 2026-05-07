@@ -10,13 +10,15 @@
     grid-template-columns: minmax(0, 500px) minmax(0, 600px);
     gap: var(--app-distance-empty);
     &__left, &__right {
-        flex: 1;
         height: fit-content;
     }
     &__left {
         display: flex;
         flex-direction: column;
         gap: 16px;
+    }
+    &__right {
+        padding-top: unset;
     }
 }
 
@@ -25,11 +27,66 @@
 }
 
 .bond {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     &__head {
         display: flex;
         align-items: center;
         gap: 8px;
         color: var(--vkui--color_text_subhead);
         justify-content: space-between;
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__item {
+        background: var(--vkui--color_background_secondary);
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    &__count {
+        width: 116px;
+    }
+}
+
+.images {
+    display: flex;
+    flex-direction: column;
+
+    &__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--vkui--color_text_subhead);
+        position: sticky;
+        top: 0;
+        background-color: var(--vkui--color_background_content);
+        z-index: 1;
+        padding: var(--app-default-padding) 0;
+    }
+
+    &__empty {
+        min-height: 320px;
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__item {
+        background: var(--vkui--color_background_secondary);
+        border-radius: var(--vkui--size_border_radius--regular);
     }
 }

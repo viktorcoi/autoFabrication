@@ -9,6 +9,7 @@ import {
 import {api, buildGetOptions, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {
     GetByIdProductResponse,
+    GetProductsListFilters,
     GetProductsResponse,
     GetProductsTableFilters,
     PatchProductsTableOptions,
@@ -29,7 +30,7 @@ const buildProductsTableOptions = (options?: GetTableOptions<Partial<GetProducts
 
 export const ApiProducts = {
     get: async (options: ApiServiceOptions<{
-        options?: GetListOptions;
+        options?: GetListOptions<Partial<GetProductsListFilters>>;
     }> = {}): Promise<ApiServiceResponse<GetProductsResponse[]>> => {
         return await api.get("/products", {
             signal: options.controller?.signal,

@@ -19,6 +19,7 @@ import type { RolePermissions } from "../roles/role.types.js";
 import { updateProductsTableItemSchema } from "./product.schemas.js";
 import type {
 	CreateProductPayload,
+	GetProductsQuery,
 	GetProductsTableQuery,
 	UpdateProductPayload,
 	UpdateProductsTablePayload,
@@ -193,6 +194,11 @@ const productArchiveSelect = {
 	},
 } satisfies Prisma.productSelect;
 
+const productListSelect = {
+	id: true,
+	name: true,
+} satisfies Prisma.productSelect;
+
 const PRODUCT_TABLE_FIELD_TO_MODEL_FIELD = {
 	id: "id",
 	name: "name",
@@ -348,7 +354,7 @@ const mapProduct = <TProduct extends {
 			id: number;
 			name: string;
 			typeProduct: { id: number; name: string; description: string | null };
-			material: { id: number; name: string; description: string | null };
+			material: { id: number; name: string; description: string | null } | null;
 		};
 	}>;
 }>(product: TProduct) => {
@@ -431,14 +437,14 @@ const ensureMaterialExists = async (id: number) => {
 const ensureProductNameIsUnique = async (
 	name: string,
 	typeProductId: number,
-	materialId: number,
+	materialId: number | null | undefined,
 	exceptId?: number,
 ) => {
 	const existingProduct = await prisma.product.findFirst({
 		where: {
 			name,
 			typeProductId,
-			materialId,
+			materialId: materialId ?? null,
 			...(exceptId ? { id: { not: exceptId } } : {}),
 		},
 		select: {
@@ -583,6 +589,57 @@ const buildProductsTableWhere = (query: GetProductsTableQuery): Prisma.productWh
 	return Object.keys(filters).length ? filters : undefined;
 };
 
+const buildProductsListWhere = (query: GetProductsQuery): Prisma.productWhereInput | undefined => {
+	const filters: Prisma.productWhereInput = {};
+
+	if (query.search) {
+		filters.OR = [
+			{
+				name: {
+					contains: query.search,
+					mode: "insensitive",
+				},
+			},
+			{
+				description: {
+					contains: query.search,
+					mode: "insensitive",
+				},
+			},
+			{
+				typeProduct: {
+					is: {
+						name: {
+							contains: query.search,
+							mode: "insensitive",
+						},
+					},
+				},
+			},
+			{
+				material: {
+					is: {
+						name: {
+							contains: query.search,
+							mode: "insensitive",
+						},
+					},
+				},
+			},
+		];
+	}
+
+	if (typeof query.typeProductId === "number") {
+		filters.typeProductId = query.typeProductId;
+	}
+
+	if (typeof query.materialId === "number") {
+		filters.materialId = query.materialId;
+	}
+
+	return Object.keys(filters).length ? filters : undefined;
+};
+
 const buildProductsTableOrderBy = (
 	sorting: GetProductsTableQuery["sorting"],
 ): Prisma.productOrderByWithRelationInput[] => {
@@ -626,34 +683,47 @@ const buildProductsTableOrderBy = (
 	}
 };
 
-export const listProducts = async (search?: string) =>
-	prisma.product.findMany({
-		where: search
-			? {
-					name: {
-						contains: search,
-						mode: "insensitive",
-					},
-				}
-			: undefined,
-		select: {
-			id: true,
-			name: true,
-			typeProduct: {
-				select: {
-					name: true,
-				},
-			},
-			material: {
-				select: {
-					name: true,
-				},
-			},
-		},
-		orderBy: [
+const buildProductsListOrderBy = (
+	sorting: GetProductsQuery["sorting"],
+): Prisma.productOrderByWithRelationInput[] => {
+	if (!sorting) {
+		return [
 			{ name: "asc" },
 			{ id: "asc" },
-		],
+		];
+	}
+
+	switch (sorting.id) {
+		case "typeProduct":
+			return [
+				{ typeProduct: { name: sorting.sort } },
+				{ id: "asc" },
+			];
+		case "material":
+			return [
+				{ material: { name: sorting.sort } },
+				{ id: "asc" },
+			];
+		case "creator":
+			return [
+				{ creator: { firstName: sorting.sort } },
+				{ creator: { lastName: sorting.sort } },
+				{ creator: { middleName: sorting.sort } },
+				{ id: "asc" },
+			];
+		default:
+			return [
+				{ [sorting.id]: sorting.sort } as Prisma.productOrderByWithRelationInput,
+				{ id: "asc" },
+			];
+	}
+};
+
+export const listProducts = async (query: GetProductsQuery) =>
+	prisma.product.findMany({
+		where: buildProductsListWhere(query),
+		select: productListSelect,
+		orderBy: buildProductsListOrderBy(query.sorting),
 	});
 
 export const getProductsTable = async (query: GetProductsTableQuery) => {
@@ -682,7 +752,7 @@ export const getProductsTable = async (query: GetProductsTableQuery) => {
 				name: product.name,
 				description: product.description ?? "",
 				typeProduct: product.typeProduct.name,
-				material: product.material.name,
+				material: product.material?.name ?? "",
 				creator: formatUserFullName(product.creator),
 				createdAt: product.createdAt,
 				files,
@@ -750,7 +820,9 @@ export const createProduct = async (
 	actorId: number,
 ) => {
 	await ensureTypeProductExists(data.typeProductId);
-	await ensureMaterialExists(data.materialId);
+	if (data.materialId !== undefined && data.materialId !== null) {
+		await ensureMaterialExists(data.materialId);
+	}
 	await ensureProductNameIsUnique(data.name, data.typeProductId, data.materialId);
 	const relatedProducts = await normalizeRelatedProducts(null, data.relatedProducts);
 	assertUniqueProductStoredFiles([], files, "файл");
@@ -769,11 +841,15 @@ export const createProduct = async (
 						id: data.typeProductId,
 					},
 				},
-				material: {
-					connect: {
-						id: data.materialId,
-					},
-				},
+				...(typeof data.materialId === "number"
+					? {
+							material: {
+								connect: {
+									id: data.materialId,
+								},
+							},
+						}
+					: {}),
 				creator: {
 					connect: {
 						id: actorId,
@@ -856,7 +932,7 @@ export const updateProduct = async (
 
 	const nextName = data.name ?? currentProduct.name;
 	const nextTypeProductId = data.typeProductId ?? currentProduct.typeProductId;
-	const nextMaterialId = data.materialId ?? currentProduct.materialId;
+	const nextMaterialId = data.materialId !== undefined ? data.materialId : currentProduct.materialId;
 	if (
 		nextName !== currentProduct.name
 		|| nextTypeProductId !== currentProduct.typeProductId
@@ -947,12 +1023,16 @@ export const updateProduct = async (
 							},
 						}
 					: {}),
-				...(typeof data.materialId === "number"
+				...(data.materialId !== undefined
 					? {
 							material: {
-								connect: {
-									id: data.materialId,
-								},
+								...(typeof data.materialId === "number"
+									? {
+											connect: {
+												id: data.materialId,
+											},
+										}
+									: { disconnect: true }),
 							},
 						}
 					: {}),

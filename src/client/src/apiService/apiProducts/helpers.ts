@@ -50,6 +50,8 @@ export const createProductOptions = (options: PostProductOptions | PathProductOp
 
     if (typeof options.materialId === "number" && options.materialId > 0) {
         formData.append("materialId", String(options.materialId));
+    } else if (options.materialId === null) {
+        formData.append("materialId", "null");
     }
 
     if (Array.isArray(options.relatedProducts)) {

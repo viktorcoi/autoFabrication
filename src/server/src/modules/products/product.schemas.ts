@@ -4,12 +4,12 @@ const productNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Название изделия обязательно")
-	.max(100, "Название изделия слишком длинное");
+	.max(50, "Название изделия слишком длинное");
 
 const productDescriptionSchema = z
 	.string()
 	.trim()
-	.max(1000, "Описание изделия слишком длинное")
+	.max(255, "Описание изделия слишком длинное")
 	.transform((value) => value.length > 0 ? value : null);
 
 const productIdSchema = z.coerce
@@ -37,7 +37,8 @@ const productComponentSchema = z.object({
 	count: z.coerce
 		.number()
 		.int()
-		.positive("Количество связанного изделия должно быть положительным числом"),
+		.positive("Количество связанного изделия должно быть положительным числом")
+		.max(1000, "Количество связанного изделия не должно быть больше 1000"),
 }).strict();
 
 const productsTableSortingSchema = z.object({
@@ -50,6 +51,17 @@ const productsTableSortingSchema = z.object({
 		"filesDownload",
 		"relatedProductsCount",
 		"description",
+	]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
+const productsListSortingSchema = z.object({
+	id: z.enum([
+		"name",
+		"typeProduct",
+		"material",
+		"creator",
+		"createdAt",
 	]),
 	sort: z.enum(["asc", "desc"]),
 }).strict();
@@ -86,6 +98,24 @@ const parseOptionalId = (value: unknown) => {
 
 		if (normalizedValue.length === 0) {
 			return undefined;
+		}
+
+		return normalizedValue;
+	}
+
+	return value;
+};
+
+const parseOptionalNullableId = (value: unknown) => {
+	if (value === undefined || value === null) {
+		return undefined;
+	}
+
+	if (typeof value === "string") {
+		const normalizedValue = value.trim();
+
+		if (normalizedValue.length === 0 || normalizedValue === "null") {
+			return null;
 		}
 
 		return normalizedValue;
@@ -195,7 +225,7 @@ export const createProductSchema = z.object({
 	name: productNameSchema,
 	description: productDescriptionSchema.optional(),
 	typeProductId: typeProductIdSchema,
-	materialId: materialIdSchema,
+	materialId: z.preprocess(parseOptionalNullableId, materialIdSchema.nullable().optional()),
 	relatedProducts: z.preprocess(
 		parseComponents,
 		z.array(productComponentSchema).max(100, "Нельзя связать больше 100 изделий").optional(),
@@ -207,7 +237,7 @@ export const updateProductSchema = z
 		name: productNameSchema.optional(),
 		description: productDescriptionSchema.optional(),
 		typeProductId: typeProductIdSchema.optional(),
-		materialId: materialIdSchema.optional(),
+		materialId: z.preprocess(parseOptionalNullableId, materialIdSchema.nullable().optional()),
 		relatedProducts: z.preprocess(
 			parseComponents,
 			z.array(productComponentSchema).max(100, "Нельзя связать больше 100 изделий").optional(),
@@ -263,7 +293,18 @@ export const getProductsTableSchema = z.object({
 	createdAtTo: dateBoundarySchema("end"),
 });
 
+export const getProductsSchema = z.object({
+	search: searchQuerySchema,
+	sorting: z
+		.preprocess(parseTableSorting, productsListSortingSchema.nullable())
+		.optional()
+		.transform((value) => value ?? null),
+	typeProductId: z.preprocess(parseOptionalId, typeProductIdSchema.optional()),
+	materialId: z.preprocess(parseOptionalId, materialIdSchema.optional()),
+});
+
 export type CreateProductPayload = z.infer<typeof createProductSchema>;
 export type UpdateProductPayload = z.infer<typeof updateProductSchema>;
+export type GetProductsQuery = z.infer<typeof getProductsSchema>;
 export type GetProductsTableQuery = z.infer<typeof getProductsTableSchema>;
 export type UpdateProductsTablePayload = z.infer<typeof updateProductsTableSchema>;

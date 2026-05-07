@@ -1,0 +1,22 @@
+.preview,
+.button {
+    width: clamp(120px, 34vw, 200px);
+    height: 118px;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--vkui--color_background_tertiary);
+}
+
+.button {
+    padding: 0;
+    border: 0;
+    cursor: zoom-in;
+}
+
+.image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const apiProxyBaseUrl = process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000/api/";
+const storageProxyBaseUrl = apiProxyBaseUrl.replace(/\/api\/?$/, "");
 
 const nextConfig: NextConfig = {
 	reactStrictMode: false,
@@ -13,6 +14,10 @@ const nextConfig: NextConfig = {
 			{
 				source: "/api/:path*",
 				destination: `${apiProxyBaseUrl.replace(/\/$/, "")}/:path*`,
+			},
+			{
+				source: "/storage/:path*",
+				destination: `${storageProxyBaseUrl.replace(/\/$/, "")}/storage/:path*`,
 			},
 		];
 	},
