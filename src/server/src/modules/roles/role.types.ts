@@ -21,6 +21,18 @@ export type GuidePermissionFlags = {
 	removing: boolean;
 };
 
+export type ProductsPermissionFlags = {
+	view: boolean;
+	adding: boolean;
+	editing: boolean;
+	removing: boolean;
+	viewProcess: boolean;
+	addingProcess: boolean;
+	editingProcess: boolean;
+	removingProcess: boolean;
+	changeDisabledProcess: boolean;
+}
+
 export type RolePermissionItem = {
 	url: "/roles";
 	access: RolePermissionFlags;
@@ -36,10 +48,16 @@ export type GuidePermissionItem = {
 	access: GuidePermissionFlags;
 };
 
+type ProductsPermissionItem = {
+	url: '/products';
+	access: ProductsPermissionFlags;
+}
+
 export type RolePermissions = {
 	1: RolePermissionItem;
 	2: UserPermissionItem;
 	3: GuidePermissionItem;
+	4: ProductsPermissionItem;
 };
 
 export type PermissionItem = RolePermissions[keyof RolePermissions];
@@ -83,6 +101,20 @@ export const defaultRolePermissions: RolePermissions = {
 			removing: false,
 		},
 	},
+	4: {
+		url: "/products",
+		access: {
+			view: false,
+			adding: false,
+			editing: false,
+			removing: false,
+			viewProcess: false,
+			addingProcess: false,
+			editingProcess: false,
+			removingProcess: false,
+			changeDisabledProcess: false,
+		},
+	},
 };
 
 export const adminPermissions: RolePermissions = {
@@ -113,6 +145,20 @@ export const adminPermissions: RolePermissions = {
 			adding: true,
 			editing: true,
 			removing: true,
+		},
+	},
+	4: {
+		url: "/products",
+		access: {
+			view: true,
+			adding: true,
+			editing: true,
+			removing: true,
+			viewProcess: true,
+			addingProcess: true,
+			editingProcess: true,
+			removingProcess: true,
+			changeDisabledProcess: true,
 		},
 	},
 };

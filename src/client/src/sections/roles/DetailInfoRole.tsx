@@ -1,5 +1,5 @@
 import {DetailInfoRoleProps} from "@/sections/roles/types";
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {
     Button,
     ButtonGroup,
@@ -20,17 +20,18 @@ import {ApiService} from "@/apiService/apiService";
 import {mergeState} from "@/shared/helpers";
 import {
     GetByIdRoleResponse,
+    RolePermissionFlagsType,
     RolePermissionSection,
 } from "@/apiService/apiRoles/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useController} from "@/shared/hooks";
 import {useAppStore} from "@/store/app/app";
-import {RolePermissionFlagsType} from "@/apiService/apiAuth/types";
 
 const SECTION_TITLES: Record<RolePermissionSection["url"], string> = {
     "/roles": "Роли пользователей",
     "/users": "Пользователи",
     "/guide": "Справочник",
+    "/products": "Изделия"
 };
 
 const ACCESS_TITLES = {
@@ -40,6 +41,11 @@ const ACCESS_TITLES = {
     editing: "Редактирование",
     removing: "Удаление",
     resetPassword: "Сброс пароля",
+    viewProcess: 'Просмотр тех. процессов',
+    addingProcess: 'Добавление тех. процессов',
+    editingProcess: 'Редактирование тех. процессов',
+    removingProcess: 'Удаление тех. процессов',
+    changeDisabledProcess: 'Блокировка изменений тех. процессов'
 } satisfies Record<string, string>;
 
 const DetailInfoRole = (props: DetailInfoRoleProps) => {

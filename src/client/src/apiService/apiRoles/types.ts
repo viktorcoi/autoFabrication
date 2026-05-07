@@ -1,6 +1,6 @@
 import type {TableSorting} from "@/components/Table/types";
 
-export type RolePermissionFlags = {
+export type RolePermissionFlagsType = {
     view: boolean;
     adding: boolean;
     changeAccess: boolean;
@@ -8,7 +8,7 @@ export type RolePermissionFlags = {
     removing: boolean;
 }
 
-export type UserPermissionFlags = {
+export type UserPermissionFlagsType = {
     view: boolean;
     adding: boolean;
     editing: boolean;
@@ -16,42 +16,60 @@ export type UserPermissionFlags = {
     removing: boolean;
 }
 
-export type GuidePermissionFlags = {
+export type GuidePermissionFlagsType = {
     view: boolean;
     adding: boolean;
     editing: boolean;
     removing: boolean;
 }
 
-export type RolePermissionItem = {
+export type ProductsPermissionFlagsType = {
+    view: boolean;
+    adding: boolean;
+    editing: boolean;
+    removing: boolean;
+    viewProcess: boolean;
+    addingProcess: boolean;
+    editingProcess: boolean;
+    removingProcess: boolean;
+    changeDisabledProcess: boolean;
+}
+
+type RolePermissionType = {
     url: '/roles';
-    access: RolePermissionFlags;
+    access: RolePermissionFlagsType;
 }
 
-export type UserPermissionItem = {
+type UserPermissionType = {
     url: '/users';
-    access: UserPermissionFlags;
+    access: UserPermissionFlagsType;
 }
 
-export type GuidePermissionItem = {
+type GuidePermissionType = {
     url: '/guide';
-    access: GuidePermissionFlags;
+    access: GuidePermissionFlagsType;
 }
 
-export type RolePermissions = {
-    1: RolePermissionItem;
-    2: UserPermissionItem;
-    3: GuidePermissionItem;
+type ProductsPermissionType = {
+    url: '/products';
+    access: ProductsPermissionFlagsType;
 }
 
-export type RolePermissionSection = RolePermissions[keyof RolePermissions];
+export type RolePermissionsType = {
+    1: RolePermissionType;
+    2: UserPermissionType;
+    3: GuidePermissionType;
+    4: ProductsPermissionType;
+}
+
+export type RolePermissionSection = RolePermissionsType[keyof RolePermissionsType];
 
 export interface GetByIdRoleResponse {
     id: number,
     name: string,
     description: string,
     isAdmin: boolean,
-    permissions: RolePermissions;
+    permissions: RolePermissionsType;
     createdAt: string,
     updatedAt: string,
     _count: {
@@ -80,5 +98,5 @@ export interface PostRolesOptions {
 }
 
 export interface PatchRolePermissionsOptions {
-    permissions: RolePermissions;
+    permissions: RolePermissionsType;
 }

@@ -34,8 +34,8 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 import {useAppStore} from "@/store/app/app";
 import {SnackbarItem} from "@/store/snackbar/types";
-import {UserPermissionFlagsType} from "@/apiService/apiAuth/types";
 import ModalFiltersUsers from "@/components/modals/ModalFilters/ModalFiltersUsers/ModalFiltersUsers";
+import {UserPermissionFlagsType} from "@/apiService/apiRoles/types";
 
 const UsersPage = () => {
 

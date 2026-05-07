@@ -1,46 +1,4 @@
-export type RolePermissionFlagsType = {
-    view: boolean;
-    adding: boolean;
-    changeAccess: boolean;
-    editing: boolean;
-    removing: boolean;
-}
-
-export type UserPermissionFlagsType = {
-    view: boolean;
-    adding: boolean;
-    editing: boolean;
-    resetPassword: boolean;
-    removing: boolean;
-}
-
-export type GuidePermissionFlagsType = {
-    view: boolean;
-    adding: boolean;
-    editing: boolean;
-    removing: boolean;
-}
-
-type RolePermissionType = {
-    url: '/roles';
-    access: RolePermissionFlagsType;
-}
-
-type UserPermissionType = {
-    url: '/users';
-    access: UserPermissionFlagsType;
-}
-
-type GuidePermissionType = {
-    url: '/guide';
-    access: GuidePermissionFlagsType;
-}
-
-export type RolePermissionsType = {
-    1: RolePermissionType;
-    2: UserPermissionType;
-    3: GuidePermissionType;
-}
+import {RolePermissionsType} from "@/apiService/apiRoles/types";
 
 export type GetAuthMeResponse = {
     id: number;

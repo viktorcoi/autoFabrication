@@ -1,13 +1,16 @@
 import { ColorSchemeType } from "@vkontakte/vkui";
 import {
     GetAuthMeResponse,
-    GuidePermissionFlagsType,
-    RolePermissionFlagsType,
-    UserPermissionFlagsType
 } from "@/apiService/apiAuth/types";
 import {ReactNode} from "react";
+import {
+    GuidePermissionFlagsType,
+    ProductsPermissionFlagsType,
+    RolePermissionFlagsType,
+    UserPermissionFlagsType
+} from "@/apiService/apiRoles/types";
 
-type NamePermission = '/users' | '/roles' | '/guide';
+type NamePermission = '/users' | '/roles' | '/guide' | '/products';
 
 export type Navigate = {
     name: string;
@@ -30,7 +33,7 @@ export type PageStorageSettings = {
 export type AppStore = {
     user: Omit<GetAuthMeResponse, 'role'> | null;
     role: Omit<GetAuthMeResponse['role'], 'permissions'> | null;
-    permissions: Map<NamePermission, RolePermissionFlagsType | UserPermissionFlagsType | GuidePermissionFlagsType>;
+    permissions: Map<NamePermission, RolePermissionFlagsType | UserPermissionFlagsType | GuidePermissionFlagsType | ProductsPermissionFlagsType>;
     appReady: boolean;
     theme: ColorSchemeType;
     delaySearch: number;
