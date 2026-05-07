@@ -74,7 +74,7 @@ export const useSearch = (loading: boolean, storageKey?: string) => {
     };
 };
 
-const getStoredFilters = <T extends Record<string, number>>(
+const getStoredFilters = <T extends Record<string, number | Date | null>>(
     storedFilters: unknown,
     defaultFilters: T,
 ): T => {
@@ -95,7 +95,7 @@ const getStoredFilters = <T extends Record<string, number>>(
     }, {...defaultFilters});
 };
 
-export const useStoredFilters = <T extends Record<string, number>>(
+export const useStoredFilters = <T extends Record<string, number | Date | null>>(
     storageKey: string,
     defaultFilters: T,
 ): [T, Dispatch<SetStateAction<T>>] => {
@@ -199,14 +199,15 @@ export const useController = (
 };
 
 export const useFilersCount = (
-    filters: Record<string, number>,
+    filters: Record<string, number | Date | null>,
 ) => {
 
     return useMemo(() => {
         let count = 0;
 
         Object.values(filters).forEach((filter) => {
-            if (filter > 0) count++;
+            if (typeof filter === 'number' && filter > 0) count++;
+            else if (filter !== null) count++;
         });
 
         return count;

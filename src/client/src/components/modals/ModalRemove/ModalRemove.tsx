@@ -16,6 +16,7 @@ const urlList = {
     '/workGroup': (id: number) => ApiService.guide.workGroup.delete({ ids: [id] }),
     '/operation': (id: number) => ApiService.guide.operation.delete({ ids: [id] }),
     '/work': (id: number) => ApiService.guide.work.delete({ ids: [id] }),
+    "/products": (id: number) => ApiService.products.delete({ ids: [id] }),
 };
 
 const ModalRemove = (props: ModalManageRoleProps) => {

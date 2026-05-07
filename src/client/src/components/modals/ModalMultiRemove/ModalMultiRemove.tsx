@@ -18,6 +18,7 @@ const urlList = {
     '/workGroup': ApiService.guide.workGroup.delete,
     '/operation': ApiService.guide.operation.delete,
     '/work': ApiService.guide.work.delete,
+    '/products': ApiService.products.delete,
 };
 
 const ModalMultiRemove = (props: ModalMultiRemoveProps) => {

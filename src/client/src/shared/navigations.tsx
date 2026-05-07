@@ -1,8 +1,8 @@
 import {
     Icon20BookSpreadSimpleOutline,
     Icon20UsersOutline,
-    Icon20WrenchOutline,
-    Icon24BriefcaseOutline
+    Icon24BriefcaseOutline,
+    Icon24SquareStackUpOutline
 } from "@vkontakte/icons";
 import {Navigate} from "@/store/app/types";
 
@@ -25,6 +25,6 @@ export const allUrl: Navigate[] = [
     {
         name: 'Изделия',
         url: '/products',
-        icon: <Icon20WrenchOutline fill={'var(--vkui--color_text_primary)'} width={20} height={20}/>,
+        icon: <Icon24SquareStackUpOutline fill={'var(--vkui--color_text_primary)'} width={20} height={20}/>,
     }
 ];

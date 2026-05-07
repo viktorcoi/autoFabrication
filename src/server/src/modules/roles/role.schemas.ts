@@ -23,6 +23,18 @@ const guidePermissionFlagsSchema = z.object({
 	removing: z.boolean(),
 });
 
+const productsPermissionFlagsSchema = z.object({
+	view: z.boolean(),
+	adding: z.boolean(),
+	editing: z.boolean(),
+	removing: z.boolean(),
+	viewProcess: z.boolean(),
+	addingProcess: z.boolean(),
+	editingProcess: z.boolean(),
+	removingProcess: z.boolean(),
+	changeDisabledProcess: z.boolean(),
+});
+
 const roleListSortingSchema = z.object({
 	id: z.enum(["id", "name"]),
 	sort: z.enum(["asc", "desc"]),
@@ -73,6 +85,10 @@ export const rolePermissionsSchema = z.object({
 	3: z.object({
 		url: z.literal("/guide"),
 		access: guidePermissionFlagsSchema,
+	}),
+	4: z.object({
+		url: z.literal("/products"),
+		access: productsPermissionFlagsSchema,
 	}),
 });
 
