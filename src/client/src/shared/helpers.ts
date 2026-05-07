@@ -1,5 +1,5 @@
 import {Dispatch, SetStateAction} from "react";
-import {RolePermissionsType} from "@/apiService/apiAuth/types";
+import {RolePermissionsType} from "@/apiService/apiRoles/types";
 
 export const hasPathPermission = (
     permissions: RolePermissionsType,

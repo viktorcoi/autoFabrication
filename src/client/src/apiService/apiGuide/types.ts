@@ -5,6 +5,11 @@ export interface GetMaterialGroupsResponse {
     name: string;
 }
 
+export interface GetTypeProductsResponse {
+    id: number;
+    name: string;
+}
+
 export interface GetMaterialsResponse {
     id: number;
     name: string;

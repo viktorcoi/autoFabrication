@@ -8,6 +8,7 @@ import {
 import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {
 	GetByIdUserResponse,
+	GetUsersResponse,
 	GetUsersTableFilters,
 	PatchUsersTableOptions,
 	PathUserOptions,
@@ -17,6 +18,18 @@ import {
 import {createUserOptions} from "@/apiService/apiUsers/helpers";
 
 export const ApiUsers = {
+	get: async (options: ApiServiceOptions = {}): Promise<ApiServiceResponse<GetUsersResponse[]>> => {
+		return await api.get("/users", {
+			signal: options.controller?.signal,
+		}).then((response) => {
+			return handleApiSuccess(
+				response.data,
+				response.status === 200 && Array.isArray(response.data),
+				options.errorOptions?.placeholder,
+			);
+		}).catch((error) => handleApiError(error, options.errorOptions));
+	},
+
 	getById: async (options: ApiServiceOptions<{
 		id: number
 	}>): Promise<ApiServiceResponse<GetByIdUserResponse>> => {

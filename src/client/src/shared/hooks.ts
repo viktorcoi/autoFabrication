@@ -74,7 +74,50 @@ export const useSearch = (loading: boolean, storageKey?: string) => {
     };
 };
 
-const getStoredFilters = <T extends Record<string, number | Date | null>>(
+type StoredFilterDateRange = [Date | null, Date | null];
+type StoredFilterValue = number | Date | StoredFilterDateRange | null;
+
+const parseStoredDate = (value: unknown) => {
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const isDateRangeDefault = (value: StoredFilterValue): value is StoredFilterDateRange =>
+    Array.isArray(value) && value.length === 2;
+
+const getStoredFilterValue = (value: unknown, defaultValue: StoredFilterValue): StoredFilterValue => {
+    if (typeof defaultValue === 'number') {
+        return typeof value === 'number' && Number.isFinite(value) ? value : defaultValue;
+    }
+
+    if (defaultValue instanceof Date) {
+        return parseStoredDate(value) ?? defaultValue;
+    }
+
+    if (isDateRangeDefault(defaultValue)) {
+        if (!Array.isArray(value) || value.length !== 2) {
+            return defaultValue;
+        }
+
+        return [
+            parseStoredDate(value[0]),
+            parseStoredDate(value[1]),
+        ];
+    }
+
+    return value === null ? null : defaultValue;
+};
+
+const getStoredFilters = <T extends Record<string, StoredFilterValue>>(
     storedFilters: unknown,
     defaultFilters: T,
 ): T => {
@@ -85,17 +128,13 @@ const getStoredFilters = <T extends Record<string, number | Date | null>>(
     return Object.entries(defaultFilters).reduce<T>((result, [key, defaultValue]) => {
         const value = (storedFilters as Record<string, unknown>)[key];
 
-        result[key as keyof T] = (
-            typeof value === 'number' && Number.isFinite(value)
-                ? value
-                : defaultValue
-        ) as T[keyof T];
+        result[key as keyof T] = getStoredFilterValue(value, defaultValue) as T[keyof T];
 
         return result;
     }, {...defaultFilters});
 };
 
-export const useStoredFilters = <T extends Record<string, number | Date | null>>(
+export const useStoredFilters = <T extends Record<string, StoredFilterValue>>(
     storageKey: string,
     defaultFilters: T,
 ): [T, Dispatch<SetStateAction<T>>] => {
@@ -198,16 +237,37 @@ export const useController = (
     };
 };
 
+const isActiveFilterValue = (value: unknown): boolean => {
+    if (Array.isArray(value)) {
+        return value.some(isActiveFilterValue);
+    }
+
+    if (value instanceof Date) {
+        return !Number.isNaN(value.getTime());
+    }
+
+    if (typeof value === 'number') {
+        return Number.isFinite(value) && value > 0;
+    }
+
+    if (typeof value === 'string') {
+        const normalizedValue = value.trim();
+
+        return normalizedValue.length > 0 && normalizedValue !== '0';
+    }
+
+    return false;
+};
+
 export const useFilersCount = (
-    filters: Record<string, number | Date | null>,
+    filters: Record<string, unknown>,
 ) => {
 
     return useMemo(() => {
         let count = 0;
 
         Object.values(filters).forEach((filter) => {
-            if (typeof filter === 'number' && filter > 0) count++;
-            else if (filter !== null) count++;
+            if (isActiveFilterValue(filter)) count++;
         });
 
         return count;

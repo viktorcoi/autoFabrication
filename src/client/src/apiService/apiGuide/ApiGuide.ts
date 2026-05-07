@@ -16,6 +16,7 @@ import {
     GetByIdWorkResponse,
     GetByIdWorkGroupResponse,
     GetByIdTypeProductsResponse,
+    GetTypeProductsResponse,
     GetMaterialsResponse,
     GetMaterialGroupsResponse,
     GetOperationsResponse,
@@ -824,6 +825,21 @@ export const ApiGuide = {
     },
 
     typeProducts: {
+        get: async (options: ApiServiceOptions<{
+            options?: GetListOptions;
+        }> = {}): Promise<ApiServiceResponse<GetTypeProductsResponse[]>> => {
+            return await api.get("/guide/typeProducts", {
+                signal: options.controller?.signal,
+                params: buildGetOptions(options.options),
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && Array.isArray(response.data),
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
         getById: async (options: ApiServiceOptions<{
             id: number
         }>): Promise<ApiServiceResponse<GetByIdTypeProductsResponse>> => {

@@ -21,6 +21,10 @@ import {
     downloadWorkFile,
     downloadWorkFilesArchive
 } from "@/apiService/apiGuide/helpers";
+import {
+    downloadProductFile,
+    downloadProductFilesArchive
+} from "@/apiService/apiProducts/helpers";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {formatBytes} from "@/components/UploadFile/helpers";
 import {ModalFilesProps} from "@/components/modals/ModalFiles/types";
@@ -36,6 +40,10 @@ const downloadMap = {
     '/work': {
         all: downloadWorkFilesArchive,
         one: downloadWorkFile,
+    },
+    '/products': {
+        all: downloadProductFilesArchive,
+        one: downloadProductFile,
     },
 };
 

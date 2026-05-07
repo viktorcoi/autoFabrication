@@ -26,6 +26,11 @@ import {useAppStore} from "@/store/app/app";
 import {SnackbarItem} from "@/store/snackbar/types";
 import {ProductsPermissionFlagsType} from "@/apiService/apiRoles/types";
 import {GetProductsTableFilters, PatchProductsTableOptions, ProductsTableRow} from "@/apiService/apiProducts/types";
+import ModalFiltersProducts from "@/components/modals/ModalFilters/ModalFiltersProducts/ModalFiltersProducts";
+import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
+import Link from "next/link";
+
+const hasDateRangeValue = (value: GetProductsTableFilters["createdAt"]) => value.some((date) => date !== null);
 
 const ProductsPage = () => {
 
@@ -57,10 +62,10 @@ const ProductsPage = () => {
         typeProductId: 0,
         materialId: 0,
         creatorId: 0,
-        createdAt: null
+        createdAt: [null, null],
     });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-remove-products' | 'modal-multi-remove-products' | 'modal-filters-products'
+        'modal-remove-products' | 'modal-multi-remove-products' | 'modal-filters-products' | 'modal-product-files'
     >>({id: null, show: false, data: null});
 
     const actionSheetRef = useRef(null);
@@ -82,7 +87,8 @@ const ProductsPage = () => {
         tableFilters.typeProductId,
         tableFilters.materialId,
         tableFilters.creatorId,
-        tableFilters.createdAt
+        tableFilters.createdAt[0],
+        tableFilters.createdAt[1],
     ]);
 
     useEffect(() => {
@@ -97,7 +103,7 @@ const ProductsPage = () => {
             typeProductId: tableFilters.typeProductId || undefined,
             materialId: tableFilters.materialId || undefined,
             creatorId: tableFilters.creatorId || undefined,
-            createdAt: tableFilters.createdAt || undefined,
+            createdAt: hasDateRangeValue(tableFilters.createdAt) ? tableFilters.createdAt : undefined,
         };
 
         await ApiService.products.table.get({
@@ -128,7 +134,8 @@ const ProductsPage = () => {
         tableFilters.typeProductId,
         tableFilters.materialId,
         tableFilters.creatorId,
-        tableFilters.createdAt
+        tableFilters.createdAt[0],
+        tableFilters.createdAt[1],
     ]);
 
     const closeModal = (r: ModalPageCloseReasonType) => {
@@ -231,6 +238,21 @@ const ProductsPage = () => {
                 getData().finally(() => setLoading(cancelRef.current));
             });
         }
+        if (e.type === 'download') {
+            const row = e.row as ProductsTableRow;
+
+            if (e.column !== 'filesDownload' || !row.files.length) return;
+
+            setModals({
+                id: 'modal-product-files',
+                show: true,
+                data: {
+                    id: row.id,
+                    name: row.name,
+                    files: row.files,
+                }
+            });
+        }
         if (e.type === 'contextMenu') {
             if (!access.editing && !access.viewProcess && !access.removing) return;
 
@@ -276,7 +298,7 @@ const ProductsPage = () => {
                                 </ActionSheetItem>
                             </>
                         )}
-                        {(!e.row.isAdmin && access.removing) && (
+                        {access.removing && (
                             <ActionSheetItem
                                 onClick={() => setModals({id: 'modal-remove-products', show: true, data})}
                                 mode={'destructive'}
@@ -302,13 +324,31 @@ const ProductsPage = () => {
     return (
         <>
             {tableManage.actionSheet}
-            {'modal-multi-remove-products' === modals.id ? (
+            {'modal-filters-products' === modals.id ? (
+                <ModalFiltersProducts
+                    onChangeFilters={setTableFilters}
+                    data={tableFilters}
+                    open={modals.show}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                />
+            ) : 'modal-multi-remove-products' === modals.id ? (
                 <ModalMultiRemove
                     data={modals.data}
                     url={'/products'}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
+                />
+            ) : 'modal-product-files' === modals.id ? (
+                <ModalFiles
+                    itemId={modals.data?.id ?? 0}
+                    name={modals.data?.name ?? ''}
+                    url={'/products'}
+                    files={modals.data?.files ?? []}
+                    open={modals.show}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
                 />
             ) : 'modal-remove-products' === modals.id && (
                 <ModalRemove
@@ -327,14 +367,15 @@ const ProductsPage = () => {
                         {(access.adding || access.removing) && (
                             <ButtonGroup gap={'s'}>
                                 {access.adding && (
-                                    <Button
-                                        size={'m'}
-                                        disabled={loading || tableManage.editMode}
-                                        before={<Icon24Add/>}
-                                        // onClick={() => mergeState({id: 'modal-manage-products', show: true}, setModals)}
-                                    >
-                                        Добавить
-                                    </Button>
+                                    <Link href={'/products/new'}>
+                                        <Button
+                                            size={'m'}
+                                            disabled={loading || tableManage.editMode}
+                                            before={<Icon24Add/>}
+                                        >
+                                            Добавить
+                                        </Button>
+                                    </Link>
                                 )}
                                 {access.removing && (
                                     !access.adding ? (
@@ -384,7 +425,7 @@ const ProductsPage = () => {
                                 <div className={'filter'}>
                                     <Button
                                         disabled={loading || tableManage.editMode}
-                                        // onClick={() => mergeState({id: 'modal-filters-products', show: true}, setModals)}
+                                        onClick={() => mergeState({id: 'modal-filters-products', show: true}, setModals)}
                                         mode={'secondary'}
                                         size={'m'}
                                         before={<Icon24Filter/>}
@@ -415,7 +456,7 @@ const ProductsPage = () => {
                     loading={loading}
                     selected={selected}
                     onEvent={onEventTable}
-                    emptyState={{
+                    emptyState={(!delaySearch.trim() && !countFilter) ? undefined :{
                         icon: <Icon24SearchSlashOutline width={62} height={62} />,
                         title: 'Совпадений не найдено',
                         description: 'Попробуйте изменить параметры поиска',

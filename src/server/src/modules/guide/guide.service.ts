@@ -41,6 +41,7 @@ import type {
 	GetWorksTableQuery,
 	GetWorkGroupsQuery,
 	GetWorkGroupsTableQuery,
+	GetTypeProductsQuery,
 	GetTypeProductsTableQuery,
 	UpdateBlanksTablePayload,
 	UpdateMaterialGroupsTablePayload,
@@ -1604,6 +1605,23 @@ export const listMaterials = async (query: GetMaterialsQuery) =>
 		},
 		select: materialListSelect,
 		orderBy: buildNameListOrderBy<Prisma.materialOrderByWithRelationInput>(query.sorting),
+	});
+
+export const listTypeProducts = async (query: GetTypeProductsQuery) =>
+	prisma.typeProduct.findMany({
+		where: query.search
+			? {
+					name: {
+						contains: query.search,
+						mode: "insensitive",
+					},
+		}
+			: undefined,
+		select: {
+			id: true,
+			name: true,
+		},
+		orderBy: buildNameListOrderBy<Prisma.TypeProductOrderByWithRelationInput>(query.sorting),
 	});
 
 export const listOperations = async (query: GetOperationsQuery) =>

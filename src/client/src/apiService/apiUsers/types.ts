@@ -14,6 +14,14 @@ export interface UserTableRow extends TableRow {
 	birthDate: string;
 }
 
+export interface GetUsersResponse {
+	id: number;
+	firstName: string;
+	lastName: string;
+	middleName?: string | null;
+	login: string;
+}
+
 export interface GetByIdUserResponse {
 	id: number;
 	firstName: string;

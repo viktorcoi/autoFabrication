@@ -5,6 +5,7 @@ import {ApiRoles} from "@/apiService/apiRoles/apiRoles";
 import {ApiUsers} from "@/apiService/apiUsers/apiUsers";
 import {ApiServiceErrorOptions, ApiServiceResponse, GetListOptions, GetTableOptions} from "@/apiService/types";
 import {ApiGuide} from "@/apiService/apiGuide/ApiGuide";
+import {ApiProducts} from "@/apiService/apiProducts/apiProducts";
 
 const resolveApiBaseUrl = () => process.env.NEXT_PUBLIC_API_URL ?? "/api/";
 
@@ -18,6 +19,7 @@ export const ApiService = {
     roles: ApiRoles,
     users: ApiUsers,
     guide: ApiGuide,
+    products: ApiProducts,
 };
 
 export const buildGetOptions = <T extends object = {}>(options?: GetListOptions<T>) => {

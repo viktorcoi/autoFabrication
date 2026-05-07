@@ -46,6 +46,7 @@ import {
 	getOperationsTableSchema,
 	getOperationGroupsSchema,
 	getOperationGroupsTableSchema,
+	getTypeProductsSchema,
 	getWorksTableSchema,
 	getWorkGroupsSchema,
 	getWorkGroupsTableSchema,
@@ -108,6 +109,7 @@ import {
 	listOperations,
 	listMaterialGroups,
 	listOperationGroups,
+	listTypeProducts,
 	listWorkGroups,
 	updateBlank,
 	updateBlanksTable,
@@ -272,6 +274,17 @@ const parseWorkUpload = (request: Request, response: Response, next: NextFunctio
 		next(error);
 	});
 };
+
+guideRouter.get(
+	"/typeProducts",
+	requirePermission("/guide", "view"),
+	asyncHandler(async (request, response) => {
+		const query = validate(getTypeProductsSchema, request.query);
+		const typeProducts = await listTypeProducts(query);
+
+		response.json(typeProducts);
+	}),
+);
 
 guideRouter.get(
 	"/typeProducts/table",

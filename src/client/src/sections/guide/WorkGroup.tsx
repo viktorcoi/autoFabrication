@@ -415,7 +415,7 @@ const WorkGroup = (
                     loading={loading}
                     selected={selected}
                     onEvent={onEventTable}
-                    emptyState={!delaySearch.trim() ? undefined :{
+                    emptyState={(!delaySearch.trim() && !countFilter) ? undefined :{
                         icon: <Icon24SearchSlashOutline width={62} height={62} />,
                         title: 'Совпадений не найдено',
                         description: 'Попробуйте изменить параметры поиска',

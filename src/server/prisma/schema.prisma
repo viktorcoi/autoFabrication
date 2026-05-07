@@ -1,159 +1,225 @@
 generator client {
-	provider = "prisma-client"
-	output   = "../src/generated/prisma"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-	provider = "postgresql"
+  provider = "postgresql"
 }
 
 model Role {
-	id          Int    @id @default(autoincrement())
-	name        String @unique
-	description String?
-	isAdmin     Boolean @default(false)
-	permissions Json
-	createdAt   DateTime @default(now())
-	updatedAt   DateTime @updatedAt
-	users       User[]
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  isAdmin     Boolean  @default(false)
+  permissions Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
 }
 
 model User {
-	id           Int    @id @default(autoincrement())
-	firstName    String
-	lastName     String
-	middleName   String?
-	birthDate    DateTime
-	login        String @unique
-	passwordHash String @map("password")
-	avatarUrl    String? @map("avatar")
-	isAdmin      Boolean @default(false)
-	roleId       Int
-	createdAt    DateTime @default(now())
-	updatedAt    DateTime @updatedAt
-	role         Role @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id              Int       @id @default(autoincrement())
+  firstName       String
+  lastName        String
+  middleName      String?
+  birthDate       DateTime
+  login           String    @unique
+  passwordHash    String    @map("password")
+  avatarUrl       String?   @map("avatar")
+  isAdmin         Boolean   @default(false)
+  roleId          Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  role            Role      @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdProducts product[] @relation("ProductCreator")
 
-	@@index([roleId])
+  @@index([roleId])
 }
 
 model TypeProduct {
-	id          Int      @id @default(autoincrement())
-	name        String   @unique
-	description String?
-	createdAt   DateTime @default(now())
-	updatedAt   DateTime @updatedAt
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    product[]
 }
 
 model materialGroup {
-	id          Int      @id @default(autoincrement())
-	name        String   @unique
-	description String?
-	createdAt   DateTime @default(now())
-	updatedAt   DateTime @updatedAt
-	materials   material[]
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  materials   material[]
 }
 
 model operationGroup {
-	id          Int      @id @default(autoincrement())
-	name        String   @unique
-	description String?
-	createdAt   DateTime @default(now())
-	updatedAt   DateTime @updatedAt
-	operations  operation[]
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  operations  operation[]
 }
 
 model material {
-	id              Int           @id @default(autoincrement())
-	name            String        @unique
-	description     String?
-	materialGroupId Int
-	createdAt       DateTime      @default(now())
-	updatedAt       DateTime      @updatedAt
-	materialGroup   materialGroup @relation(fields: [materialGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-	blanks          blank[]
+  id              Int           @id @default(autoincrement())
+  name            String        @unique
+  description     String?
+  materialGroupId Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  materialGroup   materialGroup @relation(fields: [materialGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  blanks          blank[]
+  products        product[]
 
-	@@index([materialGroupId])
+  @@index([materialGroupId])
+}
+
+model product {
+  id            Int                @id @default(autoincrement())
+  name          String
+  description   String?
+  typeProductId Int
+  materialId    Int
+  creatorId     Int
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  typeProduct   TypeProduct        @relation(fields: [typeProductId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  material      material           @relation(fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  creator       User               @relation("ProductCreator", fields: [creatorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  files         productFile[]
+  images        productImage[]
+  components    productComponent[] @relation("ProductComponents")
+  usedIn        productComponent[] @relation("ProductComponentChildren")
+
+  @@unique([name, typeProductId, materialId])
+  @@index([typeProductId])
+  @@index([materialId])
+  @@index([creatorId])
+}
+
+model productFile {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  originalName String   @map("originalName")
+  size         Int
+  mimeType     String?  @map("mimeType")
+  storagePath  String   @map("storagePath")
+  createdAt    DateTime @default(now())
+  product      product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([productId])
+}
+
+model productImage {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  originalName String   @map("originalName")
+  size         Int
+  mimeType     String?  @map("mimeType")
+  storagePath  String   @map("storagePath")
+  createdAt    DateTime @default(now())
+  product      product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([productId])
+}
+
+model productComponent {
+  id                 Int      @id @default(autoincrement())
+  productId          Int
+  componentProductId Int
+  count              Int
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  product            product  @relation("ProductComponents", fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  componentProduct   product  @relation("ProductComponentChildren", fields: [componentProductId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([productId, componentProductId])
+  @@index([componentProductId])
 }
 
 model blank {
-	id          Int      @id @default(autoincrement())
-	name        String
-	description String?
-	materialId  Int
-	createdAt   DateTime @default(now())
-	updatedAt   DateTime @updatedAt
-	material    material @relation(fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  materialId  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  material    material @relation(fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
-	@@index([materialId])
-	@@unique([name, materialId])
+  @@unique([name, materialId])
+  @@index([materialId])
 }
 
 model operation {
-	id               Int            @id @default(autoincrement())
-	name             String         @unique
-	description      String?
-	operationGroupId Int
-	createdAt        DateTime       @default(now())
-	updatedAt        DateTime       @updatedAt
-	operationGroup   operationGroup @relation(fields: [operationGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-	files            operationFile[]
-	workGroups       workGroup[]
+  id               Int             @id @default(autoincrement())
+  name             String          @unique
+  description      String?
+  operationGroupId Int
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  operationGroup   operationGroup  @relation(fields: [operationGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  files            operationFile[]
+  workGroups       workGroup[]
 
-	@@index([operationGroupId])
+  @@index([operationGroupId])
 }
 
 model workGroup {
-	id          Int       @id @default(autoincrement())
-	name        String
-	description String?
-	operationId Int
-	createdAt   DateTime  @default(now())
-	updatedAt   DateTime  @updatedAt
-	operation   operation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-	works       work[]
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  operationId Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  operation   operation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  works       work[]
 
-	@@index([operationId])
-	@@unique([name, operationId])
+  @@unique([name, operationId])
+  @@index([operationId])
 }
 
 model work {
-	id          Int        @id @default(autoincrement())
-	name        String
-	description String?
-	workGroupId Int
-	tpz         Float
-	tsht        Float
-	createdAt   DateTime   @default(now())
-	updatedAt   DateTime   @updatedAt
-	workGroup   workGroup  @relation(fields: [workGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-	files       workFile[]
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  workGroupId Int
+  tpz         Float
+  tsht        Float
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  workGroup   workGroup  @relation(fields: [workGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  files       workFile[]
 
-	@@index([workGroupId])
-	@@unique([name, workGroupId])
+  @@unique([name, workGroupId])
+  @@index([workGroupId])
 }
 
 model operationFile {
-	id           Int       @id @default(autoincrement())
-	operationId  Int
-	originalName String    @map("originalName")
-	size         Int
-	mimeType     String?   @map("mimeType")
-	storagePath  String    @map("storagePath")
-	createdAt    DateTime  @default(now())
-	operation    operation @relation(fields: [operationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id           Int       @id @default(autoincrement())
+  operationId  Int
+  originalName String    @map("originalName")
+  size         Int
+  mimeType     String?   @map("mimeType")
+  storagePath  String    @map("storagePath")
+  createdAt    DateTime  @default(now())
+  operation    operation @relation(fields: [operationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-	@@index([operationId])
+  @@index([operationId])
 }
 
 model workFile {
-	id           Int      @id @default(autoincrement())
-	workId       Int
-	originalName String   @map("originalName")
-	size         Int
-	mimeType     String?  @map("mimeType")
-	storagePath  String   @map("storagePath")
-	createdAt    DateTime @default(now())
-	work         work     @relation(fields: [workId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id           Int      @id @default(autoincrement())
+  workId       Int
+  originalName String   @map("originalName")
+  size         Int
+  mimeType     String?  @map("mimeType")
+  storagePath  String   @map("storagePath")
+  createdAt    DateTime @default(now())
+  work         work     @relation(fields: [workId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-	@@index([workId])
+  @@index([workId])
 }

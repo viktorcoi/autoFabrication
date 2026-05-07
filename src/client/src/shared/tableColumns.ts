@@ -71,11 +71,13 @@ export const tableColumns: Record<string, Column[]> = {
     ],
 
     products: [
-        {key: 'ID', header: 'Описание', minSize: 115, size: 420, maxSize: 3065},
         {key: 'name', header: 'Название изделия', minSize: 110, size: 220, maxSize: 625},
         {key: 'typeProduct', header: 'Тип изделия', minSize: 110, size: 220, maxSize: 625},
         {key: 'material', header: 'Материал', minSize: 110, size: 220, maxSize: 625},
         {key: 'creator', header: 'Создал', minSize: 110, size: 220, maxSize: 625},
-        {key: 'birthDate', header: 'Дата создания', size: 180, resize: false, type: 'date'},
+        {key: 'createdAt', header: 'Дата создания', size: 180, resize: false, type: 'date'},
+        {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false},
+        {key: 'relatedProductsCount', header: 'Связанные', minSize: 115, size: 130, maxSize: 180, type: 'text'},
+        {key: 'description', header: 'Описание', minSize: 115, size: 420, maxSize: 3065},
     ]
 };

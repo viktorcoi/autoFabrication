@@ -1,0 +1,35 @@
+.header {
+    display: flex;
+    gap: var(--app-distance-empty);
+    align-items: center;
+}
+
+.wrap {
+    display: grid;
+    height: calc(100% - 56px - var(--app-distance-empty));
+    grid-template-columns: minmax(0, 500px) minmax(0, 600px);
+    gap: var(--app-distance-empty);
+    &__left, &__right {
+        flex: 1;
+        height: fit-content;
+    }
+    &__left {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+}
+
+.textarea {
+    min-height: 124px;
+}
+
+.bond {
+    &__head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--vkui--color_text_subhead);
+        justify-content: space-between;
+    }
+}

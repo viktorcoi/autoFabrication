@@ -291,6 +291,8 @@ const getNameListSchema = z.object({
 	sorting: listSortingQuerySchema,
 });
 
+export const getTypeProductsSchema = getNameListSchema;
+
 export const getMaterialGroupsSchema = getNameListSchema;
 
 export const getOperationGroupsSchema = getNameListSchema;
@@ -822,6 +824,7 @@ export const getWorksTableSchema = z.object({
 });
 
 export type GetTypeProductsTableQuery = z.infer<typeof getTypeProductsTableSchema>;
+export type GetTypeProductsQuery = z.infer<typeof getTypeProductsSchema>;
 export type UpdateTypeProductsTablePayload = z.infer<typeof updateTypeProductsTableSchema>;
 export type GetMaterialGroupsQuery = z.infer<typeof getMaterialGroupsSchema>;
 export type GetMaterialGroupsTableQuery = z.infer<typeof getMaterialGroupsTableSchema>;
