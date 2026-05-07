@@ -17,9 +17,9 @@ import {
 } from "@vkontakte/vkui";
 import {useEffect, useMemo, useState} from "react";
 import {
-    Icon16Clear,
+    Icon16Clear, Icon20HelpOutline,
     Icon24Add,
-    Icon24Cancel,
+    Icon24Cancel, Icon24HelpOutline,
     Icon24ListDeleteOutline,
     Icon24SearchSlashOutline,
     Icon24ViewOutline
@@ -37,6 +37,7 @@ const ModalRelatedProducts = (props: ModalRelatedProductsProps) => {
 
     const {
         selectedProducts,
+        editProductId,
         onChangeProducts,
         onClose,
         preventClose,
@@ -80,25 +81,6 @@ const ModalRelatedProducts = (props: ModalRelatedProductsProps) => {
         setSelected(selectedProducts);
     }, [selectedProducts]);
 
-    const getProducts = async () => {
-        mergeState({products: true}, setLoading);
-        const controller = createControllerProducts();
-
-        await ApiService.products.get({
-            controller,
-            options: {
-                search: delaySearch.trim() || undefined,
-                sorting: {id: 'name', sort: 'asc'},
-                typeProductId: filters.typeProductId || undefined,
-                materialId: filters.materialId || undefined,
-            },
-        }).then(({status, data}) => {
-            if (status === 'success') {
-                setProducts(data);
-            }
-        })
-    };
-
     useEffect(() => {
         const getOptions = async () => {
             const controllerTypes = createControllerTypes();
@@ -131,8 +113,8 @@ const ModalRelatedProducts = (props: ModalRelatedProductsProps) => {
                         })),
                     }, setOptions);
                 } else onClose('error');
-            })
-        }
+            });
+        };
 
         getOptions().finally(() => mergeState({
             typeProduct: false,
@@ -141,19 +123,39 @@ const ModalRelatedProducts = (props: ModalRelatedProductsProps) => {
     }, []);
 
     useEffect(() => {
-        getProducts().finally(() => mergeState({products: false}, setLoading));
-    }, [delaySearch, filters.typeProductId, filters.materialId]);
+        mergeState({products: true}, setLoading);
+        const controller = createControllerProducts();
+
+        ApiService.products.get({
+            controller,
+            options: {
+                search: delaySearch.trim() || undefined,
+                sorting: {id: 'name', sort: 'asc'},
+                typeProductId: filters.typeProductId || undefined,
+                materialId: filters.materialId || undefined,
+                editProductId,
+            },
+        }).then(({status, data}) => {
+            if (status === 'success') {
+                setProducts(data);
+            }
+        }).finally(() => mergeState({products: false}, setLoading));
+    }, [delaySearch, editProductId, filters.typeProductId, filters.materialId]);
 
     const selectedIds = useMemo(
         () => new Set(selected.map(({id}) => id)),
         [selected]
     );
     const availableProducts = useMemo(
-        () => products.filter(({id}) => !selectedIds.has(id)),
-        [products, selectedIds]
+        () => products.filter(({id}) => id !== editProductId && !selectedIds.has(id)),
+        [editProductId, products, selectedIds]
     );
 
     const addProduct = (product: GetProductsResponse) => {
+        if (product.disabled) {
+            return;
+        }
+
         setSelected((prevState) => (
             prevState.some(({id}) => id === product.id)
                 ? prevState
@@ -277,8 +279,19 @@ const ModalRelatedProducts = (props: ModalRelatedProductsProps) => {
                             {availableProducts.map((product) => (
                                 <SimpleCell
                                     key={product.id}
-                                    className={styles.cell}
+                                    disabled={product.disabled}
+                                    className={classNames(styles.cell, product.disabled && styles['disabled'])}
                                     multiline={true}
+                                    before={!!product.disabledReason && (
+                                        <Tooltip
+                                            description={product.disabledReason}
+                                            usePortal={true}
+                                            placement={'top'}
+                                            disableTriggerOnFocus={true}
+                                        >
+                                            <Icon20HelpOutline className={styles.cell__help}/>
+                                        </Tooltip>
+                                    )}
                                     onClick={() => addProduct(product)}
                                     after={(
                                         <Tooltip

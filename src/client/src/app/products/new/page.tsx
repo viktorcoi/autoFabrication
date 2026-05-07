@@ -43,18 +43,9 @@ import ImagesProvider from "@/components/ImagesProvider/ImagesProvider";
 import ProductImagePreview from "@/components/ProductImagePreview/ProductImagePreview";
 import ModalProductImages from "@/components/modals/ModalProducts/ModalProductImages/ModalProductImages";
 import {OpenModalsType} from "@/components/modals/types";
+import {ProductNewFormData} from "@/app/products/new/types";
 
-type ProductFormData = {
-    name: string;
-    typeProductId: number;
-    materialId: number;
-    description: string;
-    files: File[];
-    images: File[];
-    relatedProducts: RelatedProductFormItem[];
-};
-
-const initialData: ProductFormData = {
+const initialData: ProductNewFormData = {
     name: '',
     typeProductId: 0,
     materialId: 0,
@@ -64,22 +55,14 @@ const initialData: ProductFormData = {
     relatedProducts: [],
 };
 
-const PRODUCT_IMAGES_MAX_FILES = 20;
-const PRODUCT_IMAGES_MAX_TOTAL_SIZE = 100 * 1024 * 1024;
-
-type ProductNewPageModalId = 'modal-related-products' | 'modal-product-images' | 'modal-product-info';
-
 const ProductNewPage = () => {
 
     const router = useRouter();
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const selectFilter = useSelectFilter();
-    const {
-        createController,
-    } = useController([]);
 
-    const [data, setData] = useState<ProductFormData>({...initialData});
-    const [modals, setModals] = useState<OpenModalsType<ProductNewPageModalId>>({
+    const [data, setData] = useState<ProductNewFormData>({...initialData});
+    const [modals, setModals] = useState<OpenModalsType<'modal-related-products' | 'modal-product-images' | 'modal-product-info'>>({
         id: null,
         show: false,
         data: null,
@@ -93,37 +76,45 @@ const ProductNewPage = () => {
         send: false,
     });
 
+    const {createController: createControllerTypes} = useController([]);
+    const {createController: createControllerMaterials} = useController([]);
+
     useEffect(() => {
-        const controller = createController();
+        const getOptions = async () => {
+            const controllerTypes = createControllerTypes();
 
-        Promise.all([
             ApiService.guide.typeProducts.get({
-                controller,
+                controller: controllerTypes,
                 options: {sorting: {id: 'name', sort: 'asc'}},
-            }),
-            ApiService.guide.material.get({
-                controller,
-                options: {sorting: {id: 'name', sort: 'asc'}},
-            }),
-        ]).then(([typeProductsResponse, materialsResponse]) => {
-            if (typeProductsResponse.status === 'success') {
-                mergeState({
-                    typeProduct: typeProductsResponse.data.map(({id, name}) => ({
-                        value: id,
-                        label: name,
-                    })),
-                }, setOptions);
-            }
+            }).then(({status, data}) => {
+                if (status === 'success') {
+                    mergeState({
+                        typeProduct: data.map(({id, name}) => ({
+                            value: id,
+                            label: name,
+                        })),
+                    }, setOptions);
+                }
+            });
 
-            if (materialsResponse.status === 'success') {
-                mergeState({
-                    material: materialsResponse.data.map(({id, name}) => ({
-                        value: id,
-                        label: name,
-                    })),
-                }, setOptions);
-            }
-        }).finally(() => mergeState({get: false}, setLoading));
+            const controllerMaterials = createControllerMaterials();
+
+            await ApiService.guide.material.get({
+                controller: controllerMaterials,
+                options: {sorting: {id: 'name', sort: 'asc'}},
+            }).then(({status, data}) => {
+                if (status === 'success') {
+                    mergeState({
+                        material: data.map(({id, name}) => ({
+                            value: id,
+                            label: name,
+                        })),
+                    }, setOptions);
+                }
+            });
+        };
+
+        getOptions().finally(() => mergeState({get: false}, setLoading));
     }, []);
 
     const disabledSave = useMemo(
@@ -134,8 +125,7 @@ const ProductNewPage = () => {
         () => getFilesTotalSize(data.images),
         [data.images]
     );
-    const canAddImages = data.images.length < PRODUCT_IMAGES_MAX_FILES
-        && imagesTotalSize < PRODUCT_IMAGES_MAX_TOTAL_SIZE;
+    const canAddImages = data.images.length < 10 && imagesTotalSize < (50 * 1024 * 1024);
 
     const saveProduct = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -282,7 +272,11 @@ const ProductNewPage = () => {
                 </>
             )}
         >
-            <form id={'save-product'} className={styles.wrap} onSubmit={saveProduct}>
+            <form
+                id={'save-product'}
+                className={styles.wrap}
+                onSubmit={saveProduct}
+            >
                 <div className={classNames('island', 'scroll', styles.wrap__left)}>
                     <FormItem
                         top={'Название изделия'}

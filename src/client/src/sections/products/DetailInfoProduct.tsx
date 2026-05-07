@@ -1,76 +1,56 @@
+import {DetailInfoProductProps} from "@/sections/products/types";
+import {useController} from "@/shared/hooks";
+import {useEffect, useMemo, useState} from "react";
+import {ApiService} from "@/apiService/apiService";
+import {GetByIdProductResponse} from "@/apiService/apiProducts/types";
 import {
     Button,
     Caption,
     classNames,
-    Gallery, HorizontalScroll,
-    ModalPage,
-    ModalPageHeader,
+    Gallery,
+    HorizontalScroll,
     Placeholder,
-    PlatformProvider,
     SimpleCell,
     Spinner,
-    Subhead,
     Text,
     Tooltip
 } from "@vkontakte/vkui";
-import {useEffect, useMemo, useState} from "react";
-import Image from "next/image";
-import {PhotoView} from "react-photo-view";
-import {
-    Icon24Add,
-    Icon24BrowserBack,
-    Icon24DocumentOutline,
-    Icon24ViewOutline, Icon48Linked,
-    Icon56GalleryOutline
-} from "@vkontakte/icons";
-import {ApiService} from "@/apiService/apiService";
-import {GetByIdProductResponse} from "@/apiService/apiProducts/types";
-import {useController} from "@/shared/hooks";
+import {Icon24DocumentOutline, Icon24ViewOutline, Icon48Linked, Icon56GalleryOutline} from "@vkontakte/icons";
 import {mergeState} from "@/shared/helpers";
 import ImagesProvider from "@/components/ImagesProvider/ImagesProvider";
-import {ModalProductInfoProps} from "@/components/modals/ModalProducts/ModalProductInfo/types";
-import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
+import {PhotoView} from "react-photo-view";
+import Image from "next/image";
 import {OpenModalsType} from "@/components/modals/types";
-import styles from './ModalProductInfo.module.scss';
+import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
+import styles from './DetailInfoProduct.module.scss';
 
-const ModalProductInfo = (props: ModalProductInfoProps) => {
+const DetailInfoProduct = (props: DetailInfoProductProps) => {
 
     const {
-        productId,
-        onClose,
-        preventClose,
-        ...restProps
+        id,
+        show
     } = props;
 
-    const [history, setHistory] = useState([productId]);
-    const [product, setProduct] = useState<GetByIdProductResponse | null>(null);
     const [loading, setLoading] = useState(true);
+    const [product, setProduct] = useState<GetByIdProductResponse | null>(null);
     const [imageIndex, setImageIndex] = useState(0);
     const [modals, setModals] = useState<OpenModalsType<'modal-product-files'>>({
         id: null,
         show: false,
         data: null,
     });
-    const currentProductId = history[history.length - 1] ?? productId;
+
     const {
         cancelRef,
         createController,
-    } = useController([currentProductId]);
-
-    useEffect(() => {
-        setHistory([productId]);
-    }, [productId]);
+    } = useController([id]);
 
     useEffect(() => {
         setLoading(true);
-        setProduct(null);
-        setImageIndex(0);
-        setModals({id: null, show: false, data: null});
-
         const controller = createController();
 
         ApiService.products.getById({
-            id: currentProductId,
+            id,
             controller,
         }).then(({status, data}) => {
             if (status === 'success') {
@@ -80,7 +60,7 @@ const ModalProductInfo = (props: ModalProductInfoProps) => {
                 cancelRef.current = true;
             }
         }).finally(() => setLoading(cancelRef.current));
-    }, [currentProductId]);
+    }, [id]);
 
     const currentImage = useMemo(
         () => product?.images[imageIndex] ?? null,
@@ -91,45 +71,8 @@ const ModalProductInfo = (props: ModalProductInfoProps) => {
     const hasImages = (product?.images.length ?? 0) > 0;
     const hasFiles = (product?.files.length ?? 0) > 0;
 
-    const openProduct = (id: number) => {
-        setHistory((prevState) => [...prevState, id]);
-    };
-
-    const goBack = () => {
-        setHistory((prevState) => prevState.length > 1 ? prevState.slice(0, -1) : prevState);
-    };
-
     return (
-        <ModalPage
-            className={styles.modal}
-            height={500}
-            onClose={onClose}
-            preventClose={preventClose || modals.id !== null}
-            header={(
-                <PlatformProvider value={'ios'}>
-                    <ModalPageHeader
-                        before={history.length > 1 ? (
-                            <Tooltip
-                                description={'Назад'}
-                                usePortal={true}
-                                placement={'top'}
-                                disableTriggerOnFocus={true}
-                            >
-                                <Button
-                                    mode={'secondary'}
-                                    size={'m'}
-                                    before={<Icon24BrowserBack/>}
-                                    onClick={goBack}
-                                />
-                            </Tooltip>
-                        ) : undefined}
-                    >
-                        {product ? `Изделие: ${product.name}` : 'Изделие'}
-                    </ModalPageHeader>
-                </PlatformProvider>
-            )}
-            {...restProps}
-        >
+        <>
             {'modal-product-files' === modals.id && product && (
                 <ModalFiles
                     itemId={product.id}
@@ -141,9 +84,7 @@ const ModalProductInfo = (props: ModalProductInfoProps) => {
                     onClosed={() => setModals({id: null, show: false, data: null})}
                 />
             )}
-            {loading ? (
-                <Spinner className={styles.spinner} size={'xl'}/>
-            ) : !product ? (
+            {loading ? <Spinner size={'xl'} /> : !product ? (
                 <Placeholder stretched={true}>
                     Изделие не найдено
                 </Placeholder>
@@ -294,8 +235,8 @@ const ModalProductInfo = (props: ModalProductInfoProps) => {
                     )}
                 </div>
             )}
-        </ModalPage>
-    );
+        </>
+    )
 };
 
-export default ModalProductInfo;
+export default DetailInfoProduct;

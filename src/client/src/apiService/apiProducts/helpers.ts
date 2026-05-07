@@ -70,6 +70,12 @@ export const createProductOptions = (options: PostProductOptions | PathProductOp
         });
     }
 
+    if ("imageOrderIds" in options && Array.isArray(options.imageOrderIds)) {
+        options.imageOrderIds.forEach((imageId) => {
+            formData.append("imageOrderIds", String(imageId));
+        });
+    }
+
     if (Array.isArray(options.files)) {
         options.files.forEach((file) => {
             formData.append("files", file);

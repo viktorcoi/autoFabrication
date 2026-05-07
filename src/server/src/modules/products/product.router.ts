@@ -152,12 +152,12 @@ const parseProductUpload = (request: Request, response: Response, next: NextFunc
 			}
 
 			if (error.code === "LIMIT_FILE_COUNT") {
-				next(new AppError(400, "Можно загрузить не более 20 файлов и 20 изображений"));
+				next(new AppError(400, "Можно загрузить не более 20 файлов и 10 изображений"));
 				return;
 			}
 
 			if (error.code === "LIMIT_UNEXPECTED_FILE") {
-				next(new AppError(400, "Можно загрузить не более 20 файлов и 20 изображений"));
+				next(new AppError(400, "Можно загрузить не более 20 файлов и 10 изображений"));
 				return;
 			}
 

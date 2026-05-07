@@ -3,17 +3,26 @@ import {PhotoView} from "react-photo-view";
 import {ProductImagePreviewProps} from "@/components/ProductImagePreview/types";
 import styles from './ProductImagePreview.module.scss';
 
-const ProductImagePreview = ({file}: ProductImagePreviewProps) => {
+const ProductImagePreview = (props: ProductImagePreviewProps) => {
 
-    const [src, setSrc] = useState('');
+    const {file} = props;
+    const [objectSrc, setObjectSrc] = useState('');
 
     useEffect(() => {
+        if (!file) {
+            setObjectSrc('');
+            return;
+        }
+
         const objectUrl = URL.createObjectURL(file);
 
-        setSrc(objectUrl);
+        setObjectSrc(objectUrl);
 
         return () => URL.revokeObjectURL(objectUrl);
     }, [file]);
+
+    const src = file ? objectSrc : props.src;
+    const name = file ? file.name : props.name;
 
     if (!src) {
         return <div className={styles.preview}/>;
@@ -23,7 +32,7 @@ const ProductImagePreview = ({file}: ProductImagePreviewProps) => {
         <img
             className={styles.image}
             src={src}
-            alt={file.name}
+            alt={name}
         />
     );
 

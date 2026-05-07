@@ -29,11 +29,14 @@ import {GetProductsTableFilters, PatchProductsTableOptions, ProductsTableRow} fr
 import ModalFiltersProducts from "@/components/modals/ModalFilters/ModalFiltersProducts/ModalFiltersProducts";
 import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
 import Link from "next/link";
+import {useRouter} from "next/navigation";
+import DetailInfoProduct from "@/sections/products/DetailInfoProduct";
 
 const hasDateRangeValue = (value: GetProductsTableFilters["createdAt"]) => value.some((date) => date !== null);
 
 const ProductsPage = () => {
 
+    const router = useRouter();
     const [loading, setLoading] = useState(true);
 
     const {
@@ -67,6 +70,15 @@ const ProductsPage = () => {
     const [modals, setModals] = useState<OpenModalsType<
         'modal-remove-products' | 'modal-multi-remove-products' | 'modal-filters-products' | 'modal-product-files'
     >>({id: null, show: false, data: null});
+    const [showInfo, setShowInfo] = useState<{
+        id: number | null;
+        render: boolean;
+        show: boolean;
+    }>({
+        id: null,
+        render: false,
+        show: false,
+    });
 
     const actionSheetRef = useRef(null);
 
@@ -220,10 +232,13 @@ const ProductsPage = () => {
                 sorting: e.sorting,
             }, setTableOptions);
         }
+        if (e.type === 'cellClick') {
+            setShowInfo({id: e.row.id, show: true, render: true});
+        }
         if (e.type === 'cellDoubleClick') {
-            if (!access.editing) return;
+            // if (!access.editing) return;
 
-            // setModals({id: 'modal-manage-products', show: true, data: e.row.id});
+            // router.push(`/products/edit/${e.row.id}`);
         }
         if (e.type === 'selected') {
             setSelected(e.rowIds);
@@ -291,7 +306,7 @@ const ProductsPage = () => {
                         {access.editing && (
                             <>
                                 <ActionSheetItem
-                                    // onClick={() => setModals({id: 'modal-manage-products', show: true, data: e.row.id})}
+                                    onClick={() => router.push(`/products/edit/${e.row.id}`)}
                                     before={<Icon24PenOutline width={20} height={20}/>}
                                 >
                                     Редактировать
@@ -461,6 +476,12 @@ const ProductsPage = () => {
                         title: 'Совпадений не найдено',
                         description: 'Попробуйте изменить параметры поиска',
                     }}
+                    rightSideRender={(showInfo.render && showInfo.id !== null) && (
+                        <DetailInfoProduct
+                            id={showInfo.id}
+                            show={showInfo.show}
+                        />
+                    )}
                 />
             </Container>
         </>

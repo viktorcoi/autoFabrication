@@ -121,6 +121,7 @@ model productImage {
   size         Int
   mimeType     String?  @map("mimeType")
   storagePath  String   @map("storagePath")
+  sortOrder    Int      @default(0) @map("sortOrder")
   createdAt    DateTime @default(now())
   product      product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 

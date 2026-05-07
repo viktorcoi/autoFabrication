@@ -9,8 +9,8 @@ export const PRODUCT_FILE_SIZE_LIMIT = 100 * 1024 * 1024;
 export const PRODUCT_FILES_LIMIT = 20;
 export const PRODUCT_FILES_TOTAL_SIZE_LIMIT = 200 * 1024 * 1024;
 export const PRODUCT_IMAGE_SIZE_LIMIT = 5 * 1024 * 1024;
-export const PRODUCT_IMAGES_LIMIT = 20;
-export const PRODUCT_IMAGES_TOTAL_SIZE_LIMIT = 100 * 1024 * 1024;
+export const PRODUCT_IMAGES_LIMIT = 10;
+export const PRODUCT_IMAGES_TOTAL_SIZE_LIMIT = 50 * 1024 * 1024;
 export const PRODUCT_UPLOAD_FILES_LIMIT = PRODUCT_FILES_LIMIT + PRODUCT_IMAGES_LIMIT;
 
 const PRODUCT_STORAGE_DIR_NAME = "products";
@@ -131,7 +131,7 @@ export const assertProductImagesTotalSize = (images: Express.Multer.File[]) => {
 	const totalSize = images.reduce((result, file) => result + file.size, 0);
 
 	if (totalSize > PRODUCT_IMAGES_TOTAL_SIZE_LIMIT) {
-		throw new AppError(413, "Общий размер изображений изделия не должен превышать 100 MB");
+		throw new AppError(413, "Общий размер изображений изделия не должен превышать 50 MB");
 	}
 };
 

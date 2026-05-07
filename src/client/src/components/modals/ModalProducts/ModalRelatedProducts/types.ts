@@ -5,6 +5,7 @@ import {RelatedProductFormItem} from "@/apiService/apiProducts/types";
 
 export interface ModalRelatedProductsProps extends Omit<ModalPageProps, "children" | "onClose"> {
     selectedProducts: RelatedProductFormItem[];
+    editProductId?: number;
     onChangeProducts(products: RelatedProductFormItem[]): void;
     onClose(reason: ModalPageCloseReasonType, event?: React.UIEvent<HTMLElement>): void;
 }

@@ -248,7 +248,11 @@ export const updateProductSchema = z
 		),
 		removedImageIds: z.preprocess(
 			parseIdArray,
-			z.array(productIdSchema).max(20, "Нельзя удалить больше 20 изображений за один запрос").optional(),
+			z.array(productIdSchema).max(10, "Нельзя удалить больше 10 изображений за один запрос").optional(),
+		),
+		imageOrderIds: z.preprocess(
+			parseIdArray,
+			z.array(productIdSchema).max(10, "Нельзя отсортировать больше 10 изображений за один запрос").optional(),
 		),
 	})
 	.strict();
@@ -301,6 +305,7 @@ export const getProductsSchema = z.object({
 		.transform((value) => value ?? null),
 	typeProductId: z.preprocess(parseOptionalId, typeProductIdSchema.optional()),
 	materialId: z.preprocess(parseOptionalId, materialIdSchema.optional()),
+	editProductId: z.preprocess(parseOptionalId, productIdSchema.optional()),
 });
 
 export type CreateProductPayload = z.infer<typeof createProductSchema>;

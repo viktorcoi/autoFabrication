@@ -6,7 +6,12 @@ import multer from "multer";
 import { AppError } from "../../shared/errors/app-error.js";
 import { asyncHandler } from "../../shared/http/async-handler.js";
 import { requireAuth } from "../../shared/http/auth.js";
-import { requirePermission } from "../../shared/http/permissions.js";
+import {
+	assertPermission,
+	hasPermission,
+	loadRolePermissions,
+	requirePermission,
+} from "../../shared/http/permissions.js";
 import { validate } from "../../shared/http/validate.js";
 import {
 	OPERATION_FILES_LIMIT,
@@ -149,6 +154,38 @@ const WORK_FILE_NOT_FOUND_ERROR = "Файл работы не найден";
 const WORK_ARCHIVE_EMPTY_ERROR = "У работы нет загруженных файлов";
 const WORK_ARCHIVE_NAME_FALLBACK = "work-files";
 
+const PRODUCTS_FOR_SELECT_PERMISSIONS = [
+	"view",
+	"adding",
+	"editing",
+	"viewProcess",
+	"addingProcess",
+	"editingProcess",
+] as const;
+
+const canReadGuideListForSelect = (permissions: Awaited<ReturnType<typeof loadRolePermissions>>) =>
+	hasPermission(permissions, "/guide", "view")
+	|| PRODUCTS_FOR_SELECT_PERMISSIONS.some((permission) => hasPermission(permissions, "/products", permission));
+
+const requireGuideListPermission = async (request: Request, response: Response, next: NextFunction) => {
+	try {
+		const permissions = await loadRolePermissions(request, response);
+		const forSelect = request.query.forSelect === "true";
+
+		if (forSelect) {
+			if (!canReadGuideListForSelect(permissions)) {
+				throw new AppError(403, "У вас отсутствует доступ для данного действия");
+			}
+		} else {
+			assertPermission(permissions, "/guide", "view");
+		}
+
+		next();
+	} catch (error) {
+		next(error);
+	}
+};
+
 const sanitizeArchiveEntryName = (value: string, fallback: string) => {
 	const sanitized = value
 		.trim()
@@ -277,7 +314,7 @@ const parseWorkUpload = (request: Request, response: Response, next: NextFunctio
 
 guideRouter.get(
 	"/typeProducts",
-	requirePermission("/guide", "view"),
+	requireGuideListPermission,
 	asyncHandler(async (request, response) => {
 		const query = validate(getTypeProductsSchema, request.query);
 		const typeProducts = await listTypeProducts(query);
@@ -366,7 +403,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/materialGroup",
-	requirePermission("/guide", "view"),
+	requireGuideListPermission,
 	asyncHandler(async (request, response) => {
 		const query = validate(getMaterialGroupsSchema, request.query);
 		const materialGroups = await listMaterialGroups(query);
@@ -444,7 +481,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/operationGroup",
-	requirePermission("/guide", "view"),
+	requireGuideListPermission,
 	asyncHandler(async (request, response) => {
 		const query = validate(getOperationGroupsSchema, request.query);
 		const operationGroups = await listOperationGroups(query);
@@ -522,7 +559,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/material",
-	requirePermission("/guide", "view"),
+	requireGuideListPermission,
 	asyncHandler(async (request, response) => {
 		const query = validate(getMaterialsSchema, request.query);
 		const materials = await listMaterials(query);
@@ -667,7 +704,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/workGroup",
-	requirePermission("/guide", "view"),
+	requireGuideListPermission,
 	asyncHandler(async (request, response) => {
 		const query = validate(getWorkGroupsSchema, request.query);
 		const workGroups = await listWorkGroups(query);
@@ -745,7 +782,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/operation",
-	requirePermission("/guide", "view"),
+	requireGuideListPermission,
 	asyncHandler(async (request, response) => {
 		const query = validate(getOperationsSchema, request.query);
 		const operations = await listOperations(query);

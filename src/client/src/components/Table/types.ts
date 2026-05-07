@@ -137,6 +137,7 @@ export type TableProps = {
     onEvent: (event: TableEvent) => void;
     getRowId?: (row: TableRow, index: number) => number;
     emptyState?: TableEmptyState;
+    rightSideRender?: ReactNode;
 };
 
 export type TableSettings = Array<{

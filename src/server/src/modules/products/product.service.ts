@@ -39,6 +39,7 @@ const productStoredImageSelect = {
 	size: true,
 	mimeType: true,
 	storagePath: true,
+	sortOrder: true,
 } satisfies Prisma.productImageSelect;
 
 const productSelect = {
@@ -89,9 +90,10 @@ const productSelect = {
 	},
 	images: {
 		select: productStoredImageSelect,
-		orderBy: {
-			id: "asc",
-		},
+		orderBy: [
+			{ sortOrder: "asc" },
+			{ id: "asc" },
+		],
 	},
 	components: {
 		select: {
@@ -174,6 +176,10 @@ const productUpdateSelect = {
 	},
 	images: {
 		select: productStoredImageSelect,
+		orderBy: [
+			{ sortOrder: "asc" },
+			{ id: "asc" },
+		],
 	},
 } satisfies Prisma.productSelect;
 
@@ -263,6 +269,7 @@ const PRODUCT_IMAGE_NOT_FOUND_ERROR = "Изображение изделия н�
 const PRODUCT_COMPONENT_NOT_FOUND_ERROR = "Связанное изделие не найдено";
 const PRODUCT_COMPONENT_SELF_ERROR = "Изделие не может быть связано само с собой";
 const PRODUCT_COMPONENT_DUPLICATE_ERROR = "Одно изделие нельзя связать несколько раз";
+const PRODUCT_COMPONENT_CYCLE_ERROR = "Связь создаст циклическую зависимость между изделиями";
 const UPDATE_PRODUCT_NO_RIGHTS_ERROR = "У вас нет прав для редактирования";
 const UPDATE_PRODUCT_SUCCESS_DESCRIPTION = "Отредактировано";
 const DELETE_PRODUCT_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
@@ -334,17 +341,24 @@ const mapProductFiles = (files: Array<{ id: number; originalName: string; size: 
 		size: file.size,
 	}));
 
-const mapProductImages = (images: Array<{ id: number; originalName: string; size: number; storagePath: string }>) =>
+const mapProductImages = (images: Array<{
+	id: number;
+	originalName: string;
+	size: number;
+	storagePath: string;
+	sortOrder: number;
+}>) =>
 	images.map((image) => ({
 		id: image.id,
 		name: normalizeProductFileOriginalName(image.originalName),
 		size: image.size,
+		sortOrder: image.sortOrder,
 		url: getProductImagePublicPath(image.storagePath),
 	}));
 
 const mapProduct = <TProduct extends {
 	files: Array<{ id: number; originalName: string; size: number }>;
-	images: Array<{ id: number; originalName: string; size: number; storagePath: string }>;
+	images: Array<{ id: number; originalName: string; size: number; storagePath: string; sortOrder: number }>;
 	creator: { firstName: string; lastName: string; middleName: string | null; login: string };
 	components: Array<{
 		id: number;
@@ -457,6 +471,89 @@ const ensureProductNameIsUnique = async (
 	}
 };
 
+const canReachProduct = (
+	adjacency: Map<number, number[]>,
+	startProductId: number,
+	targetProductId: number,
+) => {
+	const visited = new Set<number>();
+	const stack = [startProductId];
+
+	while (stack.length) {
+		const productId = stack.pop();
+
+		if (typeof productId !== "number" || visited.has(productId)) {
+			continue;
+		}
+
+		if (productId === targetProductId) {
+			return true;
+		}
+
+		visited.add(productId);
+
+		for (const componentProductId of adjacency.get(productId) ?? []) {
+			stack.push(componentProductId);
+		}
+	}
+
+	return false;
+};
+
+const getUnavailableRelatedProductReasons = async (
+	editProductId: number,
+	candidateIds: number[],
+) => {
+	const unavailableProducts = new Map<number, string>();
+	const uniqueCandidateIds = getUniqueIds(candidateIds);
+
+	if (!uniqueCandidateIds.length) {
+		return unavailableProducts;
+	}
+
+	const product = await prisma.product.findUnique({
+		where: { id: editProductId },
+		select: { id: true },
+	});
+
+	if (!product) {
+		throw new AppError(404, PRODUCT_NOT_FOUND_ERROR);
+	}
+
+	const components = await prisma.productComponent.findMany({
+		where: {
+			productId: {
+				not: editProductId,
+			},
+		},
+		select: {
+			productId: true,
+			componentProductId: true,
+		},
+	});
+	const adjacency = components.reduce<Map<number, number[]>>((result, component) => {
+		const currentComponents = result.get(component.productId) ?? [];
+
+		currentComponents.push(component.componentProductId);
+		result.set(component.productId, currentComponents);
+
+		return result;
+	}, new Map());
+
+	for (const candidateId of uniqueCandidateIds) {
+		if (candidateId === editProductId) {
+			unavailableProducts.set(candidateId, PRODUCT_COMPONENT_SELF_ERROR);
+			continue;
+		}
+
+		if (canReachProduct(adjacency, candidateId, editProductId)) {
+			unavailableProducts.set(candidateId, PRODUCT_COMPONENT_CYCLE_ERROR);
+		}
+	}
+
+	return unavailableProducts;
+};
+
 const normalizeRelatedProducts = async (
 	productId: number | null,
 	relatedProducts: ProductComponentPayload[] = [],
@@ -495,6 +592,18 @@ const normalizeRelatedProducts = async (
 
 	if (normalizedProducts.some((product) => !existingIds.has(product.productId))) {
 		throw new AppError(404, PRODUCT_COMPONENT_NOT_FOUND_ERROR);
+	}
+
+	if (productId !== null) {
+		const unavailableProducts = await getUnavailableRelatedProductReasons(
+			productId,
+			normalizedProducts.map((product) => product.productId),
+		);
+		const unavailableProduct = normalizedProducts.find((product) => unavailableProducts.has(product.productId));
+
+		if (unavailableProduct) {
+			throw new AppError(400, unavailableProducts.get(unavailableProduct.productId) ?? PRODUCT_COMPONENT_CYCLE_ERROR);
+		}
 	}
 
 	return normalizedProducts;
@@ -719,12 +828,32 @@ const buildProductsListOrderBy = (
 	}
 };
 
-export const listProducts = async (query: GetProductsQuery) =>
-	prisma.product.findMany({
+export const listProducts = async (query: GetProductsQuery) => {
+	const products = await prisma.product.findMany({
 		where: buildProductsListWhere(query),
 		select: productListSelect,
 		orderBy: buildProductsListOrderBy(query.sorting),
 	});
+
+	if (typeof query.editProductId !== "number") {
+		return products;
+	}
+
+	const unavailableProducts = await getUnavailableRelatedProductReasons(
+		query.editProductId,
+		products.map((product) => product.id),
+	);
+
+	return products.map((product) => {
+		const disabledReason = unavailableProducts.get(product.id);
+
+		return {
+			...product,
+			disabled: Boolean(disabledReason),
+			...(disabledReason ? { disabledReason } : {}),
+		};
+	});
+};
 
 export const getProductsTable = async (query: GetProductsTableQuery) => {
 	const where = buildProductsTableWhere(query);
@@ -870,11 +999,12 @@ export const createProduct = async (
 				...(savedImages.length
 					? {
 							images: {
-								create: savedImages.map((image) => ({
+								create: savedImages.map((image, index) => ({
 									originalName: image.originalName,
 									size: image.size,
 									mimeType: image.mimeType,
 									storagePath: image.storagePath,
+									sortOrder: index,
 								})),
 							},
 						}
@@ -965,6 +1095,25 @@ export const updateProduct = async (
 
 	const remainingFiles = currentProduct.files.filter((file) => !removedFileIds.includes(file.id));
 	const remainingImages = currentProduct.images.filter((image) => !removedImageIds.includes(image.id));
+	const hasImageOrderIds = data.imageOrderIds !== undefined;
+	const imageOrderIds = hasImageOrderIds ? getUniqueIds(data.imageOrderIds ?? []) : undefined;
+
+	if (
+		hasImageOrderIds
+		&& (
+			(imageOrderIds?.length ?? 0) !== (data.imageOrderIds?.length ?? 0)
+			|| (imageOrderIds?.length ?? 0) !== remainingImages.length
+			|| imageOrderIds?.some((imageId) => !remainingImages.some((image) => image.id === imageId))
+		)
+	) {
+		throw new AppError(400, "Некорректный порядок изображений изделия");
+	}
+
+	const orderedRemainingImages = imageOrderIds
+		? imageOrderIds
+				.map((imageId) => currentImagesById.get(imageId))
+				.filter((image): image is (typeof currentProduct.images)[number] => Boolean(image))
+		: remainingImages;
 	const totalFilesCount = remainingFiles.length + files.length;
 	const totalFilesSize = remainingFiles.reduce((result, file) => result + file.size, 0)
 		+ files.reduce((result, file) => result + file.size, 0);
@@ -998,15 +1147,16 @@ export const updateProduct = async (
 	}
 
 	if (totalImagesCount > PRODUCT_IMAGES_LIMIT) {
-		throw new AppError(400, "Можно хранить не более 20 изображений у одного изделия");
+		throw new AppError(400, "Можно хранить не более 10 изображений у одного изделия");
 	}
 
 	if (totalImagesSize > PRODUCT_IMAGES_TOTAL_SIZE_LIMIT) {
-		throw new AppError(413, "Общий размер изображений изделия не должен превышать 100 MB");
+		throw new AppError(413, "Общий размер изображений изделия не должен превышать 50 MB");
 	}
 
 	const savedFiles = await saveProductFiles(files);
 	const savedImages = await saveProductImages(images);
+	const shouldUpdateImages = removedImageIds.length || savedImages.length || hasImageOrderIds;
 
 	try {
 		const product = await prisma.product.update({
@@ -1061,7 +1211,7 @@ export const updateProduct = async (
 							},
 						}
 					: {}),
-				...(removedImageIds.length || savedImages.length
+				...(shouldUpdateImages
 					? {
 							images: {
 								...(removedImageIds.length
@@ -1073,13 +1223,26 @@ export const updateProduct = async (
 											},
 										}
 									: {}),
+								...(orderedRemainingImages.length
+									? {
+											update: orderedRemainingImages.map((image, index) => ({
+												where: {
+													id: image.id,
+												},
+												data: {
+													sortOrder: index,
+												},
+											})),
+										}
+									: {}),
 								...(savedImages.length
 									? {
-											create: savedImages.map((image) => ({
+											create: savedImages.map((image, index) => ({
 												originalName: image.originalName,
 												size: image.size,
 												mimeType: image.mimeType,
 												storagePath: image.storagePath,
+												sortOrder: orderedRemainingImages.length + index,
 											})),
 										}
 									: {}),

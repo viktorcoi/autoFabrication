@@ -9,6 +9,7 @@ export interface ProductFileItem {
 }
 
 export interface ProductImageItem extends ProductFileItem {
+    sortOrder: number;
     url: string;
 }
 
@@ -35,11 +36,14 @@ export interface ProductRelatedItem {
 export type GetProductsResponse = {
     id: number;
     name: string;
+    disabled?: boolean;
+    disabledReason?: string;
 };
 
 export type GetProductsListFilters = {
     typeProductId: number;
     materialId: number;
+    editProductId: number;
 };
 
 export type RelatedProductFormItem = {
@@ -108,6 +112,7 @@ export interface PathProductOptions {
     images?: File[];
     removedFileIds?: number[];
     removedImageIds?: number[];
+    imageOrderIds?: number[];
     relatedProducts?: Array<{
         productId: number;
         count: number;

@@ -52,9 +52,13 @@
     background: var(--vkui--color_background_secondary);
     &__buttons {
         gap: 4px;
+        align-items: center;
+    }
+    &__help {
+        cursor: help;
     }
 }
-//
-//.spinner {
-//    height: 100%;
-//}
+
+.spinner {
+    height: 100%;
+}

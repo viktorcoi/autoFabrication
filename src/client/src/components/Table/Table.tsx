@@ -97,6 +97,7 @@ const Table = (props: TableProps) => {
         editMode = true,
         total,
         page,
+        rightSideRender,
         rows,
         loading = false,
         selected,
@@ -1493,131 +1494,134 @@ const Table = (props: TableProps) => {
 
     return (
         <>
-            <div
-                className={classNames(
-                    'island',
-                    styles.wrap,
-                    className,
-                )}
-            >
+            <div className={styles.wrap}>
                 <div
-                    ref={scrollRef}
                     className={classNames(
-                        'scroll',
-                        styles.scroll,
-                        (loading || !visibleRows.length) && styles['scroll--disabled'],
-                        draggingColumnId && styles.scrollDragging,
+                        'island',
+                        styles.content,
+                        className,
                     )}
                 >
-                    <table
-                        ref={tableRef}
+                    <div
+                        ref={scrollRef}
                         className={classNames(
-                            styles.table,
-                            editing && styles['table--editing'],
+                            'scroll',
+                            styles.scroll,
+                            (loading || !visibleRows.length) && styles['scroll--disabled'],
+                            draggingColumnId && styles.scrollDragging,
                         )}
-                        style={{width: `var(${TABLE_TOTAL_WIDTH_CSS_VAR}, ${table.getTotalSize()}px)`}}
                     >
-                        <TableHeader
-                            editing={editing}
-                            disabled={disabled}
-                            loading={loading}
-                            headerGroups={table.getHeaderGroups()}
-                            columnMap={columnMap}
-                            draggingColumnId={draggingColumnId}
-                            resizingColumnId={resizingColumnId}
-                            headerCellRefsRef={headerCellRefsRef}
-                            onOpenContextMenu={(columnId, point) => {
-                                setHeaderContextColumnId(columnId);
-                                setHeaderContextPoint(point);
-                            }}
-                            beginColumnInteraction={beginColumnInteraction}
-                            beginColumnResize={beginColumnResize}
-                        />
-
-                        <TableBody
-                            disabled={disabled}
-                            loading={loading}
-                            editing={editing}
-                            scrollRef={scrollRef}
-                            visibleRows={visibleRows}
-                            columnMap={columnMap}
-                            draftChanges={draftChanges}
-                            invalidRequiredCellKeys={invalidRequiredCellKeys}
-                            draggingColumnId={draggingColumnId}
-                            resizingColumnId={resizingColumnId}
-                            selectedRowIdsSet={selectedRowIdsSet}
-                            rowRefsRef={rowRefsRef}
-                            measuredRowHeightsRef={measuredRowHeightsRef}
-                            rowHeights={editingRowHeights}
-                            previewSelectedRowIdsRef={previewSelectedRowIdsRef}
-                            selectionStateRef={selectionStateRef}
-                            onEventRef={onEventRef}
-                            beginSelection={beginSelection}
-                            extendSelection={extendSelection}
-                            getNextRowSelection={getNextRowSelection}
-                            setSelectedRows={setSelectedRows}
-                            emitSelectedRows={emitSelectedRows}
-                            emitCellClick={emitCellClick}
-                            emitCellDoubleClick={emitCellDoubleClick}
-                            emitInteractiveClick={emitInteractiveClick}
-                            emitBooleanChange={emitBooleanChange}
-                            onDraftTextChange={updateDraftTextCell}
-                        />
-                    </table>
-
-                    {(loading || (visibleRowIds.length === 0 && !!data.length)) ? (
-                        <div className={styles.loading}>
-                            <Spinner size={'xl'}/>
-                        </div>
-                    ) : (data.length === 0 && visibleRows.length === 0 && !loading) && (
-                        <Placeholder
-                            className={styles.empty}
-                            title={emptyState.title}
-                            icon={emptyState.icon}
+                        <table
+                            ref={tableRef}
+                            className={classNames(
+                                styles.table,
+                                editing && styles['table--editing'],
+                            )}
+                            style={{width: `var(${TABLE_TOTAL_WIDTH_CSS_VAR}, ${table.getTotalSize()}px)`}}
                         >
-                            <Text>
-                                {emptyState.description}
-                            </Text>
-                        </Placeholder>
+                            <TableHeader
+                                editing={editing}
+                                disabled={disabled}
+                                loading={loading}
+                                headerGroups={table.getHeaderGroups()}
+                                columnMap={columnMap}
+                                draggingColumnId={draggingColumnId}
+                                resizingColumnId={resizingColumnId}
+                                headerCellRefsRef={headerCellRefsRef}
+                                onOpenContextMenu={(columnId, point) => {
+                                    setHeaderContextColumnId(columnId);
+                                    setHeaderContextPoint(point);
+                                }}
+                                beginColumnInteraction={beginColumnInteraction}
+                                beginColumnResize={beginColumnResize}
+                            />
+
+                            <TableBody
+                                disabled={disabled}
+                                loading={loading}
+                                editing={editing}
+                                scrollRef={scrollRef}
+                                visibleRows={visibleRows}
+                                columnMap={columnMap}
+                                draftChanges={draftChanges}
+                                invalidRequiredCellKeys={invalidRequiredCellKeys}
+                                draggingColumnId={draggingColumnId}
+                                resizingColumnId={resizingColumnId}
+                                selectedRowIdsSet={selectedRowIdsSet}
+                                rowRefsRef={rowRefsRef}
+                                measuredRowHeightsRef={measuredRowHeightsRef}
+                                rowHeights={editingRowHeights}
+                                previewSelectedRowIdsRef={previewSelectedRowIdsRef}
+                                selectionStateRef={selectionStateRef}
+                                onEventRef={onEventRef}
+                                beginSelection={beginSelection}
+                                extendSelection={extendSelection}
+                                getNextRowSelection={getNextRowSelection}
+                                setSelectedRows={setSelectedRows}
+                                emitSelectedRows={emitSelectedRows}
+                                emitCellClick={emitCellClick}
+                                emitCellDoubleClick={emitCellDoubleClick}
+                                emitInteractiveClick={emitInteractiveClick}
+                                emitBooleanChange={emitBooleanChange}
+                                onDraftTextChange={updateDraftTextCell}
+                            />
+                        </table>
+
+                        {(loading || (visibleRowIds.length === 0 && !!data.length)) ? (
+                            <div className={styles.loading}>
+                                <Spinner size={'xl'}/>
+                            </div>
+                        ) : (data.length === 0 && visibleRows.length === 0 && !loading) && (
+                            <Placeholder
+                                className={styles.empty}
+                                title={emptyState.title}
+                                icon={emptyState.icon}
+                            >
+                                <Text>
+                                    {emptyState.description}
+                                </Text>
+                            </Placeholder>
+                        )}
+                    </div>
+
+                    {(dragGhost || resizingColumnId) &&(
+                        <div className={classNames(
+                            styles.plug,
+                            dragGhost && styles['plug--drag'],
+                            resizingColumnId && styles['plug--resize']
+                        )}/>
+                    )}
+                    {dragGhost && dragGhostHeader && createPortal(
+                        <div
+                            ref={dragGhostRef}
+                            className={styles.dragGhost}
+                            style={{
+                                width: dragGhost.width,
+                                height: dragGhost.height,
+                                left: dragGhost.left,
+                                top: dragGhost.top,
+                            }}
+                        >
+                            <div className={classNames(headerStyles.headerInner, styles.dragGhostInner)}>
+                                {renderContent(
+                                    flexRender(dragGhostHeader.column.columnDef.header, dragGhostHeader.getContext()),
+                                    headerStyles.headerTitle,
+                                )}
+                                {dragGhostHeader.column.getCanSort() && dragGhostHeader.column.getIsSorted() === 'asc' && (
+                                    <Icon16SortArrowUp fill="var(--vkui--color_icon_tertiary)"/>
+                                )}
+                                {dragGhostHeader.column.getCanSort() && dragGhostHeader.column.getIsSorted() === 'desc' && (
+                                    <Icon16SortArrowDown fill="var(--vkui--color_icon_tertiary)"/>
+                                )}
+                                {dragGhostHeader.column.getCanSort() && !dragGhostHeader.column.getIsSorted() && (
+                                    <Icon16SortOutline fill="var(--vkui--color_icon_tertiary)"/>
+                                )}
+                            </div>
+                        </div>,
+                        document.body,
                     )}
                 </div>
-
-                {(dragGhost || resizingColumnId) &&(
-                    <div className={classNames(
-                        styles.plug,
-                        dragGhost && styles['plug--drag'],
-                        resizingColumnId && styles['plug--resize']
-                    )}/>
-                )}
-                {dragGhost && dragGhostHeader && createPortal(
-                    <div
-                        ref={dragGhostRef}
-                        className={styles.dragGhost}
-                        style={{
-                            width: dragGhost.width,
-                            height: dragGhost.height,
-                            left: dragGhost.left,
-                            top: dragGhost.top,
-                        }}
-                    >
-                        <div className={classNames(headerStyles.headerInner, styles.dragGhostInner)}>
-                            {renderContent(
-                                flexRender(dragGhostHeader.column.columnDef.header, dragGhostHeader.getContext()),
-                                headerStyles.headerTitle,
-                            )}
-                            {dragGhostHeader.column.getCanSort() && dragGhostHeader.column.getIsSorted() === 'asc' && (
-                                <Icon16SortArrowUp fill="var(--vkui--color_icon_tertiary)"/>
-                            )}
-                            {dragGhostHeader.column.getCanSort() && dragGhostHeader.column.getIsSorted() === 'desc' && (
-                                <Icon16SortArrowDown fill="var(--vkui--color_icon_tertiary)"/>
-                            )}
-                            {dragGhostHeader.column.getCanSort() && !dragGhostHeader.column.getIsSorted() && (
-                                <Icon16SortOutline fill="var(--vkui--color_icon_tertiary)"/>
-                            )}
-                        </div>
-                    </div>,
-                    document.body,
-                )}
+                {rightSideRender && rightSideRender}
             </div>
 
             {!editing && headerContextColumnId && (
