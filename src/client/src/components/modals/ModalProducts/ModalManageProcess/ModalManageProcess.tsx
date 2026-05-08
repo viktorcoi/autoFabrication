@@ -17,7 +17,7 @@ import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useController, useSelectFilter} from "@/shared/hooks";
 import {mergeState} from "@/shared/helpers";
 import UploadFile from "@/components/UploadFile/UploadFile";
-import {PathProcessOptions, PostProcessOptions, ProcessFileItem} from "@/apiService/apiProcesses/types";
+import {PathProcessOptions, ProcessFileItem} from "@/apiService/apiProcesses/types";
 import {ModalManageProcessProps} from "@/components/modals/ModalProducts/ModalManageProcess/types";
 import styles from "./ModalManageProcess.module.scss";
 

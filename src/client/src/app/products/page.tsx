@@ -2,7 +2,7 @@
 
 import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Counter, Search, Tooltip} from "@vkontakte/vkui";
 import {
-    Icon24Add, Icon24BrowserBack,
+    Icon24Add,
     Icon24Filter,
     Icon24PenOutline,
     Icon24SearchSlashOutline,
