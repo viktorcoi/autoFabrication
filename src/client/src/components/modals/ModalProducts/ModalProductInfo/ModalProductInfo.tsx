@@ -9,7 +9,6 @@ import {
     PlatformProvider,
     SimpleCell,
     Spinner,
-    Subhead,
     Text,
     Tooltip
 } from "@vkontakte/vkui";
@@ -17,7 +16,6 @@ import {useEffect, useMemo, useState} from "react";
 import Image from "next/image";
 import {PhotoView} from "react-photo-view";
 import {
-    Icon24Add,
     Icon24BrowserBack,
     Icon24DocumentOutline,
     Icon24ViewOutline, Icon48Linked,

@@ -1,0 +1,131 @@
+.wrap {
+    display: flex;
+    flex-direction: column;
+    width: 500px;
+    min-width: 500px;
+    max-height: 100%;
+    gap: var(--app-distance-empty);
+    margin-left: var(--app-distance-empty);
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: var(--app-default-padding);
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 8px 12px;
+    padding: 12px;
+    border-radius: var(--app-border-radius);
+    background-color: var(--vkui--color_background_secondary);
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label {
+    color: var(--vkui--color_text_subhead);
+}
+
+.description {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.relatedList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cell {
+    flex-shrink: 0;
+    border-radius: var(--app-border-radius);
+    background-color: var(--vkui--color_background_secondary);
+    max-height: 44px;
+}
+
+.gallery {
+    overflow: hidden;
+    width: 100%;
+    border-radius: var(--app-border-radius);
+    background-color: var(--vkui--color_background_secondary);
+}
+
+.slide {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 260px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: zoom-in;
+}
+
+.image {
+    object-fit: contain !important;
+    object-position: center !important;
+}
+
+.imageName {
+    overflow: hidden;
+    min-height: 16px;
+    color: var(--vkui--color_text_secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.thumb {
+    width: 96px;
+    flex: 0 0 96px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--vkui--color_background_secondary);
+    cursor: pointer;
+    &:not(:last-child) {
+        margin-right: 4px;
+    }
+}
+
+.thumbActive {
+    border-color: var(--vkui--color_stroke_accent);
+}
+
+.thumbImage {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1.45;
+    object-fit: cover;
+}
+
+.thumbName {
+    display: block;
+    padding: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--vkui--color_text_subhead);
+}
+
+.spinner, .empty {
+    min-height: 300px;
+}

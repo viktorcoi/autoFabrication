@@ -1,6 +1,6 @@
 'use client'
 
-import {ActionSheet, ActionSheetItem, Button, ButtonGroup, Counter, Search, Tooltip} from "@vkontakte/vkui";
+import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Counter, Search, Tooltip} from "@vkontakte/vkui";
 import {
     Icon24Add,
     Icon24Filter,
@@ -31,6 +31,7 @@ import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import DetailInfoProduct from "@/sections/products/DetailInfoProduct";
+import styles from './page.module.scss';
 
 const hasDateRangeValue = (value: GetProductsTableFilters["createdAt"]) => value.some((date) => date !== null);
 
@@ -127,6 +128,9 @@ const ProductsPage = () => {
                     mergeState({page: tableOptions.page - 1}, setTableOptions);
                     cancelRef.current = true;
                     return;
+                }
+                if (showInfo.id !== null && !data.data.some(({id}) => id === showInfo.id)) {
+                    mergeState({show: false}, setShowInfo);
                 }
                 setTable(data);
                 cancelRef.current = false;
@@ -460,29 +464,40 @@ const ProductsPage = () => {
                     </>
                 )}
             >
-                <Table
-                    componentName={'products'}
-                    editMode={access.editing}
-                    data={table.data}
-                    columns={tableColumns.products}
-                    total={table.total}
-                    page={tableOptions.page}
-                    rows={tableOptions.rows}
-                    loading={loading}
-                    selected={selected}
-                    onEvent={onEventTable}
-                    emptyState={(!delaySearch.trim() && !countFilter) ? undefined :{
-                        icon: <Icon24SearchSlashOutline width={62} height={62} />,
-                        title: 'Совпадений не найдено',
-                        description: 'Попробуйте изменить параметры поиска',
-                    }}
-                    rightSideRender={(showInfo.render && showInfo.id !== null) && (
+                <div className={styles.table}>
+                    <div
+                        className={classNames(
+                            styles.table__wrap,
+                            showInfo.show && styles['table__wrap--show'],
+                        )}
+                    >
+                        <Table
+                            componentName={'products'}
+                            editMode={access.editing}
+                            data={table.data}
+                            columns={tableColumns.products}
+                            total={table.total}
+                            page={tableOptions.page}
+                            rows={tableOptions.rows}
+                            loading={loading}
+                            selected={selected}
+                            onEvent={onEventTable}
+                            emptyState={(!delaySearch.trim() && !countFilter) ? undefined :{
+                                icon: <Icon24SearchSlashOutline width={62} height={62} />,
+                                title: 'Совпадений не найдено',
+                                description: 'Попробуйте изменить параметры поиска',
+                            }}
+                        />
+                    </div>
+                    {(showInfo.render && showInfo.id !== null) && (
                         <DetailInfoProduct
-                            id={showInfo.id}
                             show={showInfo.show}
+                            id={showInfo.id}
+                            onClose={() => mergeState({show: false,}, setShowInfo)}
+                            onClosed={() => setShowInfo({id: null, render: false, show: false})}
                         />
                     )}
-                />
+                </div>
             </Container>
         </>
     )
