@@ -16,6 +16,8 @@ const Wrapper = ({ children }: PropsWithChildren) => {
         initializeApp
     } = useAppStore((state) => state);
 
+    // TODO - баг с переходом между страниц браузерным методом
+
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

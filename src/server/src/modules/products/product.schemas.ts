@@ -43,6 +43,7 @@ const productComponentSchema = z.object({
 
 const productsTableSortingSchema = z.object({
 	id: z.enum([
+		"id",
 		"name",
 		"typeProduct",
 		"material",

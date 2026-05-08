@@ -1,6 +1,18 @@
 'use client'
 
-import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Counter, Search, Tooltip} from "@vkontakte/vkui";
+import Container from "@/components/Container/Container";
+import {
+    ActionSheet,
+    ActionSheetItem,
+    Button,
+    ButtonGroup,
+    Text,
+    Counter,
+    Search,
+    Subhead,
+    Tooltip
+} from "@vkontakte/vkui";
+import Link from "next/link";
 import {
     Icon24Add,
     Icon24Filter,
@@ -8,47 +20,44 @@ import {
     Icon24SearchSlashOutline,
     Icon24TrashSimpleOutline
 } from "@vkontakte/icons";
-import Container from "@/components/Container/Container";
-import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
-import {useController, useFilersCount, useSearch, useStoredFilters} from "@/shared/hooks";
 import {mergeState} from "@/shared/helpers";
-import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
+import styles from "@/app/process/page.module.scss";
 import Table from "@/components/Table/Table";
-import {ApiService} from "@/apiService/apiService";
-import {GetTableOptions, GetTableResponse} from "@/apiService/types";
 import {tableColumns} from "@/shared/tableColumns";
-import {TableEvent} from "@/components/Table/types";
-import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
-import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
+import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
+import {useParams, useRouter} from "next/navigation";
+import {useController, useFilersCount, useSearch, useStoredFilters} from "@/shared/hooks";
+import {GetTableOptions, GetTableResponse} from "@/apiService/types";
+import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {useShowErrors} from "@/store/showErrors/showErrors";
 import {useAppStore} from "@/store/app/app";
+import {ApiService} from "@/apiService/apiService";
 import {SnackbarItem} from "@/store/snackbar/types";
+import {TableEvent} from "@/components/Table/types";
+import ModalMultiRemove from "@/components/modals/ModalMultiRemove/ModalMultiRemove";
+import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import {ProductsPermissionFlagsType} from "@/apiService/apiRoles/types";
-import {GetProductsTableFilters, PatchProductsTableOptions, ProductsTableRow} from "@/apiService/apiProducts/types";
-import ModalFiltersProducts from "@/components/modals/ModalFilters/ModalFiltersProducts/ModalFiltersProducts";
-import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
-import Link from "next/link";
-import {useRouter} from "next/navigation";
-import DetailInfoProduct from "@/sections/products/DetailInfoProduct";
-import styles from './page.module.scss';
 
-const hasDateRangeValue = (value: GetProductsTableFilters["createdAt"]) => value.some((date) => date !== null);
+const hasDateRangeValue = (value: GetProcessTableFilters["createdAt"]) => value.some((date) => date !== null);
 
-const ProductsPage = () => {
+const ProcessPage = () => {
 
     const router = useRouter();
     const [loading, setLoading] = useState(true);
+    const params = useParams<{id: string}>();
+    const productId = useMemo(() => Number(params.id), [params.id]);
+    const [nameProduct, setNameProduct] = useState('');
 
     const {
         search,
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading, 'products');
+    } = useSearch(loading, 'process');
 
     const [selected, setSelected] = useState<number[]>([]);
-    const [table, setTable] = useState<GetTableResponse<ProductsTableRow[]>>({
+    const [table, setTable] = useState<GetTableResponse<ProcessTableRow[]>>({
         data: [],
         total: 0,
     });
@@ -62,14 +71,14 @@ const ProductsPage = () => {
         editMode: false,
         actionSheet: null
     });
-    const [tableFilters, setTableFilters] = useStoredFilters<GetProductsTableFilters>('products', {
+    const [tableFilters, setTableFilters] = useStoredFilters<GetProcessTableFilters>('process', {
         typeProductId: 0,
         materialId: 0,
         creatorId: 0,
         createdAt: [null, null],
     });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-remove-products' | 'modal-multi-remove-products' | 'modal-filters-products' | 'modal-product-files'
+        'modal-remove-process' | 'modal-multi-remove-process' | 'modal-filters-process' | 'modal-product-files'
     >>({id: null, show: false, data: null});
     const [showInfo, setShowInfo] = useState<{
         id: number | null;
@@ -88,6 +97,8 @@ const ProductsPage = () => {
     const showErrors = useShowErrors(state => state);
     // TODO - (PERMISSIONS/ACCESS/ДОСТУП) dev режим защиты
     const { TEST, permissions } = useAppStore(state => state);
+
+    const {createController: createProductController} = useController([]);
 
     const {
         createController,
@@ -112,14 +123,14 @@ const ProductsPage = () => {
         setLoading(true);
 
         const controller = createController();
-        const filterOptions: Partial<GetProductsTableFilters> = {
+        const filterOptions: Partial<GetProcessTableFilters> = {
             typeProductId: tableFilters.typeProductId || undefined,
             materialId: tableFilters.materialId || undefined,
             creatorId: tableFilters.creatorId || undefined,
             createdAt: hasDateRangeValue(tableFilters.createdAt) ? tableFilters.createdAt : undefined,
         };
 
-        await ApiService.products.table.get({
+        await ApiService.process.table.get({
             options: {...tableOptions, ...filterOptions},
             controller
         }).then(({status, data}) => {
@@ -139,6 +150,18 @@ const ProductsPage = () => {
             }
         })
     };
+
+    useEffect(() => {
+        const controller = createController();
+        ApiService.products.getById({
+            id: productId,
+            controller
+        }).then(({status, data}) => {
+            if (status === 'success') {
+                setNameProduct(data.name);
+            }
+        })
+    }, []);
 
     useEffect(() => {
         getData().finally(() => setLoading(cancelRef.current));
@@ -161,12 +184,12 @@ const ProductsPage = () => {
         }
     };
 
-    const handleTableSave = async (changes: PatchProductsTableOptions) => {
+    const handleTableSave = async (changes: PatchProcessTableOptions) => {
         setLoading(true);
 
         const ids = Object.keys(changes);
 
-        await ApiService.products.table.patch({
+        await ApiService.process.table.patch({
             options: changes,
         }).then(async ({status, data}) => {
 
@@ -202,7 +225,7 @@ const ProductsPage = () => {
             const product = table.data.find(({id}) => id === selected[0]);
             if (product) {
                 setModals({
-                    id: 'modal-remove-products',
+                    id: 'modal-remove-process',
                     show: true,
                     data: {
                         id: product.id,
@@ -211,11 +234,11 @@ const ProductsPage = () => {
                 });
             }
         } else {
-            const products = table.data.filter(({id}) => selected.includes(id));
+            const process = table.data.filter(({id}) => selected.includes(id));
             setModals({
-                id: 'modal-multi-remove-products',
+                id: 'modal-multi-remove-process',
                 show: true,
-                data: products.map(p => ({id: p.id, name: p.name}))
+                data: process.map(p => ({id: p.id, name: p.name}))
             })
         }
     };
@@ -242,7 +265,7 @@ const ProductsPage = () => {
         if (e.type === 'cellDoubleClick') {
             if (!access.viewProcess) return;
 
-            router.push(`/products/edit/${e.row.id}/process`);
+            router.push(`/process/edit/${e.row.id}/process`);
         }
         if (e.type === 'selected') {
             setSelected(e.rowIds);
@@ -258,7 +281,7 @@ const ProductsPage = () => {
             });
         }
         if (e.type === 'download') {
-            const row = e.row as ProductsTableRow;
+            const row = e.row as ProcessTableRow;
 
             if (e.column !== 'filesDownload' || !row.files.length) return;
 
@@ -281,53 +304,53 @@ const ProductsPage = () => {
             };
 
             mergeState({actionSheet:
-                <>
-                    <div
-                        ref={actionSheetRef}
-                        style={{
-                            position: 'fixed',
-                            left: `${e.x}px`,
-                            top: `${e.y}px`,
-                            width: 1,
-                            height: 1,
-                            pointerEvents: 'none',
-                        }}
-                    />
-                    <ActionSheet
-                        placement={'bottom-end'}
-                        popupOffsetDistance={8}
-                        toggleRef={actionSheetRef}
-                        onClosed={() => mergeState({actionSheet: null}, setTableManage)}
-                    >
-                        {access.viewProcess && (
-                            <ActionSheetItem
-                                onClick={() => router.push(`/products/edit/${e.row.id}/process`)}
-                                before={<Icon24PenOutline width={20} height={20}/>}
-                            >
-                                Перейти к тех. процессам
-                            </ActionSheetItem>
-                        )}
-                        {access.editing && (
-                            <>
+                    <>
+                        <div
+                            ref={actionSheetRef}
+                            style={{
+                                position: 'fixed',
+                                left: `${e.x}px`,
+                                top: `${e.y}px`,
+                                width: 1,
+                                height: 1,
+                                pointerEvents: 'none',
+                            }}
+                        />
+                        <ActionSheet
+                            placement={'bottom-end'}
+                            popupOffsetDistance={8}
+                            toggleRef={actionSheetRef}
+                            onClosed={() => mergeState({actionSheet: null}, setTableManage)}
+                        >
+                            {access.viewProcess && (
                                 <ActionSheetItem
-                                    onClick={() => router.push(`/products/edit/${e.row.id}`)}
+                                    onClick={() => router.push(`/process/edit/${e.row.id}/process`)}
                                     before={<Icon24PenOutline width={20} height={20}/>}
                                 >
-                                    Редактировать
+                                    Перейти к тех. процессам
                                 </ActionSheetItem>
-                            </>
-                        )}
-                        {access.removing && (
-                            <ActionSheetItem
-                                onClick={() => setModals({id: 'modal-remove-products', show: true, data})}
-                                mode={'destructive'}
-                                before={<Icon24TrashSimpleOutline width={20} height={20}/>}
-                            >
-                                Удалить
-                            </ActionSheetItem>
-                        )}
-                    </ActionSheet>
-                </>
+                            )}
+                            {access.editing && (
+                                <>
+                                    <ActionSheetItem
+                                        onClick={() => router.push(`/process/edit/${e.row.id}`)}
+                                        before={<Icon24PenOutline width={20} height={20}/>}
+                                    >
+                                        Редактировать
+                                    </ActionSheetItem>
+                                </>
+                            )}
+                            {access.removing && (
+                                <ActionSheetItem
+                                    onClick={() => setModals({id: 'modal-remove-process', show: true, data})}
+                                    mode={'destructive'}
+                                    before={<Icon24TrashSimpleOutline width={20} height={20}/>}
+                                >
+                                    Удалить
+                                </ActionSheetItem>
+                            )}
+                        </ActionSheet>
+                    </>
             }, setTableManage);
         }
     };
@@ -343,38 +366,28 @@ const ProductsPage = () => {
     return (
         <>
             {tableManage.actionSheet}
-            {'modal-filters-products' === modals.id ? (
-                <ModalFiltersProducts
+            {'modal-filters-process' === modals.id ? (
+                <ModalFiltersProcess
                     onChangeFilters={setTableFilters}
                     data={tableFilters}
                     open={modals.show}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                 />
-            ) : 'modal-multi-remove-products' === modals.id ? (
+            ) : 'modal-multi-remove-process' === modals.id ? (
                 <ModalMultiRemove
                     data={modals.data}
-                    url={'/products'}
+                    url={'/process'}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
                 />
-            ) : 'modal-product-files' === modals.id ? (
-                <ModalFiles
-                    itemId={modals.data?.id ?? 0}
-                    name={modals.data?.name ?? ''}
-                    url={'/products'}
-                    files={modals.data?.files ?? []}
-                    open={modals.show}
-                    onClose={closeModal}
-                    onClosed={() => setModals({id: null, show: false, data: null})}
-                />
-            ) : 'modal-remove-products' === modals.id && (
+            ) : 'modal-remove-process' === modals.id && (
                 <ModalRemove
                     removeId={modals.data?.id}
                     mode={'table'}
                     name={modals.data?.name}
-                    url={'/products'}
+                    url={'/process'}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                     open={modals.show}
@@ -386,7 +399,7 @@ const ProductsPage = () => {
                         {(access.adding || access.removing) && (
                             <ButtonGroup gap={'s'}>
                                 {access.adding && (
-                                    <Link href={'/products/new'}>
+                                    <Link href={'/process/new'}>
                                         <Button
                                             size={'m'}
                                             disabled={loading || tableManage.editMode}
@@ -444,7 +457,7 @@ const ProductsPage = () => {
                                 <div className={'filter'}>
                                     <Button
                                         disabled={loading || tableManage.editMode}
-                                        onClick={() => mergeState({id: 'modal-filters-products', show: true}, setModals)}
+                                        onClick={() => mergeState({id: 'modal-filters-process', show: true}, setModals)}
                                         mode={'secondary'}
                                         size={'m'}
                                         before={<Icon24Filter/>}
@@ -464,43 +477,30 @@ const ProductsPage = () => {
                     </>
                 )}
             >
-                <div className={styles.table}>
-                    <div
-                        className={classNames(
-                            styles.table__wrap,
-                            showInfo.show && styles['table__wrap--show'],
-                        )}
-                    >
-                        <Table
-                            componentName={'products'}
-                            editMode={access.editing}
-                            data={table.data}
-                            columns={tableColumns.products}
-                            total={table.total}
-                            page={tableOptions.page}
-                            rows={tableOptions.rows}
-                            loading={loading}
-                            selected={selected}
-                            onEvent={onEventTable}
-                            emptyState={(!delaySearch.trim() && !countFilter) ? undefined :{
-                                icon: <Icon24SearchSlashOutline width={62} height={62} />,
-                                title: 'Совпадений не найдено',
-                                description: 'Попробуйте изменить параметры поиска',
-                            }}
-                        />
-                    </div>
-                    {(showInfo.render && showInfo.id !== null) && (
-                        <DetailInfoProduct
-                            show={showInfo.show}
-                            id={showInfo.id}
-                            onClose={() => mergeState({show: false,}, setShowInfo)}
-                            onClosed={() => setShowInfo({id: null, render: false, show: false})}
-                        />
-                    )}
+                <div className={'island'}>
+                    <Text weight={'1'}>Технологические процессы</Text>
+                    <Text>{nameProduct} ({productId})</Text>
                 </div>
+                <Table
+                    componentName={'process'}
+                    editMode={access.editing}
+                    data={table.data}
+                    columns={tableColumns.process}
+                    total={table.total}
+                    page={tableOptions.page}
+                    rows={tableOptions.rows}
+                    loading={loading}
+                    selected={selected}
+                    onEvent={onEventTable}
+                    emptyState={(!delaySearch.trim() && !countFilter) ? undefined :{
+                        icon: <Icon24SearchSlashOutline width={62} height={62} />,
+                        title: 'Совпадений не найдено',
+                        description: 'Попробуйте изменить параметры поиска',
+                    }}
+                />
             </Container>
         </>
     )
-};
+}
 
-export default ProductsPage;
+export default ProcessPage;

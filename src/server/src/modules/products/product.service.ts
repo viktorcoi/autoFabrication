@@ -781,6 +781,8 @@ const buildProductsTableOrderBy = (
 	}
 
 	switch (sorting.id) {
+		case "id":
+			return [{ id: sorting.sort }];
 		case "typeProduct":
 			return [
 				{ typeProduct: { name: sorting.sort } },

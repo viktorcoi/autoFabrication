@@ -80,5 +80,17 @@ export const tableColumns: Record<string, Column[]> = {
         {key: 'relatedProductsCount', header: 'Связанные', size: 125, resize: false, type: 'text'},
         {key: 'createdAt', header: 'Дата создания', size: 180, resize: false, type: 'date'},
         {key: 'description', header: 'Описание', minSize: 115, size: 420, maxSize: 3065},
+    ],
+
+    process: [
+        {key: 'id', header: 'ID', size: 100, resize: false},
+        {key: 'name', header: 'Наименование тех. процесса', minSize: 170, size: 220, maxSize: 625},
+        {key: 'creator', header: 'Разработал', minSize: 100, size: 220, maxSize: 750},
+        {key: 'updatedAt', header: 'Дата изменения', size: 180, resize: false, type: 'date'},
+        {key: 'material', header: 'Материал', minSize: 115, size: 220, maxSize: 625},
+        {key: 'blank', header: 'Загатовка', minSize: 115, size: 220, maxSize: 625},
+        {key: 'operationCount', header: 'Кол-во операций', size: 125, resize: false, type: 'text'},
+        {key: 'access', header: 'Доступ', type: 'access', size: 95, resize: false}, // надо будет в таблицу добавить новый эл-нт, из бэка это должно приходить boolean, в таблице рендерится кнопка с замчком (закрытым или открытым)
+        {key: 'description', header: 'Описание', minSize: 115, size: 420, maxSize: 3065},
     ]
 };
