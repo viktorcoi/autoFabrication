@@ -609,12 +609,23 @@ const normalizeRelatedProducts = async (
 	return normalizedProducts;
 };
 
+const parseProductSearchId = (search?: string) => {
+	if (!search || !/^[1-9]\d*$/.test(search)) {
+		return null;
+	}
+
+	const id = Number(search);
+
+	return Number.isSafeInteger(id) ? id : null;
+};
+
 const buildProductsTableWhere = (query: GetProductsTableQuery): Prisma.productWhereInput | undefined => {
 	const filters: Prisma.productWhereInput = {};
 	const search = query.search;
 
 	if (search) {
-		filters.OR = [
+		const searchId = parseProductSearchId(search);
+		const searchFilters: Prisma.productWhereInput[] = [
 			{
 				name: {
 					contains: search,
@@ -674,6 +685,12 @@ const buildProductsTableWhere = (query: GetProductsTableQuery): Prisma.productWh
 				},
 			},
 		];
+
+		if (searchId !== null) {
+			searchFilters.unshift({ id: searchId });
+		}
+
+		filters.OR = searchFilters;
 	}
 
 	if (typeof query.typeProductId === "number") {
@@ -702,7 +719,8 @@ const buildProductsListWhere = (query: GetProductsQuery): Prisma.productWhereInp
 	const filters: Prisma.productWhereInput = {};
 
 	if (query.search) {
-		filters.OR = [
+		const searchId = parseProductSearchId(query.search);
+		const searchFilters: Prisma.productWhereInput[] = [
 			{
 				name: {
 					contains: query.search,
@@ -736,6 +754,12 @@ const buildProductsListWhere = (query: GetProductsQuery): Prisma.productWhereInp
 				},
 			},
 		];
+
+		if (searchId !== null) {
+			searchFilters.unshift({ id: searchId });
+		}
+
+		filters.OR = searchFilters;
 	}
 
 	if (typeof query.typeProductId === "number") {
