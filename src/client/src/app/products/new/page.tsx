@@ -19,7 +19,6 @@ import {
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {
-    Icon16Clear,
     Icon24Add,
     Icon24BrowserBack, Icon24Cancel,
     Icon24ViewOutline,
@@ -35,7 +34,6 @@ import {formatBytes, getFilesTotalSize} from "@/components/UploadFile/helpers";
 import {ApiService} from "@/apiService/apiService";
 import {useController, useSelectFilter} from "@/shared/hooks";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
-import {RelatedProductFormItem} from "@/apiService/apiProducts/types";
 import NumberPicker from "@/components/NumberPicker/NumberPicker";
 import ModalRelatedProducts from "@/components/modals/ModalProducts/ModalRelatedProducts/ModalRelatedProducts";
 import ModalProductInfo from "@/components/modals/ModalProducts/ModalProductInfo/ModalProductInfo";

@@ -243,6 +243,7 @@ const DetailInfoProduct = (props: DetailInfoProductProps) => {
                                     <ImagesProvider>
                                         <div className={styles.gallery}>
                                             <Gallery
+                                                key={`${product.id}-${additionalInfo ? 'full' : 'short'}`}
                                                 looped={true}
                                                 slideIndex={imageIndex}
                                                 onChange={setImageIndex}

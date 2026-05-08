@@ -71,13 +71,14 @@ export const tableColumns: Record<string, Column[]> = {
     ],
 
     products: [
-        {key: 'name', header: 'Название изделия', minSize: 110, size: 220, maxSize: 625},
-        {key: 'typeProduct', header: 'Тип изделия', minSize: 110, size: 220, maxSize: 625},
-        {key: 'material', header: 'Материал', minSize: 110, size: 220, maxSize: 625},
-        {key: 'creator', header: 'Создал', minSize: 110, size: 220, maxSize: 625},
-        {key: 'createdAt', header: 'Дата создания', size: 180, resize: false, type: 'date'},
+        {key: 'id', header: 'ID', size: 100, resize: false},
+        {key: 'name', header: 'Название изделия', minSize: 170, size: 220, maxSize: 625},
+        {key: 'typeProduct', header: 'Тип изделия', minSize: 130, size: 220, maxSize: 625},
+        {key: 'material', header: 'Материал', minSize: 115, size: 220, maxSize: 625},
+        {key: 'creator', header: 'Создал', minSize: 100, size: 220, maxSize: 750},
         {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false},
-        {key: 'relatedProductsCount', header: 'Связанные', minSize: 115, size: 130, maxSize: 180, type: 'text'},
+        {key: 'relatedProductsCount', header: 'Связанные', size: 125, resize: false, type: 'text'},
+        {key: 'createdAt', header: 'Дата создания', size: 180, resize: false, type: 'date'},
         {key: 'description', header: 'Описание', minSize: 115, size: 420, maxSize: 3065},
     ]
 };

@@ -17,9 +17,8 @@ import {
 } from "@vkontakte/vkui";
 import {useEffect, useMemo, useState} from "react";
 import {
-    Icon16Clear, Icon20HelpOutline,
-    Icon24Add,
-    Icon24Cancel, Icon24HelpOutline,
+    Icon20HelpOutline,
+    Icon24Cancel,
     Icon24ListDeleteOutline,
     Icon24SearchSlashOutline,
     Icon24ViewOutline
