@@ -1,0 +1,8 @@
+.product {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    &__name {
+        color: var(--vkui--color_text_subhead);
+    }
+}

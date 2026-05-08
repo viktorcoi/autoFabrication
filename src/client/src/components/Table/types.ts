@@ -10,7 +10,7 @@ export type TableRow = Record<string, unknown> & {
     isRequired?: string[];
 };
 
-export type ColumnType = 'text' | 'button' | 'download' | 'boolean' | 'avatar' | 'date' | 'status' | 'decimal';
+export type ColumnType = 'text' | 'button' | 'download' | 'boolean' | 'avatar' | 'date' | 'status' | 'decimal' | 'access';
 
 export type Column = {
     key: string;
@@ -93,6 +93,13 @@ export type TableEvent =
 } & TableEventMeta)
     | ({
     type: 'download';
+    row: TableRow;
+    column: string;
+    value: unknown;
+    event: ReactMouseEvent<HTMLElement>;
+} & TableEventMeta)
+    | ({
+    type: 'access';
     row: TableRow;
     column: string;
     value: unknown;

@@ -41,11 +41,11 @@ const ACCESS_TITLES = {
     editing: "Редактирование",
     removing: "Удаление",
     resetPassword: "Сброс пароля",
-    viewProcess: 'Просмотр тех. процессов',
-    addingProcess: 'Добавление тех. процессов',
-    editingProcess: 'Редактирование тех. процессов',
-    removingProcess: 'Удаление тех. процессов',
-    changeDisabledProcess: 'Блокировка изменений тех. процессов'
+    viewProcess: 'Просмотр техпроцессов',
+    addingProcess: 'Добавление техпроцессов',
+    editingProcess: 'Редактирование техпроцессов',
+    removingProcess: 'Удаление техпроцессов',
+    changeDisabledProcess: 'Блокировка изменений техпроцессов'
 } satisfies Record<string, string>;
 
 const DetailInfoRole = (props: DetailInfoRoleProps) => {

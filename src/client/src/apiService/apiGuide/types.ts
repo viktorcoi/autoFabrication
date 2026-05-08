@@ -15,6 +15,11 @@ export interface GetMaterialsResponse {
     name: string;
 }
 
+export interface GetBlanksResponse {
+    id: number;
+    name: string;
+}
+
 export interface GetByIdTypeProductsResponse {
     id: number;
     name: string;

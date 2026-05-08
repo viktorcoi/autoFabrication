@@ -18,6 +18,7 @@ import {
     GetByIdTypeProductsResponse,
     GetTypeProductsResponse,
     GetMaterialsResponse,
+    GetBlanksResponse,
     GetMaterialGroupsResponse,
     GetOperationsResponse,
     GetOperationGroupsResponse,
@@ -531,6 +532,34 @@ export const ApiGuide = {
     },
 
     blank: {
+        get: async (options: ApiServiceOptions<{
+            options?: GuideListOptions<{
+                materialGroupId?: number;
+                materialId?: number;
+            }>;
+        }> = {}): Promise<ApiServiceResponse<GetBlanksResponse[]>> => {
+            return await api.get("/guide/blank", {
+                signal: options.controller?.signal,
+                params: buildGuideListOptions({
+                    ...(typeof options.options?.materialGroupId === "number" && options.options.materialGroupId > 0
+                        ? { materialGroupId: options.options.materialGroupId }
+                        : undefined),
+                    ...(typeof options.options?.materialId === "number" && options.options.materialId > 0
+                        ? { materialId: options.options.materialId }
+                        : undefined),
+                    search: options.options?.search,
+                    sorting: options.options?.sorting,
+                    forSelect: options.options?.forSelect,
+                }),
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && Array.isArray(response.data),
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
         getById: async (options: ApiServiceOptions<{
             id: number
         }>): Promise<ApiServiceResponse<GetByIdBlankResponse>> => {

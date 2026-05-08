@@ -33,6 +33,8 @@ model User {
   updatedAt       DateTime  @updatedAt
   role            Role      @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdProducts product[] @relation("ProductCreator")
+  createdProcesses technologicalProcess[] @relation("ProcessCreator")
+  disabledProcesses technologicalProcess[] @relation("ProcessDisabledBy")
 
   @@index([roleId])
 }
@@ -94,6 +96,7 @@ model product {
   images        productImage[]
   components    productComponent[] @relation("ProductComponents")
   usedIn        productComponent[] @relation("ProductComponentChildren")
+  processes     technologicalProcess[]
 
   @@unique([name, typeProductId, materialId])
   @@index([typeProductId])
@@ -150,9 +153,46 @@ model blank {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   material    material @relation(fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  processes   technologicalProcess[]
 
   @@unique([name, materialId])
   @@index([materialId])
+}
+
+model technologicalProcess {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  name         String
+  description  String?
+  blankId      Int?
+  creatorId    Int
+  disabledById Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  product      product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  blank        blank?   @relation(fields: [blankId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  creator      User     @relation("ProcessCreator", fields: [creatorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  disabledBy   User?    @relation("ProcessDisabledBy", fields: [disabledById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  files        technologicalProcessFile[]
+
+  @@unique([productId, name])
+  @@index([productId])
+  @@index([blankId])
+  @@index([creatorId])
+  @@index([disabledById])
+}
+
+model technologicalProcessFile {
+  id           Int      @id @default(autoincrement())
+  processId    Int
+  originalName String   @map("originalName")
+  size         Int
+  mimeType     String?  @map("mimeType")
+  storagePath  String   @map("storagePath")
+  createdAt    DateTime @default(now())
+  process      technologicalProcess @relation(fields: [processId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([processId])
 }
 
 model operation {

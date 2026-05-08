@@ -25,6 +25,10 @@ import {
     downloadProductFile,
     downloadProductFilesArchive
 } from "@/apiService/apiProducts/helpers";
+import {
+    downloadProcessFile,
+    downloadProcessFilesArchive
+} from "@/apiService/apiProcesses/helpers";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {formatBytes} from "@/components/UploadFile/helpers";
 import {ModalFilesProps} from "@/components/modals/ModalFiles/types";
@@ -44,6 +48,10 @@ const downloadMap = {
     '/products': {
         all: downloadProductFilesArchive,
         one: downloadProductFile,
+    },
+    '/processes': {
+        all: downloadProcessFilesArchive,
+        one: downloadProcessFile,
     },
 };
 

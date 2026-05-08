@@ -212,7 +212,7 @@ const Table = (props: TableProps) => {
     };
 
     const emitInteractiveClick = (
-        type: 'button' | 'download',
+        type: 'button' | 'download' | 'access',
         params: {
             row: TableRow;
             column: string;

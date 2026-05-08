@@ -301,6 +301,11 @@ export const getMaterialsSchema = getNameListSchema.extend({
 	materialGroupId: z.preprocess(parseOptionalId, materialGroupIdSchema.optional()),
 });
 
+export const getBlanksSchema = getNameListSchema.extend({
+	materialGroupId: z.preprocess(parseOptionalId, materialGroupIdSchema.optional()),
+	materialId: z.preprocess(parseOptionalId, materialIdSchema.optional()),
+});
+
 export const getOperationsSchema = getNameListSchema.extend({
 	operationGroupId: z.preprocess(parseOptionalId, operationGroupIdSchema.optional()),
 });
@@ -835,6 +840,7 @@ export type UpdateOperationGroupsTablePayload = z.infer<typeof updateOperationGr
 export type GetMaterialsQuery = z.infer<typeof getMaterialsSchema>;
 export type GetMaterialsTableQuery = z.infer<typeof getMaterialsTableSchema>;
 export type UpdateMaterialsTablePayload = z.infer<typeof updateMaterialsTableSchema>;
+export type GetBlanksQuery = z.infer<typeof getBlanksSchema>;
 export type GetBlanksTableQuery = z.infer<typeof getBlanksTableSchema>;
 export type UpdateBlanksTablePayload = z.infer<typeof updateBlanksTableSchema>;
 export type GetWorkGroupsQuery = z.infer<typeof getWorkGroupsSchema>;

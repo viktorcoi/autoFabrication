@@ -164,6 +164,7 @@ export const getColumnType = (column?: Column): ColumnType => {
         || column?.type === 'date'
         || column?.type === 'status'
         || column?.type === 'decimal'
+        || column?.type === 'access'
         || column?.type === 'text'
     ) {
         return column.type;

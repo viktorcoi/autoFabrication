@@ -43,7 +43,7 @@ export type TableBodyProps = {
     emitCellClick: (params: CellMouseEventParams) => void;
     emitCellDoubleClick: (params: CellMouseEventParams) => void;
     emitInteractiveClick: (
-        type: 'button' | 'download',
+        type: 'button' | 'download' | 'access',
         params: CellMouseEventParams,
     ) => void;
     emitBooleanChange: (params: BooleanChangeEventParams) => void;

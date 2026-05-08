@@ -2,7 +2,7 @@
 
 import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Counter, Search, Tooltip} from "@vkontakte/vkui";
 import {
-    Icon24Add,
+    Icon24Add, Icon24BrowserBack,
     Icon24Filter,
     Icon24PenOutline,
     Icon24SearchSlashOutline,
@@ -242,7 +242,7 @@ const ProductsPage = () => {
         if (e.type === 'cellDoubleClick') {
             if (!access.viewProcess) return;
 
-            router.push(`/products/edit/${e.row.id}/process`);
+            router.push(`/products/${e.row.id}/process`);
         }
         if (e.type === 'selected') {
             setSelected(e.rowIds);
@@ -301,10 +301,10 @@ const ProductsPage = () => {
                     >
                         {access.viewProcess && (
                             <ActionSheetItem
-                                onClick={() => router.push(`/products/edit/${e.row.id}/process`)}
+                                onClick={() => router.push(`/products/${e.row.id}/process`)}
                                 before={<Icon24PenOutline width={20} height={20}/>}
                             >
-                                Перейти к тех. процессам
+                                Перейти к техпроцессам
                             </ActionSheetItem>
                         )}
                         {access.editing && (

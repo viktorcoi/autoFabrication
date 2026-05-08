@@ -84,13 +84,14 @@ export const tableColumns: Record<string, Column[]> = {
 
     process: [
         {key: 'id', header: 'ID', size: 100, resize: false},
-        {key: 'name', header: 'Наименование тех. процесса', minSize: 170, size: 220, maxSize: 625},
-        {key: 'creator', header: 'Разработал', minSize: 100, size: 220, maxSize: 750},
+        {key: 'name', header: 'Наименование техпроцесса', minSize: 230, size: 240, maxSize: 625},
+        {key: 'creator', header: 'Разработал', minSize: 125, size: 180, maxSize: 750},
         {key: 'updatedAt', header: 'Дата изменения', size: 180, resize: false, type: 'date'},
-        {key: 'material', header: 'Материал', minSize: 115, size: 220, maxSize: 625},
-        {key: 'blank', header: 'Загатовка', minSize: 115, size: 220, maxSize: 625},
-        {key: 'operationCount', header: 'Кол-во операций', size: 125, resize: false, type: 'text'},
-        {key: 'access', header: 'Доступ', type: 'access', size: 95, resize: false}, // надо будет в таблицу добавить новый эл-нт, из бэка это должно приходить boolean, в таблице рендерится кнопка с замчком (закрытым или открытым)
-        {key: 'description', header: 'Описание', minSize: 115, size: 420, maxSize: 3065},
+        {key: 'operationCount', header: 'Операции', size: 115, resize: false, type: 'text'},
+        {key: 'access', header: 'Доступ', type: 'access', size: 95, resize: false},
+        {key: 'blank', header: 'Заготовка', minSize: 115, size: 220, maxSize: 625},
+        {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false},
+        {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065},
+
     ]
 };

@@ -4,6 +4,8 @@ import {useVirtualizer} from '@tanstack/react-virtual';
 import {
     Icon16CancelCircle,
     Icon16DownloadOutline,
+    Icon16Lock,
+    Icon16LockOpen,
     Icon24View,
     Icon40DoneCircle
 } from '@vkontakte/icons';
@@ -319,6 +321,64 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                 />
                                             </Tooltip>
                                         );
+                                    } else if (columnType === 'access') {
+                                        const isOpen = getBooleanCellValue(cellValue);
+                                        const accessTooltip = typeof row.original.accessTooltip === 'string'
+                                            ? row.original.accessTooltip
+                                            : isOpen ? 'Открыт' : 'Закрыт';
+                                        const canChangeAccess = row.original.canChangeAccess !== false;
+
+                                        cellContent = (
+                                            <Tooltip
+                                                description={accessTooltip}
+                                                usePortal={true}
+                                                placement="top"
+                                                disableTriggerOnFocus={true}
+                                            >
+                                                <Button
+                                                    data-table-ignore-hover={true}
+                                                    size="s"
+                                                    mode="tertiary"
+                                                    className={styles.button}
+                                                    label={accessTooltip}
+                                                    disabled={controlDisabled || !canChangeAccess}
+                                                    onMouseDown={(event) => event.stopPropagation()}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+
+                                                        if (controlDisabled || !canChangeAccess) {
+                                                            return;
+                                                        }
+
+                                                        emitInteractiveClick('access', {
+                                                            row: row.original,
+                                                            column: columnId,
+                                                            value: cellValue,
+                                                            event,
+                                                            target: event.target,
+                                                            ...getMousePoint(event),
+                                                        });
+                                                    }}
+                                                    onDoubleClick={(event) => {
+                                                        event.stopPropagation();
+
+                                                        if (controlDisabled || !canChangeAccess) {
+                                                            return;
+                                                        }
+
+                                                        emitInteractiveClick('access', {
+                                                            row: row.original,
+                                                            column: columnId,
+                                                            value: cellValue,
+                                                            event,
+                                                            target: event.target,
+                                                            ...getMousePoint(event),
+                                                        });
+                                                    }}
+                                                    after={isOpen ? <Icon16LockOpen /> : <Icon16Lock />}
+                                                />
+                                            </Tooltip>
+                                        );
                                     } else if (columnType === 'boolean') {
                                         cellContent = (
                                             <span
@@ -553,6 +613,7 @@ const TableBody = React.memo((props: TableBodyProps) => {
                                                         styles.cellControl,
                                                         columnType === 'boolean' && styles.cellControlBoolean,
                                                         columnType === 'status' && styles.cellControlStatus,
+                                                        columnType === 'access' && styles.cellControlAccess,
                                                     )}
                                                 >
                                                     {cellContent}

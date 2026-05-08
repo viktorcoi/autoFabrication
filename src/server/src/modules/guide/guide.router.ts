@@ -42,6 +42,7 @@ import {
 	deleteWorkIdsSchema,
 	deleteWorkGroupIdsSchema,
 	deleteTypeProductIdsSchema,
+	getBlanksSchema,
 	getBlanksTableSchema,
 	getMaterialGroupsSchema,
 	getMaterialGroupsTableSchema,
@@ -110,6 +111,7 @@ import {
 	getWorkGroupsTable,
 	getTypeProductById,
 	getTypeProductsTable,
+	listBlanks,
 	listMaterials,
 	listOperations,
 	listMaterialGroups,
@@ -632,6 +634,17 @@ guideRouter.get(
 		const table = await getBlanksTable(query);
 
 		response.json(table);
+	}),
+);
+
+guideRouter.get(
+	"/blank",
+	requireGuideListPermission,
+	asyncHandler(async (request, response) => {
+		const query = validate(getBlanksSchema, request.query);
+		const blanks = await listBlanks(query);
+
+		response.json(blanks);
 	}),
 );
 

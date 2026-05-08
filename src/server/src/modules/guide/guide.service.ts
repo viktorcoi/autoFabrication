@@ -29,6 +29,7 @@ import {
 	updateTypeProductsTableItemSchema,
 } from "./guide.schemas.js";
 import type {
+	GetBlanksQuery,
 	GetBlanksTableQuery,
 	GetMaterialGroupsQuery,
 	GetMaterialGroupsTableQuery,
@@ -170,6 +171,11 @@ const blankTableSelect = {
 			},
 		},
 	},
+} satisfies Prisma.blankSelect;
+
+const blankListSelect = {
+	id: true,
+	name: true,
 } satisfies Prisma.blankSelect;
 
 const operationListSelect = {
@@ -1605,6 +1611,36 @@ export const listMaterials = async (query: GetMaterialsQuery) =>
 		},
 		select: materialListSelect,
 		orderBy: buildNameListOrderBy<Prisma.materialOrderByWithRelationInput>(query.sorting),
+	});
+
+export const listBlanks = async (query: GetBlanksQuery) =>
+	prisma.blank.findMany({
+		where: {
+			...(query.search
+				? {
+						name: {
+							contains: query.search,
+							mode: "insensitive",
+						},
+					}
+				: {}),
+			...(typeof query.materialId === "number"
+				? {
+						materialId: query.materialId,
+					}
+				: {}),
+			...(typeof query.materialGroupId === "number"
+				? {
+						material: {
+							is: {
+								materialGroupId: query.materialGroupId,
+							},
+						},
+					}
+				: {}),
+		},
+		select: blankListSelect,
+		orderBy: buildNameListOrderBy<Prisma.blankOrderByWithRelationInput>(query.sorting),
 	});
 
 export const listTypeProducts = async (query: GetTypeProductsQuery) =>
