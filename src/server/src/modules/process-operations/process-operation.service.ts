@@ -70,6 +70,17 @@ const processOperationTableSelect = {
 			steps: true,
 		},
 	},
+	steps: {
+		select: {
+			works: {
+				select: {
+					tpz: true,
+					tsht: true,
+					count: true,
+				},
+			},
+		},
+	},
 } satisfies Prisma.processOperationSelect;
 
 const processOperationSelect = {
@@ -213,6 +224,33 @@ const getUniqueIds = (ids: number[]) => {
 		uniqueIds.add(id);
 		return true;
 	});
+};
+
+const roundProcessOperationTime = (value: number) => {
+	const rounded = Number(value.toFixed(3));
+
+	return Object.is(rounded, -0) ? 0 : rounded;
+};
+
+const getProcessOperationWorksTime = (
+	steps: Array<{ works: Array<{ tpz: number; tsht: number; count: number }> }>,
+	field: "tpz" | "tsht",
+) => {
+	const hasWorks = steps.some((step) => step.works.length > 0);
+
+	if (!hasWorks) {
+		return "";
+	}
+
+	const total = steps.reduce(
+		(stepResult, step) => stepResult + step.works.reduce(
+			(workResult, work) => workResult + work[field] * work.count,
+			0,
+		),
+		0,
+	);
+
+	return roundProcessOperationTime(total);
 };
 
 const mapProcessOperationFiles = (files: Array<{ id: number; originalName: string; size: number }>) =>
@@ -435,6 +473,12 @@ const buildProcessOperationsTableOrderBy = (
 				{ sortOrder: "asc" },
 				{ id: "asc" },
 			];
+		case "tpz":
+		case "tsht":
+			return [
+				{ sortOrder: "asc" },
+				{ id: "asc" },
+			];
 		default:
 			return [
 				{ sortOrder: "asc" },
@@ -442,6 +486,42 @@ const buildProcessOperationsTableOrderBy = (
 			];
 	}
 };
+
+const sortProcessOperationsByWorkTime = <TOperation extends {
+	id: number;
+	sortOrder: number;
+	steps: Array<{ works: Array<{ tpz: number; tsht: number; count: number }> }>;
+}>(
+	operations: TOperation[],
+	field: "tpz" | "tsht",
+	sort: "asc" | "desc",
+) => [...operations].sort((left, right) => {
+	const leftValue = left.steps.reduce(
+		(stepResult, step) => stepResult + step.works.reduce(
+			(workResult, work) => workResult + work[field] * work.count,
+			0,
+		),
+		0,
+	);
+	const rightValue = right.steps.reduce(
+		(stepResult, step) => stepResult + step.works.reduce(
+			(workResult, work) => workResult + work[field] * work.count,
+			0,
+		),
+		0,
+	);
+	const diff = leftValue - rightValue;
+
+	if (diff !== 0) {
+		return sort === "asc" ? diff : -diff;
+	}
+
+	if (left.sortOrder !== right.sortOrder) {
+		return left.sortOrder - right.sortOrder;
+	}
+
+	return left.id - right.id;
+});
 
 const mapSelectedProcessOperation = <TOperation extends {
 	id: number;
@@ -473,6 +553,7 @@ export const getProcessOperationsTable = async (
 	const where = buildProcessOperationsTableWhere(query);
 	const orderBy = buildProcessOperationsTableOrderBy(query.sorting);
 	const skip = query.page * query.rows;
+	const sortByWorkTime = query.sorting?.id === "tpz" || query.sorting?.id === "tsht";
 	const canEdit = canEditProcessOperations(permissions, process, actorId) && process.disabledById === null;
 	const [total, operations] = await prisma.$transaction([
 		prisma.processOperation.count({ where }),
@@ -480,14 +561,17 @@ export const getProcessOperationsTable = async (
 			where,
 			select: processOperationTableSelect,
 			orderBy,
-			skip,
-			take: query.rows,
+			...(sortByWorkTime ? {} : { skip, take: query.rows }),
 		}),
 	]);
+	const pageOperations = sortByWorkTime
+		? sortProcessOperationsByWorkTime(operations, query.sorting!.id as "tpz" | "tsht", query.sorting!.sort)
+			.slice(skip, skip + query.rows)
+		: operations;
 
 	return {
 		total,
-		data: operations.map((operation) => {
+		data: pageOperations.map((operation) => {
 			const files = mapProcessOperationFiles(operation.files);
 			const rowCanEdit = canEdit && operation.process.disabledById === null;
 
@@ -495,8 +579,8 @@ export const getProcessOperationsTable = async (
 				id: operation.id,
 				index: operation.sortOrder + 1,
 				name: operation.operation.name,
-				tpz: "",
-				tsht: "",
+				tpz: getProcessOperationWorksTime(operation.steps, "tpz"),
+				tsht: getProcessOperationWorksTime(operation.steps, "tsht"),
 				stepCount: operation._count.steps || "",
 				operationGroup: operation.operation.operationGroup.name,
 				files,

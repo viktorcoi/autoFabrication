@@ -117,12 +117,12 @@ export const tableColumns: Record<string, Column[]> = {
     ],
 
     processWorks: [
-        {key: 'index', header: '№', size: 100, resize: false}, // Номер сортировки
-        {key: 'name', header: 'Этап', minSize: 230, size: 240, maxSize: 625}, // Имя этапа добавляется из Работ (справочники)
-        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'}, // Подставляется автоматически из  Работ (справочники) (но можно менять)
-        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'}, // Подставляется автоматически из  Работ (справочники) (но можно менять)
-        {key: 'count', header: 'Кол-во', size: 115, resize: false, type: 'text'}, // Кол-во вводится в попапе управления
+        {key: 'index', header: '№', size: 100, resize: false},
+        {key: 'name', header: 'Этап', minSize: 230, size: 240, maxSize: 625},
+        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'count', header: 'Кол-во', size: 115, resize: false, type: 'decimal'},
         {key: 'workGroup', header: 'Группа работ', minSize: 150, size: 200, maxSize: 625},
-        {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065}, // Описание добавляется из модалки создания/редактирования
+        {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065},
     ]
 };

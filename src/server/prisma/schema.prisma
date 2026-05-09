@@ -254,6 +254,7 @@ model processStep {
   updatedAt          DateTime @updatedAt
   processOperation   processOperation @relation(fields: [processOperationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   files              processStepFile[]
+  works              processWork[]
 
   @@index([processOperationId])
   @@index([sortOrder])
@@ -270,6 +271,26 @@ model processStepFile {
   processStep  processStep @relation(fields: [processStepId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([processStepId])
+}
+
+model processWork {
+  id            Int      @id @default(autoincrement())
+  processStepId Int
+  workId        Int
+  sortOrder     Int      @default(0)
+  count         Int      @default(1)
+  tpz           Float
+  tsht          Float
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  processStep   processStep @relation(fields: [processStepId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  work          work        @relation(fields: [workId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([processStepId, workId])
+  @@index([processStepId])
+  @@index([workId])
+  @@index([sortOrder])
 }
 
 model workGroup {
@@ -297,6 +318,7 @@ model work {
   updatedAt   DateTime   @updatedAt
   workGroup   workGroup  @relation(fields: [workGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   files       workFile[]
+  processWorks processWork[]
 
   @@unique([name, workGroupId])
   @@index([workGroupId])

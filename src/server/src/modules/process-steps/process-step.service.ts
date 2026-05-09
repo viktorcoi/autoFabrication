@@ -57,6 +57,18 @@ const processStepTableSelect = {
 			id: "asc",
 		},
 	},
+	works: {
+		select: {
+			tpz: true,
+			tsht: true,
+			count: true,
+		},
+	},
+	_count: {
+		select: {
+			works: true,
+		},
+	},
 } satisfies Prisma.processStepSelect;
 
 const processStepSelect = {
@@ -181,6 +193,25 @@ const getUniqueIds = (ids: number[]) => {
 		uniqueIds.add(id);
 		return true;
 	});
+};
+
+const roundProcessStepTime = (value: number) => {
+	const rounded = Number(value.toFixed(3));
+
+	return Object.is(rounded, -0) ? 0 : rounded;
+};
+
+const getProcessStepWorksTime = (
+	works: Array<{ tpz: number; tsht: number; count: number }>,
+	field: "tpz" | "tsht",
+) => {
+	if (!works.length) {
+		return "";
+	}
+
+	const total = works.reduce((result, work) => result + work[field] * work.count, 0);
+
+	return roundProcessStepTime(total);
 };
 
 const mapProcessStepFiles = (files: Array<{ id: number; originalName: string; size: number }>) =>
@@ -369,6 +400,12 @@ const buildProcessStepsTableOrderBy = (
 				{ sortOrder: "asc" },
 				{ id: "asc" },
 			];
+		case "workCount":
+			return [
+				{ works: { _count: sorting.sort } },
+				{ sortOrder: "asc" },
+				{ id: "asc" },
+			];
 		case "description":
 			return [
 				{ description: sorting.sort },
@@ -382,6 +419,30 @@ const buildProcessStepsTableOrderBy = (
 			];
 	}
 };
+
+const sortProcessStepsByWorkTime = <TStep extends {
+	id: number;
+	sortOrder: number;
+	works: Array<{ tpz: number; tsht: number; count: number }>;
+}>(
+	steps: TStep[],
+	field: "tpz" | "tsht",
+	sort: "asc" | "desc",
+) => [...steps].sort((left, right) => {
+	const leftValue = left.works.reduce((result, work) => result + work[field] * work.count, 0);
+	const rightValue = right.works.reduce((result, work) => result + work[field] * work.count, 0);
+	const diff = leftValue - rightValue;
+
+	if (diff !== 0) {
+		return sort === "asc" ? diff : -diff;
+	}
+
+	if (left.sortOrder !== right.sortOrder) {
+		return left.sortOrder - right.sortOrder;
+	}
+
+	return left.id - right.id;
+});
 
 const mapSelectedProcessStep = <TStep extends {
 	id: number;
@@ -407,6 +468,7 @@ export const getProcessStepsTable = async (
 	const where = buildProcessStepsTableWhere(query);
 	const orderBy = buildProcessStepsTableOrderBy(query.sorting);
 	const skip = query.page * query.rows;
+	const sortByWorkTime = query.sorting?.id === "tpz" || query.sorting?.id === "tsht";
 	const canEdit = canEditProcessSteps(permissions, processOperation.process, actorId)
 		&& processOperation.process.disabledById === null;
 	const [total, steps] = await prisma.$transaction([
@@ -415,14 +477,17 @@ export const getProcessStepsTable = async (
 			where,
 			select: processStepTableSelect,
 			orderBy,
-			skip,
-			take: query.rows,
+			...(sortByWorkTime ? {} : { skip, take: query.rows }),
 		}),
 	]);
+	const pageSteps = sortByWorkTime
+		? sortProcessStepsByWorkTime(steps, query.sorting!.id as "tpz" | "tsht", query.sorting!.sort)
+			.slice(skip, skip + query.rows)
+		: steps;
 
 	return {
 		total,
-		data: steps.map((step) => {
+		data: pageSteps.map((step) => {
 			const files = mapProcessStepFiles(step.files);
 			const rowCanEdit = canEdit && step.processOperation.process.disabledById === null;
 
@@ -430,9 +495,9 @@ export const getProcessStepsTable = async (
 				id: step.id,
 				index: step.sortOrder + 1,
 				name: step.name,
-				tpz: "",
-				tsht: "",
-				workCount: "",
+				tpz: getProcessStepWorksTime(step.works, "tpz"),
+				tsht: getProcessStepWorksTime(step.works, "tsht"),
+				workCount: step._count.works || "",
 				files,
 				filesDownload: files.length ? "download" : "",
 				description: step.description ?? "",

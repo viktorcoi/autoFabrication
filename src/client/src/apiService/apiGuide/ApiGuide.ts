@@ -21,6 +21,7 @@ import {
     GetBlanksResponse,
     GetMaterialGroupsResponse,
     GetOperationsResponse,
+    GetWorksResponse,
     GetOperationGroupsResponse,
     GetWorkGroupsResponse,
     BlankTableRow,
@@ -776,6 +777,34 @@ export const ApiGuide = {
     },
 
     work: {
+        get: async (options: ApiServiceOptions<{
+            options?: GuideListOptions<{
+                operationId?: number;
+                workGroupId?: number;
+            }>;
+        }> = {}): Promise<ApiServiceResponse<GetWorksResponse[]>> => {
+            return await api.get("/guide/work", {
+                signal: options.controller?.signal,
+                params: buildGuideListOptions({
+                    ...(typeof options.options?.operationId === "number" && options.options.operationId > 0
+                        ? { operationId: options.options.operationId }
+                        : undefined),
+                    ...(typeof options.options?.workGroupId === "number" && options.options.workGroupId > 0
+                        ? { workGroupId: options.options.workGroupId }
+                        : undefined),
+                    search: options.options?.search,
+                    sorting: options.options?.sorting,
+                    forSelect: options.options?.forSelect,
+                }),
+            }).then((response) => {
+                return handleApiSuccess(
+                    response.data,
+                    response.status === 200 && Array.isArray(response.data),
+                    options.errorOptions?.placeholder,
+                );
+            }).catch((error) => handleApiError(error, options.errorOptions));
+        },
+
         getById: async (options: ApiServiceOptions<{
             id: number
         }>): Promise<ApiServiceResponse<GetByIdWorkResponse>> => {

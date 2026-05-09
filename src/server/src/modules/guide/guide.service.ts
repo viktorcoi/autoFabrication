@@ -39,6 +39,7 @@ import type {
 	GetOperationsTableQuery,
 	GetOperationGroupsQuery,
 	GetOperationGroupsTableQuery,
+	GetWorksQuery,
 	GetWorksTableQuery,
 	GetWorkGroupsQuery,
 	GetWorkGroupsTableQuery,
@@ -363,6 +364,21 @@ const workTableSelect = {
 		select: workFileSelect,
 		orderBy: {
 			id: "asc",
+		},
+	},
+} satisfies Prisma.workSelect;
+
+const workListSelect = {
+	id: true,
+	name: true,
+	description: true,
+	workGroupId: true,
+	tpz: true,
+	tsht: true,
+	workGroup: {
+		select: {
+			id: true,
+			name: true,
 		},
 	},
 } satisfies Prisma.workSelect;
@@ -1730,6 +1746,56 @@ export const listWorkGroups = async (query: GetWorkGroupsQuery) =>
 		},
 		select: workGroupListSelect,
 		orderBy: buildNameListOrderBy<Prisma.workGroupOrderByWithRelationInput>(query.sorting),
+	});
+
+export const listWorks = async (query: GetWorksQuery) =>
+	prisma.work.findMany({
+		where: {
+			...(query.search
+				? {
+						OR: [
+							{
+								name: {
+									contains: query.search,
+									mode: "insensitive",
+								},
+							},
+							{
+								description: {
+									contains: query.search,
+									mode: "insensitive",
+								},
+							},
+							{
+								workGroup: {
+									is: {
+										name: {
+											contains: query.search,
+											mode: "insensitive",
+										},
+									},
+								},
+							},
+						],
+					}
+				: {}),
+			...(typeof query.workGroupId === "number"
+				? {
+						workGroupId: query.workGroupId,
+					}
+				: {}),
+			...(typeof query.operationId === "number"
+				? {
+						workGroup: {
+							is: {
+								operationId: query.operationId,
+							},
+						},
+					}
+				: {}),
+		},
+		select: workListSelect,
+		orderBy: buildNameListOrderBy<Prisma.workOrderByWithRelationInput>(query.sorting),
 	});
 
 export const getTypeProductsTable = async (query: GetTypeProductsTableQuery) => {

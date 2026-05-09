@@ -315,6 +315,11 @@ export const getWorkGroupsSchema = getNameListSchema.extend({
 	operationId: z.preprocess(parseOptionalId, operationIdSchema.optional()),
 });
 
+export const getWorksSchema = getNameListSchema.extend({
+	operationId: z.preprocess(parseOptionalId, operationIdSchema.optional()),
+	workGroupId: z.preprocess(parseOptionalId, workGroupIdSchema.optional()),
+});
+
 export const createTypeProductSchema = z.object({
 	name: typeProductNameSchema,
 	description: typeProductDescriptionSchema.optional(),
@@ -849,5 +854,6 @@ export type UpdateWorkGroupsTablePayload = z.infer<typeof updateWorkGroupsTableS
 export type GetOperationsQuery = z.infer<typeof getOperationsSchema>;
 export type GetOperationsTableQuery = z.infer<typeof getOperationsTableSchema>;
 export type UpdateOperationsTablePayload = z.infer<typeof updateOperationsTableSchema>;
+export type GetWorksQuery = z.infer<typeof getWorksSchema>;
 export type GetWorksTableQuery = z.infer<typeof getWorksTableSchema>;
 export type UpdateWorksTablePayload = z.infer<typeof updateWorksTableSchema>;

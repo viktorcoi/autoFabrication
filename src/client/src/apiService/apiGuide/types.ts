@@ -308,6 +308,19 @@ export interface WorkFileItem {
     size: number;
 }
 
+export interface GetWorksResponse {
+    id: number;
+    name: string;
+    description: string | null;
+    workGroupId: number;
+    tpz: number;
+    tsht: number;
+    workGroup: {
+        id: number;
+        name: string;
+    };
+}
+
 export interface GetByIdWorkResponse {
     id: number;
     name: string;

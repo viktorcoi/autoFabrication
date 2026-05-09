@@ -53,6 +53,7 @@ import {
 	getOperationGroupsSchema,
 	getOperationGroupsTableSchema,
 	getTypeProductsSchema,
+	getWorksSchema,
 	getWorksTableSchema,
 	getWorkGroupsSchema,
 	getWorkGroupsTableSchema,
@@ -117,6 +118,7 @@ import {
 	listMaterialGroups,
 	listOperationGroups,
 	listTypeProducts,
+	listWorks,
 	listWorkGroups,
 	updateBlank,
 	updateBlanksTable,
@@ -197,6 +199,24 @@ const requireGuideOperationPreviewPermission = async (request: Request, response
 		const permissions = await loadRolePermissions(request, response);
 
 		if (!canReadGuideOperationPreview(permissions)) {
+			throw new AppError(403, "У вас отсутствует доступ для данного действия");
+		}
+
+		next();
+	} catch (error) {
+		next(error);
+	}
+};
+
+const canReadGuideWorkPreview = (permissions: Awaited<ReturnType<typeof loadRolePermissions>>) =>
+	hasPermission(permissions, "/guide", "view")
+	|| hasPermission(permissions, "/products", "viewProcess");
+
+const requireGuideWorkPreviewPermission = async (request: Request, response: Response, next: NextFunction) => {
+	try {
+		const permissions = await loadRolePermissions(request, response);
+
+		if (!canReadGuideWorkPreview(permissions)) {
 			throw new AppError(403, "У вас отсутствует доступ для данного действия");
 		}
 
@@ -993,6 +1013,17 @@ guideRouter.delete(
 );
 
 guideRouter.get(
+	"/work",
+	requireGuideListPermission,
+	asyncHandler(async (request, response) => {
+		const query = validate(getWorksSchema, request.query);
+		const works = await listWorks(query);
+
+		response.json(works);
+	}),
+);
+
+guideRouter.get(
 	"/work/table",
 	requirePermission("/guide", "view"),
 	asyncHandler(async (request, response) => {
@@ -1005,7 +1036,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/work/files/:fileId/download",
-	requirePermission("/guide", "view"),
+	requireGuideWorkPreviewPermission,
 	asyncHandler(async (request, response, next) => {
 		const workFile = await getWorkFileDownloadInfo(parseId(String(request.params.fileId)));
 		const absolutePath = getWorkFileAbsolutePath(workFile.storagePath);
@@ -1029,7 +1060,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/work/:id/files/archive",
-	requirePermission("/guide", "view"),
+	requireGuideWorkPreviewPermission,
 	asyncHandler(async (request, response, next) => {
 		const work = await getWorkFilesArchiveInfo(parseId(String(request.params.id)));
 
@@ -1110,7 +1141,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/work/:id",
-	requirePermission("/guide", "view"),
+	requireGuideWorkPreviewPermission,
 	asyncHandler(async (request, response) => {
 		const work = await getWorkById(parseId(String(request.params.id)));
 
