@@ -2,7 +2,7 @@ import React from "react";
 import {ModalPageProps} from "@vkontakte/vkui";
 import {ModalPageCloseReasonType} from "@/components/modals/types";
 
-export type GuideFilesUrl = '/operation' | '/work' | '/products' | '/processes';
+export type GuideFilesUrl = '/operation' | '/work' | '/products' | '/processes' | '/processOperations';
 
 export interface GuideFilesItem {
     id: number;

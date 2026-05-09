@@ -124,6 +124,11 @@ const processTableSelect = {
 			id: "asc",
 		},
 	},
+	_count: {
+		select: {
+			operations: true,
+		},
+	},
 } satisfies Prisma.technologicalProcessSelect;
 
 const processUpdateSelect = {
@@ -511,7 +516,10 @@ const buildProcessesTableOrderBy = (
 				{ id: "asc" },
 			];
 		case "operationCount":
-			return [{ id: "asc" }];
+			return [
+				{ operations: { _count: sorting.sort } },
+				{ id: "asc" },
+			];
 		case "access":
 			return [
 				{ disabledById: sorting.sort },
@@ -583,7 +591,7 @@ export const getProcessesTable = async (
 				blank: process.blank?.name ?? "",
 				files,
 				filesDownload: files.length ? "download" : "",
-				operationCount: "",
+				operationCount: process._count.operations || "",
 				access: !isLocked,
 				accessTooltip: disabledBy
 					? `Закрыт (${disabledBy}${disabledAt ? `, ${disabledAt}` : ""})`

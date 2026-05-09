@@ -188,6 +188,24 @@ const requireGuideListPermission = async (request: Request, response: Response, 
 	}
 };
 
+const canReadGuideOperationPreview = (permissions: Awaited<ReturnType<typeof loadRolePermissions>>) =>
+	hasPermission(permissions, "/guide", "view")
+	|| hasPermission(permissions, "/products", "viewProcess");
+
+const requireGuideOperationPreviewPermission = async (request: Request, response: Response, next: NextFunction) => {
+	try {
+		const permissions = await loadRolePermissions(request, response);
+
+		if (!canReadGuideOperationPreview(permissions)) {
+			throw new AppError(403, "У вас отсутствует доступ для данного действия");
+		}
+
+		next();
+	} catch (error) {
+		next(error);
+	}
+};
+
 const sanitizeArchiveEntryName = (value: string, fallback: string) => {
 	const sanitized = value
 		.trim()
@@ -806,7 +824,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/operation/files/:fileId/download",
-	requirePermission("/guide", "view"),
+	requireGuideOperationPreviewPermission,
 	asyncHandler(async (request, response, next) => {
 		const operationFile = await getOperationFileDownloadInfo(parseId(String(request.params.fileId)));
 		const absolutePath = getOperationFileAbsolutePath(operationFile.storagePath);
@@ -830,7 +848,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/operation/:id/files/archive",
-	requirePermission("/guide", "view"),
+	requireGuideOperationPreviewPermission,
 	asyncHandler(async (request, response, next) => {
 		const operation = await getOperationFilesArchiveInfo(parseId(String(request.params.id)));
 
@@ -911,7 +929,7 @@ guideRouter.get(
 
 guideRouter.get(
 	"/operation/:id",
-	requirePermission("/guide", "view"),
+	requireGuideOperationPreviewPermission,
 	asyncHandler(async (request, response) => {
 		const operation = await getOperationById(parseId(String(request.params.id)));
 

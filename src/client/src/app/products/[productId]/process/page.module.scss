@@ -2,7 +2,24 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    &__name {
+    &__adres {
+        display: flex;
+        gap: 3px;
+    }
+    &__modal, &__slash, &__name {
         color: var(--vkui--color_text_subhead);
+    }
+    &__modal, &__name {
+        transition: .15s ease-out opacity;
+        cursor: pointer;
+        &:hover {
+            opacity: 0.7;
+        }
+    }
+    &__name {
+        &:last-child {
+            cursor: default;
+            opacity: 1;
+        }
     }
 }

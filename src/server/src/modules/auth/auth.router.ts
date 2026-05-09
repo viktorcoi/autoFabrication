@@ -37,7 +37,7 @@ const getRouteAccess = (
 		};
 	}
 
-	if (/^\/products\/[^/]+\/process\/?$/.test(path)) {
+	if (/^\/products\/[^/]+\/process(?:\/.*)?\/?$/.test(path)) {
 		return {
 			allowed: hasPermission(permissions, "/products", "viewProcess"),
 			isProtectedRoute: true,

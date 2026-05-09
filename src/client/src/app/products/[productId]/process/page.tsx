@@ -561,7 +561,9 @@ const ProcessPage = () => {
             >
                 <div className={classNames('island', styles.header)}>
                     <Text weight={'1'}>Технологические процессы</Text>
-                    <Caption level={'2'} className={styles.header__name}>{`${product.name} (ID: ${productId})`}</Caption>
+                    <div className={styles.header__adres}>
+                        <Caption level={'2'} className={styles.header__modal}>{`${product.name} (ID: ${productId})`}</Caption>
+                    </div>
                 </div>
                 <Table
                     componentName={'process'}

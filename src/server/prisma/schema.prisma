@@ -175,6 +175,7 @@ model technologicalProcess {
   creator      User     @relation("ProcessCreator", fields: [creatorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   disabledBy   User?    @relation("ProcessDisabledBy", fields: [disabledById], references: [id], onDelete: SetNull, onUpdate: Cascade)
   files        technologicalProcessFile[]
+  operations   processOperation[]
 
   @@index([productId])
   @@index([blankId])
@@ -205,8 +206,41 @@ model operation {
   operationGroup   operationGroup  @relation(fields: [operationGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   files            operationFile[]
   workGroups       workGroup[]
+  processOperations processOperation[]
 
   @@index([operationGroupId])
+}
+
+model processOperation {
+  id          Int      @id @default(autoincrement())
+  processId   Int
+  operationId Int
+  sortOrder   Int      @default(0)
+  exit        Int?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  process     technologicalProcess @relation(fields: [processId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  operation   operation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  files       processOperationFile[]
+
+  @@unique([processId, operationId])
+  @@index([processId])
+  @@index([operationId])
+  @@index([sortOrder])
+}
+
+model processOperationFile {
+  id                 Int      @id @default(autoincrement())
+  processOperationId Int
+  originalName       String   @map("originalName")
+  size               Int
+  mimeType           String?  @map("mimeType")
+  storagePath        String   @map("storagePath")
+  createdAt          DateTime @default(now())
+  processOperation   processOperation @relation(fields: [processOperationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([processOperationId])
 }
 
 model workGroup {

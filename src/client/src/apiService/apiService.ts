@@ -7,6 +7,7 @@ import {ApiServiceErrorOptions, ApiServiceResponse, GetListOptions, GetTableOpti
 import {ApiGuide} from "@/apiService/apiGuide/ApiGuide";
 import {ApiProducts} from "@/apiService/apiProducts/apiProducts";
 import {ApiProcesses} from "@/apiService/apiProcesses/apiProcesses";
+import {ApiProcessOperations} from "@/apiService/apiProcessOperations/apiProcessOperations";
 
 const resolveApiBaseUrl = () => process.env.NEXT_PUBLIC_API_URL ?? "/api/";
 
@@ -22,6 +23,7 @@ export const ApiService = {
     guide: ApiGuide,
     products: ApiProducts,
     process: ApiProcesses,
+    processOperation: ApiProcessOperations,
 };
 
 export const buildGetOptions = <T extends object = {}>(options?: GetListOptions<T>) => {

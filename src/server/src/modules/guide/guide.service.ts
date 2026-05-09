@@ -181,6 +181,13 @@ const blankListSelect = {
 const operationListSelect = {
 	id: true,
 	name: true,
+	operationGroupId: true,
+	operationGroup: {
+		select: {
+			id: true,
+			name: true,
+		},
+	},
 } satisfies Prisma.operationSelect;
 
 const operationGroupListSelect = {

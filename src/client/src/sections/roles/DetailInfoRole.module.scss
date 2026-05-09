@@ -61,7 +61,7 @@
         display: grid;
         grid-template-rows: 0fr;
         opacity: 0;
-        transition: grid-template-rows .15s ease, opacity .15s ease, padding-top .15s ease;
+        transition: grid-template-rows .15s ease-out, opacity .15s ease-out, padding-top .15s ease-out;
         padding-top: 0;
         &--opened {
             grid-template-rows: 1fr;

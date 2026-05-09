@@ -88,6 +88,11 @@ export interface GetOperationGroupsResponse {
 export interface GetOperationsResponse {
     id: number;
     name: string;
+    operationGroupId?: number;
+    operationGroup?: {
+        id: number;
+        name: string;
+    };
 }
 
 export interface GetWorkGroupsResponse {
