@@ -40,6 +40,7 @@ import {GetProcessTableFilters, PatchProcessTableOptions, ProcessTableRow} from 
 import Link from "next/link";
 import ModalFiltersProcess from "@/components/modals/ModalFilters/ModalFiltersProcess/ModalFiltersProcess";
 import styles from "./page.module.scss";
+import ModalProductInfo from "@/components/modals/ModalProducts/ModalProductInfo/ModalProductInfo";
 
 const hasDateRangeValue = (value: GetProcessTableFilters["updatedAt"]) => value.some((date) => date !== null);
 
@@ -85,7 +86,7 @@ const ProcessPage = () => {
         updatedAt: [null, null],
     });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-manage-process' | 'modal-remove-process' | 'modal-multi-remove-process' | 'modal-process-files' | 'modal-filters-process'
+        'modal-manage-process' | 'modal-remove-process' | 'modal-multi-remove-process' | 'modal-process-files' | 'modal-filters-process' | 'modal-product-info'
     >>({id: null, show: false, data: null});
 
     const actionSheetRef = useRef(null);
@@ -302,7 +303,7 @@ const ProcessPage = () => {
         }
         if (e.type === 'cellDoubleClick') {
             const row = e.row as ProcessTableRow;
-            if (!row.canEdit) return;
+            if (!row.canEdit && !access.viewProcess) return;
 
             router.push(`/products/${productId}/process/${e.row.id}/operation`);
         }
@@ -409,6 +410,14 @@ const ProcessPage = () => {
     return (
         <>
             {tableManage.actionSheet}
+            {"modal-product-info" === modals.id && (
+                <ModalProductInfo
+                    productId={productId}
+                    open={modals.show}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                />
+            )}
             {'modal-filters-process' === modals.id ? (
                 <ModalFiltersProcess
                     onChangeFilters={setTableFilters}
@@ -562,7 +571,17 @@ const ProcessPage = () => {
                 <div className={classNames('island', styles.header)}>
                     <Text weight={'1'}>Технологические процессы</Text>
                     <div className={styles.header__adres}>
-                        <Caption level={'2'} className={styles.header__modal}>{`${product.name} (ID: ${productId})`}</Caption>
+                        <Caption
+                            level={'2'}
+                            className={styles.header__modal}
+                            onClick={() => setModals({
+                                id: "modal-product-info",
+                                show: true,
+                                data: null,
+                            })}
+                        >
+                            {`${product.name} (ID: ${productId})`}
+                        </Caption>
                     </div>
                 </div>
                 <Table

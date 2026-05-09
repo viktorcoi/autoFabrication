@@ -1,0 +1,18 @@
+.list {
+    padding: var(--app-default-padding);
+    display: flex;
+    flex-direction: column;
+}
+
+.cell {
+    background: var(--vkui--color_background_secondary);
+    border-radius: var(--vkui--size_border_radius--regular);
+    &__buttons {
+        gap: 4px;
+        align-items: center;
+    }
+}
+
+.spinner {
+    height: 100%;
+}

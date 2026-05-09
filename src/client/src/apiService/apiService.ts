@@ -8,6 +8,7 @@ import {ApiGuide} from "@/apiService/apiGuide/ApiGuide";
 import {ApiProducts} from "@/apiService/apiProducts/apiProducts";
 import {ApiProcesses} from "@/apiService/apiProcesses/apiProcesses";
 import {ApiProcessOperations} from "@/apiService/apiProcessOperations/apiProcessOperations";
+import {ApiProcessSteps} from "@/apiService/apiProcessSteps/apiProcessSteps";
 
 const resolveApiBaseUrl = () => process.env.NEXT_PUBLIC_API_URL ?? "/api/";
 
@@ -24,6 +25,7 @@ export const ApiService = {
     products: ApiProducts,
     process: ApiProcesses,
     processOperation: ApiProcessOperations,
+    processStep: ApiProcessSteps,
 };
 
 export const buildGetOptions = <T extends object = {}>(options?: GetListOptions<T>) => {

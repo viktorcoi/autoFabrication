@@ -223,6 +223,7 @@ model processOperation {
   process     technologicalProcess @relation(fields: [processId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   operation   operation @relation(fields: [operationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   files       processOperationFile[]
+  steps       processStep[]
 
   @@unique([processId, operationId])
   @@index([processId])
@@ -241,6 +242,34 @@ model processOperationFile {
   processOperation   processOperation @relation(fields: [processOperationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([processOperationId])
+}
+
+model processStep {
+  id                 Int      @id @default(autoincrement())
+  processOperationId Int
+  sortOrder          Int      @default(0)
+  name               String
+  description        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  processOperation   processOperation @relation(fields: [processOperationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  files              processStepFile[]
+
+  @@index([processOperationId])
+  @@index([sortOrder])
+}
+
+model processStepFile {
+  id           Int      @id @default(autoincrement())
+  processStepId Int
+  originalName String   @map("originalName")
+  size         Int
+  mimeType     String?  @map("mimeType")
+  storagePath  String   @map("storagePath")
+  createdAt    DateTime @default(now())
+  processStep  processStep @relation(fields: [processStepId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([processStepId])
 }
 
 model workGroup {

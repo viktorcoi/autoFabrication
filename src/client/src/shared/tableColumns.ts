@@ -104,5 +104,15 @@ export const tableColumns: Record<string, Column[]> = {
         {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false},
         {key: 'operationGroup', header: 'Группа операций', minSize: 175, size: 220, maxSize: 625},
         {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065},
+    ],
+
+    processSteps: [
+        {key: 'index', header: '№', size: 100, resize: false}, // Номер сортировки
+        {key: 'name', header: 'Этап', minSize: 230, size: 240, maxSize: 625}, // Имя этапа добавляется из модалки создания/редактирования
+        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'}, // Считается из вложенных страниц из работ (которые считаются из справочников) (это оставим на будущее, но если работы не добавлены, в ячейке просто пусто)
+        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'}, // Считается из вложенных страниц из работ (которые считаются из справочников) (это оставим на будущее, но если работы не добавлены, в ячейке просто пусто)
+        {key: 'workCount', header: 'Кол-во работ', size: 115, resize: false, type: 'text'}, // Кол-во работ (считается из приавязанных работ, если 0 ничего не выводим)
+        {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false}, // Файлы прикрепленные из модалки создания/редактирования
+        {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065}, // Описание добавляется из модалки создания/редактирования
     ]
 };

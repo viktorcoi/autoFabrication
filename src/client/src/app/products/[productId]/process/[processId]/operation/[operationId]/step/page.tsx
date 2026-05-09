@@ -7,7 +7,6 @@ import {
     ButtonGroup,
     Caption,
     classNames,
-    Counter,
     Search,
     Text,
     Tooltip
@@ -15,7 +14,6 @@ import {
 import {
     Icon24BrowserBack,
     Icon24ChevronRight,
-    Icon24Filter,
     Icon24PenOutline,
     Icon24SearchSlashOutline
 } from "@vkontakte/icons";
@@ -26,56 +24,36 @@ import Container from "@/components/Container/Container";
 import Table from "@/components/Table/Table";
 import {tableColumns} from "@/shared/tableColumns";
 import {mergeState} from "@/shared/helpers";
-import {useController, useFilersCount, useSearch, useStoredFilters} from "@/shared/hooks";
+import {useController, useSearch} from "@/shared/hooks";
 import {GetTableOptions, GetTableResponse} from "@/apiService/types";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import {useAppStore} from "@/store/app/app";
 import {ApiService} from "@/apiService/apiService";
 import {TableDraftChanges, TableEvent} from "@/components/Table/types";
 import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
-import ModalManageProcessOperations from "@/components/modals/ModalProducts/ModalManageProcessOperations/ModalManageProcessOperations";
-import ModalManageProcessOperation from "@/components/modals/ModalProducts/ModalManageProcessOperation/ModalManageProcessOperation";
-import ModalFiltersProcessOperation from "@/components/modals/ModalFilters/ModalFiltersProcessOperation/ModalFiltersProcessOperation";
 import ModalProductInfo from "@/components/modals/ModalProducts/ModalProductInfo/ModalProductInfo";
+import ModalManageProcessSteps from "@/components/modals/ModalProducts/ModalManageProcessSteps/ModalManageProcessSteps";
+import ModalManageProcessStep from "@/components/modals/ModalProducts/ModalManageProcessStep/ModalManageProcessStep";
 import {ProductsPermissionFlagsType} from "@/apiService/apiRoles/types";
-import {
-    GetProcessOperationsTableFilters,
-    PatchProcessOperationOptions,
-    ProcessOperationTableRow
-} from "@/apiService/apiProcessOperations/types";
+import {PatchProcessStepOptions, ProcessStepTableRow} from "@/apiService/apiProcessSteps/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
-import styles from '../../page.module.scss';
+import styles from '../../../../page.module.scss';
 
-const defaultFilters: Omit<GetProcessOperationsTableFilters, "processId"> = {
-    operationGroupId: 0,
-};
-
-const parseExitValue = (value: unknown) => {
-    const normalizedValue = String(value ?? "").trim();
-
-    if (!normalizedValue) {
-        return null;
-    }
-
-    const parsedValue = Number(normalizedValue);
-
-    if (!Number.isInteger(parsedValue) || parsedValue < 0) {
-        return undefined;
-    }
-
-    return parsedValue;
-};
-
-const OperationPage = () => {
+const StepPage = () => {
 
     const router = useRouter();
-    const params = useParams<{processId: string, productId: string}>();
+    const params = useParams<{productId: string, processId: string, operationId: string}>();
 
     const productId = useMemo(() => Number(params.productId), [params.productId]);
     const processId = useMemo(() => Number(params.processId), [params.processId]);
+    const operationId = useMemo(() => Number(params.operationId), [params.operationId]);
     const [loading, setLoading] = useState(true);
     const [productName, setProductName] = useState("");
     const [processName, setProcessName] = useState("");
+    const [operationData, setOperationData] = useState({
+        name: '',
+        index: 0
+    });
     const [processLocked, setProcessLocked] = useState(true);
     const [processCreatorId, setProcessCreatorId] = useState<number | null>(null);
 
@@ -84,15 +62,10 @@ const OperationPage = () => {
         setSearch,
         delaySearch,
         inputRef
-    } = useSearch(loading, `process-operation-${processId}`);
+    } = useSearch(loading, `process-step-${operationId}`);
 
-    const [filters, setFilters] = useStoredFilters(
-        `process-operation-filters-${processId}`,
-        defaultFilters,
-    );
-    const countFilter = useFilersCount(filters);
     const [selected, setSelected] = useState<number[]>([]);
-    const [table, setTable] = useState<GetTableResponse<ProcessOperationTableRow[]>>({
+    const [table, setTable] = useState<GetTableResponse<ProcessStepTableRow[]>>({
         data: [],
         total: 0,
     });
@@ -107,10 +80,9 @@ const OperationPage = () => {
         actionSheet: null
     });
     const [modals, setModals] = useState<OpenModalsType<
-        "modal-operation-files"
-        | "modal-manage-operations"
-        | "modal-manage-operation"
-        | "modal-filters"
+        "modal-step-files"
+        | "modal-manage-steps"
+        | "modal-manage-step"
         | "modal-product-info"
     >>({id: null, show: false, data: null});
 
@@ -118,17 +90,16 @@ const OperationPage = () => {
     const { TEST, permissions, user } = useAppStore(state => state);
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
 
-    const {createController: createHeaderController} = useController([productId, processId]);
+    const {createController: createHeaderController} = useController([productId, processId, operationId]);
     const {
         createController,
         cancelRef
     } = useController([
-        processId,
+        operationId,
         tableOptions.sorting,
         tableOptions.search,
         tableOptions.page,
         tableOptions.rows,
-        filters.operationGroupId,
     ]);
 
     const access = useMemo(() => {
@@ -148,14 +119,18 @@ const OperationPage = () => {
         if (!Number.isFinite(processId) || processId <= 0) {
             router.push(`/products/${productId}/process`);
         }
-    }, [processId, productId, router]);
+
+        if (!Number.isFinite(operationId) || operationId <= 0) {
+            router.push(`/products/${productId}/process/${processId}/operation`);
+        }
+    }, [operationId, processId, productId, router]);
 
     useEffect(() => {
         mergeState({search: delaySearch}, setTableOptions);
     }, [delaySearch]);
 
     const getData = async () => {
-        if (!Number.isFinite(processId) || processId <= 0) {
+        if (!Number.isFinite(operationId) || operationId <= 0) {
             return;
         }
 
@@ -163,11 +138,10 @@ const OperationPage = () => {
 
         const controller = createController();
 
-        await ApiService.processOperation.table.get({
+        await ApiService.processStep.table.get({
             options: {
                 ...tableOptions,
-                processId,
-                operationGroupId: filters.operationGroupId || undefined,
+                operationId,
             },
             controller
         }).then(({status, data}) => {
@@ -187,7 +161,11 @@ const OperationPage = () => {
     };
 
     const getHeaderData = async () => {
-        if (!Number.isFinite(productId) || productId <= 0 || !Number.isFinite(processId) || processId <= 0) {
+        if (
+            !Number.isFinite(productId) || productId <= 0
+            || !Number.isFinite(processId) || processId <= 0
+            || !Number.isFinite(operationId) || operationId <= 0
+        ) {
             return;
         }
 
@@ -217,21 +195,37 @@ const OperationPage = () => {
                 setProcessCreatorId(data.creatorId);
             }
         });
+
+        await ApiService.processOperation.getById({
+            id: operationId,
+            controller
+        }).then(({status, data}) => {
+            if (status === "success") {
+                if (data.processId !== processId) {
+                    router.push(`/products/${productId}/process/${processId}/operation`);
+                    return;
+                }
+
+                setOperationData({
+                    name: data.operation.name,
+                    index: data.sortOrder + 1
+                });
+            }
+        });
     };
 
     useEffect(() => {
         getHeaderData();
-    }, [productId, processId]);
+    }, [productId, processId, operationId]);
 
     useEffect(() => {
         getData().finally(() => setLoading(cancelRef.current));
     }, [
-        processId,
+        operationId,
         tableOptions.sorting,
         tableOptions.search,
         tableOptions.page,
         tableOptions.rows,
-        filters.operationGroupId,
     ]);
 
     const closeModal = (reason: ModalPageCloseReasonType) => {
@@ -244,14 +238,14 @@ const OperationPage = () => {
 
     const openEditModal = (id: number) => {
         setModals({
-            id: "modal-manage-operation",
+            id: "modal-manage-step",
             show: true,
             data: id,
         });
     };
 
-    const openSteps = (id: number) => {
-        router.push(`/products/${productId}/process/${processId}/operation/${id}/step`);
+    const openWorks = (id: number) => {
+        router.push(`/products/${productId}/process/${processId}/operation/${operationId}/step/${id}/work`);
     };
 
     const handleTableSave = async (changes: TableDraftChanges) => {
@@ -261,14 +255,14 @@ const OperationPage = () => {
             return;
         }
 
-        const hasInvalidExit = changeEntries.some(([, item]) => (
-            "exit" in item && parseExitValue(item.exit) === undefined
+        const hasInvalidName = changeEntries.some(([, item]) => (
+            "name" in item && !String(item.name ?? "").trim()
         ));
 
-        if (hasInvalidExit) {
+        if (hasInvalidName) {
             addSnackbar({
                 type: "error",
-                text: "Выход должен быть целым числом не меньше 0",
+                text: "Название этапа обязательно",
             });
             return;
         }
@@ -276,10 +270,10 @@ const OperationPage = () => {
         setLoading(true);
 
         const results = await Promise.all(changeEntries.map(async ([id, item]) => {
-            const options: PatchProcessOperationOptions = {};
+            const options: PatchProcessStepOptions = {};
 
-            if ("exit" in item) {
-                options.exit = parseExitValue(item.exit) ?? null;
+            if ("name" in item) {
+                options.name = String(item.name ?? "").trim();
             }
 
             if ("description" in item) {
@@ -290,7 +284,7 @@ const OperationPage = () => {
                 return false;
             }
 
-            const {status} = await ApiService.processOperation.patch({
+            const {status} = await ApiService.processStep.patch({
                 id: Number(id),
                 options,
             });
@@ -323,7 +317,7 @@ const OperationPage = () => {
             }, setTableOptions);
         }
         if (e.type === "rowDoubleClick" || e.type === "cellDoubleClick") {
-            openSteps((e.row as ProcessOperationTableRow).id);
+            openWorks((e.row as ProcessStepTableRow).id);
         }
         if (e.type === "selected") {
             setSelected(e.rowIds);
@@ -339,12 +333,12 @@ const OperationPage = () => {
             });
         }
         if (e.type === "download") {
-            const row = e.row as ProcessOperationTableRow;
+            const row = e.row as ProcessStepTableRow;
 
             if (e.column !== "filesDownload" || !row.files.length) return;
 
             setModals({
-                id: "modal-operation-files",
+                id: "modal-step-files",
                 show: true,
                 data: {
                     id: row.id,
@@ -354,7 +348,7 @@ const OperationPage = () => {
             });
         }
         if (e.type === "contextMenu") {
-            const row = e.row as ProcessOperationTableRow;
+            const row = e.row as ProcessStepTableRow;
 
             mergeState({actionSheet:
                 <>
@@ -376,10 +370,10 @@ const OperationPage = () => {
                         onClosed={() => mergeState({actionSheet: null}, setTableManage)}
                     >
                         <ActionSheetItem
-                            onClick={() => openSteps(row.id)}
+                            onClick={() => openWorks(row.id)}
                             before={<Icon24ChevronRight width={20} height={20}/>}
                         >
-                            Перейти к этапам
+                            Перейти к работам
                         </ActionSheetItem>
                         {row.canEdit && (
                             <ActionSheetItem
@@ -395,7 +389,7 @@ const OperationPage = () => {
         }
     };
 
-    const emptyState = !delaySearch.trim() && countFilter === 0 ? undefined : {
+    const emptyState = !delaySearch.trim() ? undefined : {
         icon: <Icon24SearchSlashOutline width={62} height={62} />,
         title: "Совпадений не найдено",
         description: "Попробуйте изменить параметры поиска",
@@ -404,41 +398,29 @@ const OperationPage = () => {
     return (
         <>
             {tableManage.actionSheet}
-            {"modal-operation-files" === modals.id && (
+            {"modal-step-files" === modals.id && (
                 <ModalFiles
                     itemId={modals.data?.id ?? 0}
                     name={modals.data?.name ?? ""}
-                    url={"/processOperations"}
+                    url={"/processSteps"}
                     files={modals.data?.files ?? []}
                     open={modals.show}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                 />
             )}
-            {"modal-manage-operations" === modals.id && (
-                <ModalManageProcessOperations
-                    processId={processId}
+            {"modal-manage-steps" === modals.id && (
+                <ModalManageProcessSteps
+                    operationId={operationId}
                     open={modals.show}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                 />
             )}
-            {"modal-manage-operation" === modals.id && (
-                <ModalManageProcessOperation
-                    idProcessOperation={modals.data}
+            {"modal-manage-step" === modals.id && (
+                <ModalManageProcessStep
+                    idStep={modals.data}
                     open={modals.show}
-                    onClose={closeModal}
-                    onClosed={() => setModals({id: null, show: false, data: null})}
-                />
-            )}
-            {"modal-filters" === modals.id && (
-                <ModalFiltersProcessOperation
-                    data={filters}
-                    open={modals.show}
-                    onChangeFilters={(filters) => {
-                        setFilters(filters);
-                        mergeState({page: 0}, setTableOptions);
-                    }}
                     onClose={closeModal}
                     onClosed={() => setModals({id: null, show: false, data: null})}
                 />
@@ -456,13 +438,13 @@ const OperationPage = () => {
                     <>
                         <ButtonGroup gap={"s"}>
                             <Tooltip
-                                description={"Вернуться к процессам"}
+                                description={"Вернуться к операциям"}
                                 usePortal={true}
                                 placement={"top"}
                                 disableTriggerOnFocus={true}
                             >
                                 <div>
-                                    <Link href={`/products/${productId}/process`}>
+                                    <Link href={`/products/${productId}/process/${processId}/operation`}>
                                         <Button
                                             mode={"secondary"}
                                             size={"m"}
@@ -476,12 +458,12 @@ const OperationPage = () => {
                                     size={"m"}
                                     disabled={loading || tableManage.editMode}
                                     onClick={() => setModals({
-                                        id: "modal-manage-operations",
+                                        id: "modal-manage-steps",
                                         show: true,
                                         data: null,
                                     })}
                                 >
-                                    Управление операциями
+                                    Управление этапами
                                 </Button>
                             )}
                         </ButtonGroup>
@@ -494,41 +476,12 @@ const OperationPage = () => {
                                 className={"search"}
                                 slotProps={{ input: { getRootRef: inputRef } }}
                             />
-                            <Tooltip
-                                description={"Фильтры"}
-                                usePortal={true}
-                                placement={"top"}
-                                disableTriggerOnFocus={true}
-                            >
-                                <div className={"filter"}>
-                                    <Button
-                                        disabled={loading || tableManage.editMode}
-                                        onClick={() => setModals({
-                                            id: "modal-filters",
-                                            show: true,
-                                            data: null,
-                                        })}
-                                        mode={"secondary"}
-                                        size={"m"}
-                                        before={<Icon24Filter/>}
-                                    />
-                                    {!!countFilter && (
-                                        <Counter
-                                            mode={"primary"}
-                                            size={"s"}
-                                            className={"filter__counter"}
-                                        >
-                                            {countFilter}
-                                        </Counter>
-                                    )}
-                                </div>
-                            </Tooltip>
                         </div>
                     </>
                 )}
             >
                 <div className={classNames("island", styles.header)}>
-                    <Text weight={"1"}>Операции</Text>
+                    <Text weight={"1"}>Этапы</Text>
                     <div className={styles.header__adres}>
                         <Caption
                             level={"2"}
@@ -543,15 +496,21 @@ const OperationPage = () => {
                         </Caption>
                         <Caption level={"2"} className={styles.header__slash}>/</Caption>
                         <Caption level={"2"} className={styles.header__name}>
-                            {`${processName} (ID: ${processId})`}
+                            <Link href={`/products/${productId}/process/${processId}/operation`}>
+                                {`${processName} (ID: ${processId})`}
+                            </Link>
+                        </Caption>
+                        <Caption level={"2"} className={styles.header__slash}>/</Caption>
+                        <Caption level={"2"} className={styles.header__name}>
+                            {`${operationData.name} (№${operationData.index})`}
                         </Caption>
                     </div>
                 </div>
                 <Table
-                    componentName={"process-operation"}
+                    componentName={"process-step"}
                     editMode={access.editingProcess}
                     data={table.data}
-                    columns={tableColumns.processOperation}
+                    columns={tableColumns.processSteps}
                     total={table.total}
                     page={tableOptions.page}
                     rows={tableOptions.rows}
@@ -565,4 +524,4 @@ const OperationPage = () => {
     );
 };
 
-export default OperationPage;
+export default StepPage;

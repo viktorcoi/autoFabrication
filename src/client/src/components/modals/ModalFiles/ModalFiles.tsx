@@ -33,6 +33,10 @@ import {
     downloadProcessOperationFile,
     downloadProcessOperationFilesArchive
 } from "@/apiService/apiProcessOperations/helpers";
+import {
+    downloadProcessStepFile,
+    downloadProcessStepFilesArchive
+} from "@/apiService/apiProcessSteps/helpers";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
 import {formatBytes} from "@/components/UploadFile/helpers";
 import {ModalFilesProps} from "@/components/modals/ModalFiles/types";
@@ -60,6 +64,10 @@ const downloadMap = {
     '/processOperations': {
         all: downloadProcessOperationFilesArchive,
         one: downloadProcessOperationFile,
+    },
+    '/processSteps': {
+        all: downloadProcessStepFilesArchive,
+        one: downloadProcessStepFile,
     },
 };
 

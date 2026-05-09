@@ -65,6 +65,11 @@ const processOperationTableSelect = {
 			id: "asc",
 		},
 	},
+	_count: {
+		select: {
+			steps: true,
+		},
+	},
 } satisfies Prisma.processOperationSelect;
 
 const processOperationSelect = {
@@ -168,6 +173,16 @@ const PROCESS_OPERATION_TABLE_FIELDS = [
 	"filesDownload",
 	"exit",
 	"description",
+] as const;
+
+const PROCESS_OPERATION_READONLY_TABLE_FIELDS = [
+	"index",
+	"name",
+	"tpz",
+	"tsht",
+	"stepCount",
+	"operationGroup",
+	"filesDownload",
 ] as const;
 
 const PROCESS_NOT_FOUND_ERROR = "Техпроцесс не найден";
@@ -414,6 +429,12 @@ const buildProcessOperationsTableOrderBy = (
 				{ sortOrder: "asc" },
 				{ id: "asc" },
 			];
+		case "stepCount":
+			return [
+				{ steps: { _count: sorting.sort } },
+				{ sortOrder: "asc" },
+				{ id: "asc" },
+			];
 		default:
 			return [
 				{ sortOrder: "asc" },
@@ -476,7 +497,7 @@ export const getProcessOperationsTable = async (
 				name: operation.operation.name,
 				tpz: "",
 				tsht: "",
-				stepCount: "",
+				stepCount: operation._count.steps || "",
 				operationGroup: operation.operation.operationGroup.name,
 				files,
 				filesDownload: files.length ? "download" : "",
@@ -486,7 +507,7 @@ export const getProcessOperationsTable = async (
 				canEdit: rowCanEdit,
 				createdAt: operation.createdAt,
 				updatedAt: operation.updatedAt,
-				isConst: PROCESS_OPERATION_TABLE_FIELDS,
+				isConst: rowCanEdit ? PROCESS_OPERATION_READONLY_TABLE_FIELDS : PROCESS_OPERATION_TABLE_FIELDS,
 				isRequired: [],
 			};
 		}),
