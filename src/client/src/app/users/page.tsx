@@ -37,6 +37,8 @@ import {SnackbarItem} from "@/store/snackbar/types";
 import ModalFiltersUsers from "@/components/modals/ModalFilters/ModalFiltersUsers/ModalFiltersUsers";
 import {UserPermissionFlagsType} from "@/apiService/apiRoles/types";
 
+// TODO - никто не может менять роль для isAdmin
+
 const UsersPage = () => {
 
     const [loading, setLoading] = useState(true);
@@ -256,12 +258,14 @@ const UsersPage = () => {
                     >
                         {access.editing && (
                             <>
-                                <ActionSheetItem
-                                    onClick={() => setModals({id: 'modal-manage-user', show: true, data: e.row.id})}
-                                    before={<Icon24PenOutline width={20} height={20}/>}
-                                >
-                                    Редактировать
-                                </ActionSheetItem>
+                                {(!e.row.isAdmin || user?.isAdmin) && (
+                                    <ActionSheetItem
+                                        onClick={() => setModals({id: 'modal-manage-user', show: true, data: e.row.id})}
+                                        before={<Icon24PenOutline width={20} height={20}/>}
+                                    >
+                                        Редактировать
+                                    </ActionSheetItem>
+                                )}
                                 <ActionSheetItem
                                     onClick={() => setModals({id: 'modal-change-login', show: true, data})}
                                     before={<Icon20MentionOutline width={20} height={20}/>}

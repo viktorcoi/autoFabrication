@@ -107,12 +107,22 @@ export const tableColumns: Record<string, Column[]> = {
     ],
 
     processSteps: [
+        {key: 'index', header: '№', size: 100, resize: false},
+        {key: 'name', header: 'Этап', minSize: 230, size: 240, maxSize: 625},
+        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'workCount', header: 'Кол-во работ', size: 115, resize: false, type: 'text'},
+        {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false},
+        {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065},
+    ],
+
+    processWorks: [
         {key: 'index', header: '№', size: 100, resize: false}, // Номер сортировки
-        {key: 'name', header: 'Этап', minSize: 230, size: 240, maxSize: 625}, // Имя этапа добавляется из модалки создания/редактирования
-        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'}, // Считается из вложенных страниц из работ (которые считаются из справочников) (это оставим на будущее, но если работы не добавлены, в ячейке просто пусто)
-        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'}, // Считается из вложенных страниц из работ (которые считаются из справочников) (это оставим на будущее, но если работы не добавлены, в ячейке просто пусто)
-        {key: 'workCount', header: 'Кол-во работ', size: 115, resize: false, type: 'text'}, // Кол-во работ (считается из приавязанных работ, если 0 ничего не выводим)
-        {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false}, // Файлы прикрепленные из модалки создания/редактирования
+        {key: 'name', header: 'Этап', minSize: 230, size: 240, maxSize: 625}, // Имя этапа добавляется из Работ (справочники)
+        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'}, // Подставляется автоматически из  Работ (справочники) (но можно менять)
+        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'}, // Подставляется автоматически из  Работ (справочники) (но можно менять)
+        {key: 'count', header: 'Кол-во', size: 115, resize: false, type: 'text'}, // Кол-во вводится в попапе управления
+        {key: 'workGroup', header: 'Группа работ', minSize: 150, size: 200, maxSize: 625},
         {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065}, // Описание добавляется из модалки создания/редактирования
     ]
 };
