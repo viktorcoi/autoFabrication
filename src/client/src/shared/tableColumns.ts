@@ -96,33 +96,33 @@ export const tableColumns: Record<string, Column[]> = {
 
     processOperation: [
         {key: 'index', header: '№', size: 100, resize: false},
-        {key: 'name', header: 'Операция', minSize: 230, size: 240, maxSize: 625},
-        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
-        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
-        {key: 'stepCount', header: 'Этапы', size: 115, resize: false, type: 'text'},
-        {key: 'exit', header: 'Выход', size: 95, resize: false},
+        {key: 'name', header: 'Операция', minSize: 115, size: 240, maxSize: 625},
+        {key: 'tpz', header: 'Тпз, мин', minSize: 105, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'tsht', header: 'Тшт, мин', minSize: 105, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'stepCount', header: 'Этапы', size: 100, resize: false, type: 'text'},
+        {key: 'exit', header: 'Выход', size: 100, resize: false},
         {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false},
-        {key: 'operationGroup', header: 'Группа операций', minSize: 175, size: 220, maxSize: 625},
+        {key: 'operationGroup', header: 'Группа операций', minSize: 160, size: 220, maxSize: 625},
         {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065},
     ],
 
     processSteps: [
         {key: 'index', header: '№', size: 100, resize: false},
-        {key: 'name', header: 'Этап', minSize: 230, size: 240, maxSize: 625},
-        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
-        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
-        {key: 'workCount', header: 'Кол-во работ', size: 115, resize: false, type: 'text'},
+        {key: 'name', header: 'Наименование этапа', minSize: 185, size: 240, maxSize: 625},
+        {key: 'tpz', header: 'Тпз, мин', minSize: 105, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'tsht', header: 'Тшт, мин', minSize: 105, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'workCount', header: 'Кол-во работ', size: 135, resize: false, type: 'text'},
         {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false},
         {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065},
     ],
 
     processWorks: [
         {key: 'index', header: '№', size: 100, resize: false},
-        {key: 'name', header: 'Этап', minSize: 230, size: 240, maxSize: 625},
-        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
-        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'name', header: 'Наименование работы', minSize: 195, size: 240, maxSize: 625},
+        {key: 'tpz', header: 'Тпз, мин', minSize: 105, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'tsht', header: 'Тшт, мин', minSize: 105, size: 110, maxSize: 140, type: 'decimal'},
         {key: 'count', header: 'Кол-во', size: 115, resize: false, type: 'decimal'},
-        {key: 'workGroup', header: 'Группа работ', minSize: 150, size: 200, maxSize: 625},
+        {key: 'workGroup', header: 'Группа работ', minSize: 135, size: 200, maxSize: 625},
         {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065},
     ]
 };

@@ -7,6 +7,10 @@
 		"src/server"
 	],
 	"scripts": {
+		"start": "concurrently -n client,server -c blue,green \"npm:start:client\" \"npm:start:server\"",
+		"start:build": "npm run build && npm run start",
+		"start:client": "npm run start --workspace client",
+		"start:server": "npm run start --workspace server",
 		"clean": "node scripts/clean-workspace-artifacts.cjs",
 		"dev": "npm run clean && concurrently -n client,server -c blue,green \"npm:dev:client\" \"npm:dev:server\"",
 		"dev:client": "npm run dev --workspace client",

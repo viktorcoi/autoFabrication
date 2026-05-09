@@ -317,7 +317,7 @@ const StepPage = () => {
             }, setTableOptions);
         }
         if (e.type === "rowDoubleClick" || e.type === "cellDoubleClick") {
-            openWorks((e.row as ProcessStepTableRow).id);
+            openWorks(e.row.id);
         }
         if (e.type === "selected") {
             setSelected(e.rowIds);

@@ -1,7 +1,7 @@
 import {
     Button,
     ButtonGroup,
-    FormItem,
+    FormItem, FormLayoutGroup,
     ModalPage,
     ModalPageHeader,
     PlatformProvider,
@@ -173,33 +173,36 @@ const ModalManageProcessWork = (props: ModalManageProcessWorkProps) => {
         >
             {loading.get ? <Spinner size={"xl"} className={styles.plug}/> : (
                 <form id={"save-process-work"} className={"modalForm"} onSubmit={saveWork}>
-                    <FormItem
-                        top={"Тпз, мин"}
+                    <FormLayoutGroup
+                        mode={'horizontal'}
                         noPadding={true}
                     >
-                        <NumberPicker
-                            min={0}
-                            max={1_000_000}
-                            step={0.1}
-                            value={data.tpz}
-                            disabled={editDisabled}
-                            onChange={(tpz) => mergeState({tpz}, setData)}
-                        />
-                    </FormItem>
-                    <FormItem
-                        top={"Тшт, мин"}
-                        noPadding={true}
-                    >
-                        <NumberPicker
-                            min={0}
-                            max={1_000_000}
-                            step={0.1}
-                            value={data.tsht}
-                            disabled={editDisabled}
-                            onChange={(tsht) => mergeState({tsht}, setData)}
-                        />
-                    </FormItem>
-                    <FormItem
+                        <FormItem
+                            top={"Тпз, мин"}
+                            noPadding={true}
+                        >
+                            <NumberPicker
+                                min={0}
+                                max={1_000_000}
+                                step={0.1}
+                                value={data.tpz}
+                                disabled={editDisabled}
+                                onChange={(tpz) => mergeState({tpz}, setData)}
+                            />
+                        </FormItem>
+                        <FormItem
+                            top={"Тшт, мин"}
+                            noPadding={true}
+                        >
+                            <NumberPicker
+                                min={0}
+                                max={1_000_000}
+                                step={0.1}
+                                value={data.tsht}
+                                disabled={editDisabled}
+                                onChange={(tsht) => mergeState({tsht}, setData)}
+                            />
+                        </FormItem> <FormItem
                         top={"Кол-во"}
                         noPadding={true}
                     >
@@ -212,6 +215,7 @@ const ModalManageProcessWork = (props: ModalManageProcessWorkProps) => {
                             onChange={(count) => mergeState({count}, setData)}
                         />
                     </FormItem>
+                    </FormLayoutGroup>
                     <FormItem
                         className={"count-symbols"}
                         top={"Описание"}

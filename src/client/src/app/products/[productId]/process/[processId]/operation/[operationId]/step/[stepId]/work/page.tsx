@@ -416,6 +416,11 @@ const WorkPage = () => {
         if (e.type === "editMode") {
             mergeState({editMode: e.editing}, setTableManage);
         }
+        if (e.type === "rowDoubleClick" || e.type === "cellDoubleClick") {
+            if (e.row.canEdit) {
+                openEditModal(e.row.id)
+            }
+        }
         if (e.type === "editSave") {
             if (Object.keys(e.changes).length === 0) return;
 

@@ -68,7 +68,7 @@ const ModalFiltersProcessOperation = (props: ModalFiltersProcessOperationProps) 
 
     return (
         <ModalPage
-            height={220}
+            height={188}
             onClose={onClose}
             header={(
                 <PlatformProvider value={"ios"}>
