@@ -111,6 +111,7 @@ export type DeleteUsersResult = {
 	error: DeleteUsersResultItem[];
 };
 
+const UPDATE_GOD_USER_ROLE_ERROR = "Роль первого пользователя нельзя изменить";
 const UPDATE_GOD_USER_ERROR = "Первого пользователя может изменять только он сам";
 
 const DELETE_USER_NO_RIGHTS_ERROR = "У вас нет прав для удаления";
@@ -488,6 +489,7 @@ export const updateUser = async (id: number, data: UpdateUserData, actorId: numb
 		select: {
 			id: true,
 			isAdmin: true,
+			roleId: true,
 		},
 	});
 
@@ -497,6 +499,10 @@ export const updateUser = async (id: number, data: UpdateUserData, actorId: numb
 
 	if (user?.isAdmin && actorId !== user.id) {
 		throw new AppError(403, UPDATE_GOD_USER_ERROR);
+	}
+
+	if (user.isAdmin && data.roleId !== undefined && data.roleId !== user.roleId) {
+		throw new AppError(403, UPDATE_GOD_USER_ROLE_ERROR);
 	}
 
 	if (data.login) {

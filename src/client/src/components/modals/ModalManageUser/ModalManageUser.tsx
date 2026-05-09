@@ -53,6 +53,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
     >>({id: null, show: false, data: null});
     const [savedData, setSavedData] = useState({...initialData});
     const [data, setData] = useState({...initialData});
+    const [managedIsAdmin, setManagedIsAdmin] = useState(false);
     const [roles, setRoles] = useState<CustomSelectOptionInterface[]>([]);
     const [avatarFileUrl, setAvatarFileUrl] = useState<string | null>(null);
     const [openAvatar, setOpenAvatar] = useState(false);
@@ -95,11 +96,13 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                                 avatarUrl: data.avatarUrl,
                             }
 
+                            setManagedIsAdmin(data.isAdmin);
                             setSavedData(user);
                             setData(user);
                         } else onClose('error')
                     });
                 } else if (typeof user === "object" && user !== null) {
+                    setManagedIsAdmin(false);
                     setData(user);
                 }
             } else onClose('error')
@@ -125,7 +128,7 @@ const ModalManageUser = (props: ModalManageUserProps) => {
         if (typeof idUser === 'number') {
             mergeState({send: true}, setLoading);
 
-            let options = {...data};
+            let options: Partial<PostUserType> = {...data};
 
             Object.keys(data).forEach((key) => {
                 const value = options[key as keyof PostUserType];
@@ -139,6 +142,10 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                     delete options[key as keyof PostUserType];
                 }
             });
+
+            if (managedIsAdmin) {
+                delete options.roleId;
+            }
 
             await ApiService.users.patch({
                 id: idUser,
@@ -172,18 +179,19 @@ const ModalManageUser = (props: ModalManageUserProps) => {
 
     const disabledSave = useMemo(() => {
         const validRequired = !!data.firstName.trim() && !!data.lastName.trim() && data.roleId && data.birthDate;
+        const roleChanged = !managedIsAdmin && data.roleId !== savedData.roleId;
 
         const validEdit = validRequired && (
             data.firstName.trim() !== savedData.firstName.trim() ||
             data.lastName.trim() !== savedData.lastName.trim() ||
             data.middleName?.trim() !== savedData.middleName?.trim() ||
-            data.roleId !== savedData.roleId ||
+            roleChanged ||
             data.birthDate !== savedData.birthDate ||
             data.avatarUrl !== savedData.avatarUrl
         );
 
         return typeof idUser === "number" ? !validEdit : !validRequired;
-    }, [idUser, data, savedData]);
+    }, [idUser, data, managedIsAdmin, savedData]);
 
     return (
         <ModalPage
@@ -297,8 +305,8 @@ const ModalManageUser = (props: ModalManageUserProps) => {
                             filterFn={selectFilter.filterFn}
                             options={roles}
                             searchable={true}
-                            disabled={loading.send}
-                            className={classNames(loading.send && 'disabled')}
+                            disabled={loading.send || managedIsAdmin}
+                            className={classNames((loading.send || managedIsAdmin) && 'disabled')}
                             value={data.roleId}
                             onChange={(e) => mergeState({roleId: Number(e.target.value)}, setData)}
                             placeholder={'Выберите роль пользователя'}
