@@ -43,7 +43,7 @@ const ACCESS_TITLES = {
     resetPassword: "Сброс пароля",
     viewProcess: 'Просмотр техпроцессов',
     addingProcess: 'Добавление техпроцессов',
-    editingProcess: 'Редактирование техпроцессов',
+    editingProcess: 'Редактирование всех техпроцессов',
     removingProcess: 'Удаление техпроцессов',
     changeDisabledProcess: 'Блокировка изменений техпроцессов'
 } satisfies Record<string, string>;

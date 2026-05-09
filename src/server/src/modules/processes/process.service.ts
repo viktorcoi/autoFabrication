@@ -215,7 +215,6 @@ export type ActionByTableResult = {
 };
 
 const PROCESS_NOT_FOUND_ERROR = "Техпроцесс не найден";
-const PROCESS_DUPLICATE_ERROR = "Техпроцесс с таким названием уже существует у этого изделия";
 const PROCESS_FILE_NOT_FOUND_ERROR = "Файл техпроцесса не найден";
 const PRODUCT_NOT_FOUND_ERROR = "Изделие не найдено";
 const BLANK_NOT_FOUND_ERROR = "Заготовка не найдена";
@@ -254,14 +253,6 @@ const isPrismaRecordNotFoundError = (error: unknown) =>
 		&& typeof error === "object"
 		&& "code" in error
 		&& error.code === "P2025",
-	);
-
-const isPrismaUniqueError = (error: unknown) =>
-	Boolean(
-		error
-		&& typeof error === "object"
-		&& "code" in error
-		&& error.code === "P2002",
 	);
 
 const formatUserFullName = (user: { firstName: string; lastName: string; middleName: string | null }) =>
@@ -395,27 +386,6 @@ const ensureBlankMatchesProductMaterial = async (
 
 	if (blank.materialId !== product.materialId) {
 		throw new AppError(400, BLANK_MATERIAL_MISMATCH_ERROR);
-	}
-};
-
-const ensureProcessNameIsUnique = async (
-	productId: number,
-	name: string,
-	exceptId?: number,
-) => {
-	const existingProcess = await prisma.technologicalProcess.findFirst({
-		where: {
-			productId,
-			name,
-			...(exceptId ? { id: { not: exceptId } } : {}),
-		},
-		select: {
-			id: true,
-		},
-	});
-
-	if (existingProcess) {
-		throw new AppError(409, PROCESS_DUPLICATE_ERROR);
 	}
 };
 
@@ -687,7 +657,6 @@ export const createProcess = async (
 ) => {
 	const product = await ensureProductExists(data.productId);
 	await ensureBlankMatchesProductMaterial(data.blankId, product);
-	await ensureProcessNameIsUnique(data.productId, data.name);
 	assertUniqueProcessStoredFiles([], files);
 
 	const savedFiles = await saveProcessFiles(files);
@@ -736,10 +705,6 @@ export const createProcess = async (
 	} catch (error) {
 		await cleanupStoredFiles(savedFiles.map((file) => file.absolutePath));
 
-		if (isPrismaUniqueError(error)) {
-			throw new AppError(409, PROCESS_DUPLICATE_ERROR);
-		}
-
 		throw error;
 	}
 };
@@ -764,11 +729,6 @@ export const updateProcess = async (
 
 	if (data.blankId !== undefined) {
 		await ensureBlankMatchesProductMaterial(data.blankId, currentProcess.product);
-	}
-
-	const nextName = data.name ?? currentProcess.name;
-	if (nextName !== currentProcess.name) {
-		await ensureProcessNameIsUnique(currentProcess.productId, nextName, id);
 	}
 
 	const removedFileIds = getUniqueIds(data.removedFileIds ?? []);
@@ -862,10 +822,6 @@ export const updateProcess = async (
 		return mapProcess(process);
 	} catch (error) {
 		await cleanupStoredFiles(savedFiles.map((file) => file.absolutePath));
-
-		if (isPrismaUniqueError(error)) {
-			throw new AppError(409, PROCESS_DUPLICATE_ERROR);
-		}
 
 		throw error;
 	}

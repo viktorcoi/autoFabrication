@@ -176,7 +176,6 @@ model technologicalProcess {
   disabledBy   User?    @relation("ProcessDisabledBy", fields: [disabledById], references: [id], onDelete: SetNull, onUpdate: Cascade)
   files        technologicalProcessFile[]
 
-  @@unique([productId, name])
   @@index([productId])
   @@index([blankId])
   @@index([creatorId])
