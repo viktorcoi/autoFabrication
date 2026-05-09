@@ -19,6 +19,44 @@ import { changeAuthUserPassword, getAuthUserById, loginUser } from "./auth.servi
 
 export const authRouter = Router();
 
+const getRouteAccess = (
+	permissions: Awaited<ReturnType<typeof loadRolePermissions>>,
+	path: string | null,
+) => {
+	if (!path) {
+		return {
+			allowed: true,
+			isProtectedRoute: false,
+		};
+	}
+
+	if (/^\/products\/edit\/[^/]+\/?$/.test(path)) {
+		return {
+			allowed: hasPermission(permissions, "/products", "editing"),
+			isProtectedRoute: true,
+		};
+	}
+
+	if (/^\/products\/[^/]+\/process\/?$/.test(path)) {
+		return {
+			allowed: hasPermission(permissions, "/products", "viewProcess"),
+			isProtectedRoute: true,
+		};
+	}
+
+	const normalizedPath = normalizePermissionPath(path);
+	const protectedPath = isPermissionRoute(permissions, normalizedPath)
+		? normalizedPath
+		: null;
+
+	return {
+		allowed: protectedPath
+			? hasPermission(permissions, protectedPath, "view")
+			: true,
+		isProtectedRoute: Boolean(protectedPath),
+	};
+};
+
 authRouter.post(
 	"/login",
 	asyncHandler(async (request, response) => {
@@ -42,17 +80,9 @@ authRouter.get(
 		requireAuth(request, response);
 		const permissions = await loadRolePermissions(request, response);
 		const query = validate(accessSchema, request.query);
-		const normalizedPath = query.path ? normalizePermissionPath(query.path) : null;
-		const protectedPath = normalizedPath && isPermissionRoute(permissions, normalizedPath)
-			? normalizedPath
-			: null;
+		const access = getRouteAccess(permissions, query.path ?? null);
 
-		response.json({
-			allowed: protectedPath
-				? hasPermission(permissions, protectedPath, "view")
-				: true,
-			isProtectedRoute: Boolean(protectedPath),
-		});
+		response.json(access);
 	}),
 );
 

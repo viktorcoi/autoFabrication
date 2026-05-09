@@ -4,13 +4,14 @@ import {
     ActionSheet,
     ActionSheetItem,
     Button,
-    ButtonGroup, Caption, classNames,
+    ButtonGroup, Caption, classNames, Counter,
     Search,
     Text,
     Tooltip
 } from "@vkontakte/vkui";
 import {
-    Icon24Add, Icon24BrowserBack,
+    Icon24Add, Icon24BrowserBack, Icon24ChevronRight,
+    Icon24Filter,
     Icon24PenOutline,
     Icon24SearchSlashOutline,
     Icon24TrashSimpleOutline
@@ -21,7 +22,7 @@ import Container from "@/components/Container/Container";
 import Table from "@/components/Table/Table";
 import {tableColumns} from "@/shared/tableColumns";
 import {mergeState} from "@/shared/helpers";
-import {useController, useSearch} from "@/shared/hooks";
+import {useController, useFilersCount, useSearch, useStoredFilters} from "@/shared/hooks";
 import {GetTableOptions, GetTableResponse} from "@/apiService/types";
 import {ModalPageCloseReasonType, OpenModalsType} from "@/components/modals/types";
 import {useSnackbarStore} from "@/store/snackbar/snackbar";
@@ -35,22 +36,18 @@ import ModalRemove from "@/components/modals/ModalRemove/ModalRemove";
 import ModalFiles from "@/components/modals/ModalFiles/ModalFiles";
 import ModalManageProcess from "@/components/modals/ModalProducts/ModalManageProcess/ModalManageProcess";
 import {ProductsPermissionFlagsType} from "@/apiService/apiRoles/types";
-import {PatchProcessTableOptions, ProcessTableRow} from "@/apiService/apiProcesses/types";
+import {GetProcessTableFilters, PatchProcessTableOptions, ProcessTableRow} from "@/apiService/apiProcesses/types";
 import Link from "next/link";
+import ModalFiltersProcess from "@/components/modals/ModalFilters/ModalFiltersProcess/ModalFiltersProcess";
 import styles from "./page.module.scss";
 
-/*
-TODO
-1) Ошибки с датой обновления, 1 не обновляется когда происходит lock/unlock, должно выводится в месте с тем кто заблокировал, сортировка не рабоатет, должно поподать в поле isConst
-2) Хз сделал он или нет, но когда изделие закрыто, мы можешь проходить дальше!
-3) Добавить фильтры 1. Юзер 2. Загатовка 3. RangeDate
- */
+const hasDateRangeValue = (value: GetProcessTableFilters["updatedAt"]) => value.some((date) => date !== null);
 
 const ProcessPage = () => {
 
     const router = useRouter();
-    const params = useParams<{id: string}>();
-    const productId = useMemo(() => Number(params.id), [params.id]);
+    const params = useParams<{productId: string}>();
+    const productId = useMemo(() => Number(params.productId), [params.productId]);
     const [loading, setLoading] = useState(true);
     const [product, setProduct] = useState<{
         name: string;
@@ -82,11 +79,17 @@ const ProcessPage = () => {
         editMode: false,
         actionSheet: null
     });
+    const [tableFilters, setTableFilters] = useStoredFilters<Omit<GetProcessTableFilters, "productId">>(`process-${productId}`, {
+        creatorId: 0,
+        blankId: 0,
+        updatedAt: [null, null],
+    });
     const [modals, setModals] = useState<OpenModalsType<
-        'modal-manage-process' | 'modal-remove-process' | 'modal-multi-remove-process' | 'modal-process-files'
+        'modal-manage-process' | 'modal-remove-process' | 'modal-multi-remove-process' | 'modal-process-files' | 'modal-filters-process'
     >>({id: null, show: false, data: null});
 
     const actionSheetRef = useRef(null);
+    const countFilter = useFilersCount(tableFilters);
     const addSnackbar = useSnackbarStore(state => state.addSnackbar);
     const showErrors = useShowErrors(state => state);
     const { TEST, permissions } = useAppStore(state => state);
@@ -101,6 +104,10 @@ const ProcessPage = () => {
         tableOptions.search,
         tableOptions.page,
         tableOptions.rows,
+        tableFilters.creatorId,
+        tableFilters.blankId,
+        tableFilters.updatedAt[0],
+        tableFilters.updatedAt[1],
     ]);
 
     useEffect(() => {
@@ -121,9 +128,14 @@ const ProcessPage = () => {
         setLoading(true);
 
         const controller = createController();
+        const filterOptions: Partial<Omit<GetProcessTableFilters, "productId">> = {
+            creatorId: tableFilters.creatorId || undefined,
+            blankId: tableFilters.blankId || undefined,
+            updatedAt: hasDateRangeValue(tableFilters.updatedAt) ? tableFilters.updatedAt : undefined,
+        };
 
         await ApiService.process.table.get({
-            options: {...tableOptions, productId},
+            options: {...tableOptions, ...filterOptions, productId},
             controller
         }).then(({status, data}) => {
             if (status === 'success') {
@@ -169,6 +181,10 @@ const ProcessPage = () => {
         tableOptions.search,
         tableOptions.page,
         tableOptions.rows,
+        tableFilters.creatorId,
+        tableFilters.blankId,
+        tableFilters.updatedAt[0],
+        tableFilters.updatedAt[1],
     ]);
 
     const closeModal = (reason: ModalPageCloseReasonType) => {
@@ -288,7 +304,7 @@ const ProcessPage = () => {
             const row = e.row as ProcessTableRow;
             if (!row.canEdit) return;
 
-            openManageModal(row.id);
+            router.push(`/products/${productId}/process/${e.row.id}/operation`);
         }
         if (e.type === 'selected') {
             setSelected(e.rowIds);
@@ -349,6 +365,12 @@ const ProcessPage = () => {
                         toggleRef={actionSheetRef}
                         onClosed={() => mergeState({actionSheet: null}, setTableManage)}
                     >
+                        <ActionSheetItem
+                            onClick={() => router.push(`/products/${productId}/process/${e.row.id}/operation`)}
+                            before={<Icon24ChevronRight width={20} height={20}/>}
+                        >
+                            Перейти к операциям
+                        </ActionSheetItem>
                         {row.canEdit && (
                             <ActionSheetItem
                                 onClick={() => openManageModal(row.id)}
@@ -387,7 +409,16 @@ const ProcessPage = () => {
     return (
         <>
             {tableManage.actionSheet}
-            {'modal-manage-process' === modals.id ? (
+            {'modal-filters-process' === modals.id ? (
+                <ModalFiltersProcess
+                    onChangeFilters={setTableFilters}
+                    data={tableFilters}
+                    productMaterialId={product.materialId}
+                    open={modals.show}
+                    onClose={closeModal}
+                    onClosed={() => setModals({id: null, show: false, data: null})}
+                />
+            ) : 'modal-manage-process' === modals.id ? (
                 <ModalManageProcess
                     idProcess={modals.data?.id ?? null}
                     productId={productId}
@@ -499,16 +530,40 @@ const ProcessPage = () => {
                                 className={'search'}
                                 slotProps={{ input: { getRootRef: inputRef } }}
                             />
+                            <Tooltip
+                                description={'Фильтры'}
+                                usePortal={true}
+                                placement={"top"}
+                                disableTriggerOnFocus={true}
+                            >
+                                <div className={'filter'}>
+                                    <Button
+                                        disabled={loading || tableManage.editMode}
+                                        onClick={() => mergeState({id: 'modal-filters-process', show: true}, setModals)}
+                                        mode={'secondary'}
+                                        size={'m'}
+                                        before={<Icon24Filter/>}
+                                    />
+                                    {!!countFilter && (
+                                        <Counter
+                                            mode={'primary'}
+                                            size={'s'}
+                                            className={'filter__counter'}
+                                        >
+                                            {countFilter}
+                                        </Counter>
+                                    )}
+                                </div>
+                            </Tooltip>
                         </div>
                     </>
                 )}
             >
                 <div className={classNames('island', styles.header)}>
                     <Text weight={'1'}>Технологические процессы</Text>
-                    <Caption level={'2'} className={styles.product__name}>{`${product.name} (ID: ${productId})`}</Caption>
+                    <Caption level={'2'} className={styles.header__name}>{`${product.name} (ID: ${productId})`}</Caption>
                 </div>
                 <Table
-                    tableId={`process-${productId}`}
                     componentName={'process'}
                     editMode={access.viewProcess}
                     data={table.data}

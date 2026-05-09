@@ -6,7 +6,7 @@ import { getStoredAvatarAbsolutePath, removeStoredFile } from "../../shared/stor
 import { getRoleById } from "../roles/role.service.js";
 import type { RolePermissions } from "../roles/role.types.js";
 import { updateUsersTableItemSchema } from "./user.schemas.js";
-import type { GetUsersTableQuery, UpdateUsersTablePayload } from "./user.schemas.js";
+import type { GetUsersQuery, GetUsersTableQuery, UpdateUsersTablePayload } from "./user.schemas.js";
 
 const userSelect = {
 	id: true,
@@ -43,6 +43,14 @@ const userTableSelect = {
 			name: true,
 		},
 	},
+} satisfies Prisma.UserSelect;
+
+const userListSelect = {
+	id: true,
+	firstName: true,
+	lastName: true,
+	middleName: true,
+	login: true,
 } satisfies Prisma.UserSelect;
 
 const USER_TABLE_FIELD_TO_MODEL_FIELD = {
@@ -319,12 +327,72 @@ const buildUsersTableOrderBy = (sorting: GetUsersTableQuery["sorting"]): Prisma.
 	}
 };
 
-export const listUsers = async () =>
+const buildUsersListWhere = (query: GetUsersQuery): Prisma.UserWhereInput | undefined => {
+	if (!query.search) {
+		return undefined;
+	}
+
+	return {
+		OR: [
+			{
+				login: {
+					contains: query.search,
+					mode: "insensitive",
+				},
+			},
+			{
+				lastName: {
+					contains: query.search,
+					mode: "insensitive",
+				},
+			},
+			{
+				firstName: {
+					contains: query.search,
+					mode: "insensitive",
+				},
+			},
+			{
+				middleName: {
+					contains: query.search,
+					mode: "insensitive",
+				},
+			},
+		],
+	};
+};
+
+const buildUsersListOrderBy = (sorting: GetUsersQuery["sorting"]): Prisma.UserOrderByWithRelationInput[] => {
+	if (!sorting) {
+		return [
+			{ lastName: "asc" },
+			{ firstName: "asc" },
+			{ middleName: "asc" },
+			{ id: "asc" },
+		];
+	}
+
+	switch (sorting.id) {
+		case "name":
+			return [
+				{ lastName: sorting.sort },
+				{ firstName: sorting.sort },
+				{ middleName: sorting.sort },
+				{ id: "asc" },
+			];
+		default:
+			return [
+				{ [sorting.id]: sorting.sort } as Prisma.UserOrderByWithRelationInput,
+				{ id: "asc" },
+			];
+	}
+};
+
+export const listUsers = async (query: GetUsersQuery) =>
 	prisma.user.findMany({
-		select: userSelect,
-		orderBy: {
-			id: "asc",
-		},
+		where: buildUsersListWhere(query),
+		select: userListSelect,
+		orderBy: buildUsersListOrderBy(query.sorting),
 	});
 
 export const getUsersTable = async (query: GetUsersTableQuery, actorId: number) => {

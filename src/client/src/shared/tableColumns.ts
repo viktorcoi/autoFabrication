@@ -92,6 +92,17 @@ export const tableColumns: Record<string, Column[]> = {
         {key: 'blank', header: 'Заготовка', minSize: 115, size: 220, maxSize: 625},
         {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false},
         {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065},
+    ],
 
+    processOperation: [
+        {key: 'id', header: '№', size: 100, resize: false},
+        {key: 'name', header: 'Операция', minSize: 230, size: 240, maxSize: 625},
+        {key: 'tpz', header: 'Тпз, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
+        {key: 'tsht', header: 'Тшт, мин', minSize: 90, size: 110, maxSize: 140, type: 'decimal'},
+        {key: '???', header: 'Этапы', size: 115, resize: false, type: 'text'},
+        {key: 'filesDownload', header: 'Файлы', type: 'download', size: 95, resize: false},
+        {key: 'exit', header: 'Выход', size: 95, resize: false},
+        {key: '???x', header: 'Кол-во этапов', size: 115, resize: false, type: 'text'},
+        {key: 'description', header: 'Описание', minSize: 115, size: 520, maxSize: 3065},
     ]
 };

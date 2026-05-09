@@ -1,5 +1,7 @@
 import {TableRow} from "@/components/Table/types";
 
+export type ProcessesDateRangeFilter = [Date | null, Date | null];
+
 export interface ProcessFileItem {
     id: number;
     name: string;
@@ -14,6 +16,7 @@ export interface GetByIdProcessResponse {
     blankId: number | null;
     creatorId: number;
     disabledById: number | null;
+    disabledAt: string | null;
     createdAt: string;
     updatedAt: string;
     product: {
@@ -80,6 +83,7 @@ export interface ProcessTableRow extends TableRow {
     canChangeAccess: boolean;
     canEdit: boolean;
     isLocked: boolean;
+    updatedAt: string;
     description: string;
 }
 
@@ -87,4 +91,7 @@ export type PatchProcessTableOptions = Record<number, Partial<Pick<ProcessTableR
 
 export type GetProcessTableFilters = {
     productId: number;
+    creatorId: number;
+    blankId: number;
+    updatedAt: ProcessesDateRangeFilter;
 };

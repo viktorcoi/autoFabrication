@@ -27,11 +27,17 @@ const blankIdSchema = z.coerce
 	.int()
 	.positive("Некорректный id заготовки");
 
+const creatorIdSchema = z.coerce
+	.number()
+	.int()
+	.positive("Некорректный id разработчика");
+
 const processTableSortingSchema = z.object({
 	id: z.enum([
 		"id",
 		"name",
 		"creator",
+		"updatedAt",
 		"blank",
 		"filesDownload",
 		"operationCount",
@@ -81,6 +87,24 @@ const parseOptionalNullableId = (value: unknown) => {
 	return value;
 };
 
+const parseOptionalId = (value: unknown) => {
+	if (value === undefined || value === null || value === "") {
+		return undefined;
+	}
+
+	if (typeof value === "string") {
+		const normalizedValue = value.trim();
+
+		if (normalizedValue.length === 0) {
+			return undefined;
+		}
+
+		return normalizedValue;
+	}
+
+	return value;
+};
+
 const parseIdArray = (value: unknown) => {
 	if (value === undefined || value === null || value === "") {
 		return undefined;
@@ -110,6 +134,42 @@ const parseIdArray = (value: unknown) => {
 
 	return [normalizedValue];
 };
+
+const parseDateBoundary = (boundary: "start" | "end") => (value: unknown) => {
+	if (value === undefined || value === null || value === "") {
+		return undefined;
+	}
+
+	if (value instanceof Date) {
+		return value;
+	}
+
+	if (typeof value !== "string") {
+		return value;
+	}
+
+	const normalizedValue = value.trim();
+
+	if (!normalizedValue.length) {
+		return undefined;
+	}
+
+	if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+		const [year, month, day] = normalizedValue.split("-").map(Number);
+		return new Date(Date.UTC(year, month - 1, day + (boundary === "end" ? 1 : 0)));
+	}
+
+	const parsedDate = new Date(normalizedValue);
+
+	if (Number.isNaN(parsedDate.getTime())) {
+		return parsedDate;
+	}
+
+	return parsedDate;
+};
+
+const dateBoundarySchema = (boundary: "start" | "end") =>
+	z.preprocess(parseDateBoundary(boundary), z.date().optional());
 
 const searchQuerySchema = z.preprocess(
 	(value) => typeof value === "string" ? value.trim() : undefined,
@@ -173,6 +233,10 @@ export const getProcessesTableSchema = z.object({
 		.preprocess(parseTableSorting, processTableSortingSchema.nullable())
 		.optional()
 		.transform((value) => value ?? null),
+	creatorId: z.preprocess(parseOptionalId, creatorIdSchema.optional()),
+	blankId: z.preprocess(parseOptionalId, blankIdSchema.optional()),
+	updatedAtFrom: dateBoundarySchema("start"),
+	updatedAtTo: dateBoundarySchema("end"),
 });
 
 export type CreateProcessPayload = z.infer<typeof createProcessSchema>;

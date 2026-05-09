@@ -1,4 +1,5 @@
 import {TableRow} from "@/components/Table/types";
+import type {TableSorting} from "@/components/Table/types";
 
 export type UserAvatarValue = string | File | null;
 
@@ -20,6 +21,12 @@ export interface GetUsersResponse {
 	lastName: string;
 	middleName?: string | null;
 	login: string;
+}
+
+export interface GetUsersOptions {
+	search?: string;
+	forSelect?: boolean;
+	sorting?: TableSorting;
 }
 
 export interface GetByIdUserResponse {

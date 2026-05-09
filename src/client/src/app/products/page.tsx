@@ -3,6 +3,7 @@
 import {ActionSheet, ActionSheetItem, Button, ButtonGroup, classNames, Counter, Search, Tooltip} from "@vkontakte/vkui";
 import {
     Icon24Add,
+    Icon24ChevronRight,
     Icon24Filter,
     Icon24PenOutline,
     Icon24SearchSlashOutline,
@@ -302,7 +303,7 @@ const ProductsPage = () => {
                         {access.viewProcess && (
                             <ActionSheetItem
                                 onClick={() => router.push(`/products/${e.row.id}/process`)}
-                                before={<Icon24PenOutline width={20} height={20}/>}
+                                before={<Icon24ChevronRight width={20} height={20}/>}
                             >
                                 Перейти к техпроцессам
                             </ActionSheetItem>

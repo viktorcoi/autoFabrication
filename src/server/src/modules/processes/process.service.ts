@@ -36,6 +36,7 @@ const processSelect = {
 	blankId: true,
 	creatorId: true,
 	disabledById: true,
+	disabledAt: true,
 	createdAt: true,
 	updatedAt: true,
 	product: {
@@ -91,6 +92,7 @@ const processTableSelect = {
 	description: true,
 	creatorId: true,
 	disabledById: true,
+	disabledAt: true,
 	createdAt: true,
 	updatedAt: true,
 	blank: {
@@ -165,6 +167,7 @@ const PROCESS_TABLE_FIELD_TO_MODEL_FIELD = {
 	id: "id",
 	name: "name",
 	creator: "creatorId",
+	updatedAt: "updatedAt",
 	blank: "blankId",
 	filesDownload: "filesDownload",
 	operationCount: "operationCount",
@@ -263,6 +266,12 @@ const isPrismaUniqueError = (error: unknown) =>
 
 const formatUserFullName = (user: { firstName: string; lastName: string; middleName: string | null }) =>
 	[user.firstName, user.lastName, user.middleName].filter(Boolean).join(" ");
+
+const formatProcessDateTime = (date: Date) =>
+	new Intl.DateTimeFormat("ru-RU", {
+		dateStyle: "short",
+		timeStyle: "short",
+	}).format(date);
 
 const mapProcessFiles = (files: Array<{ id: number; originalName: string; size: number }>) =>
 	files.map((file) => ({
@@ -486,6 +495,21 @@ const buildProcessesTableWhere = (query: GetProcessesTableQuery): Prisma.technol
 		filters.OR = searchFilters;
 	}
 
+	if (typeof query.creatorId === "number") {
+		filters.creatorId = query.creatorId;
+	}
+
+	if (typeof query.blankId === "number") {
+		filters.blankId = query.blankId;
+	}
+
+	if (query.updatedAtFrom || query.updatedAtTo) {
+		filters.updatedAt = {
+			...(query.updatedAtFrom ? { gte: query.updatedAtFrom } : {}),
+			...(query.updatedAtTo ? { lt: query.updatedAtTo } : {}),
+		};
+	}
+
 	return filters;
 };
 
@@ -577,6 +601,7 @@ export const getProcessesTable = async (
 		data: processes.map((process) => {
 			const files = mapProcessFiles(process.files);
 			const disabledBy = process.disabledBy ? formatUserFullName(process.disabledBy) : "";
+			const disabledAt = process.disabledAt ? formatProcessDateTime(process.disabledAt) : "";
 			const isLocked = process.disabledById !== null;
 			const rowCanEdit = !isLocked && canEditProcess(permissions, process, actorId);
 
@@ -590,7 +615,9 @@ export const getProcessesTable = async (
 				filesDownload: files.length ? "download" : "",
 				operationCount: "",
 				access: !isLocked,
-				accessTooltip: disabledBy ? `Закрыл: ${disabledBy}` : "Открыт",
+				accessTooltip: disabledBy
+					? `Закрыт (${disabledBy}${disabledAt ? `, ${disabledAt}` : ""})`
+					: "Открыт",
 				canChangeAccess,
 				canEdit: rowCanEdit,
 				isLocked,
@@ -856,6 +883,7 @@ export const updateProcessAccess = async (
 	}
 
 	try {
+		const now = new Date();
 		const process = await prisma.technologicalProcess.update({
 			where: { id },
 			data: {
@@ -868,6 +896,8 @@ export const updateProcessAccess = async (
 					: {
 							disconnect: true,
 						},
+				disabledAt: data.disabled ? now : null,
+				updatedAt: now,
 			},
 			select: processSelect,
 		});

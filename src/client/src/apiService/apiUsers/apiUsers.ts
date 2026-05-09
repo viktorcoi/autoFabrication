@@ -2,12 +2,14 @@ import {
 	ActionByTableResponse,
 	ApiServiceOptions,
 	ApiServiceResponse,
+	GetListOptions,
 	GetTableOptions,
 	GetTableResponse
 } from "@/apiService/types";
-import {api, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
+import {api, buildGetOptions, buildTableOptions, handleApiError, handleApiSuccess} from "@/apiService/apiService";
 import {
 	GetByIdUserResponse,
+	GetUsersOptions,
 	GetUsersResponse,
 	GetUsersTableFilters,
 	PatchUsersTableOptions,
@@ -18,9 +20,12 @@ import {
 import {createUserOptions} from "@/apiService/apiUsers/helpers";
 
 export const ApiUsers = {
-	get: async (options: ApiServiceOptions = {}): Promise<ApiServiceResponse<GetUsersResponse[]>> => {
+	get: async (options: ApiServiceOptions<{
+		options?: GetListOptions<GetUsersOptions>;
+	}> = {}): Promise<ApiServiceResponse<GetUsersResponse[]>> => {
 		return await api.get("/users", {
 			signal: options.controller?.signal,
+			params: buildGetOptions(options.options),
 		}).then((response) => {
 			return handleApiSuccess(
 				response.data,

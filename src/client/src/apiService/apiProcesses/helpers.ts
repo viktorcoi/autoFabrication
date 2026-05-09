@@ -1,6 +1,33 @@
 import axios from "axios";
 import {api} from "@/apiService/apiService";
-import {PathProcessOptions, PostProcessOptions} from "@/apiService/apiProcesses/types";
+import {PathProcessOptions, PostProcessOptions, ProcessesDateRangeFilter} from "@/apiService/apiProcesses/types";
+
+const padDatePart = (value: number) => String(value).padStart(2, "0");
+
+const formatProcessFilterDate = (date: Date | null) => {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return undefined;
+    }
+
+    return [
+        date.getFullYear(),
+        padDatePart(date.getMonth() + 1),
+        padDatePart(date.getDate()),
+    ].join("-");
+};
+
+export const getProcessDateRangeParams = (range?: ProcessesDateRangeFilter) => {
+    if (!range) {
+        return {};
+    }
+
+    const [from, to] = range;
+
+    return {
+        ...(from ? {updatedAtFrom: formatProcessFilterDate(from)} : undefined),
+        ...(to ? {updatedAtTo: formatProcessFilterDate(to)} : undefined),
+    };
+};
 
 export const createProcessOptions = (options: PostProcessOptions | PathProcessOptions) => {
     const formData = new FormData();

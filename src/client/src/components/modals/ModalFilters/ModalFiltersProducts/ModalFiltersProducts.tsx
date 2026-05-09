@@ -31,9 +31,9 @@ const ModalFiltersProducts = (props: ModalFiltersProductsProps) => {
         ...restProps
     } = props;
 
-    const {
-        createController,
-    } = useController([]);
+    const {createController} = useController([]);
+    const {createController: createMaterialController} = useController([]);
+    const {createController: createUsersController} = useController([]);
 
     const selectFilter = useSelectFilter();
 
@@ -75,7 +75,7 @@ const ModalFiltersProducts = (props: ModalFiltersProductsProps) => {
     }, []);
 
     useEffect(() => {
-        const controller = createController();
+        const controller = createMaterialController();
 
         ApiService.guide.material.get({
             controller,
@@ -95,10 +95,11 @@ const ModalFiltersProducts = (props: ModalFiltersProductsProps) => {
     }, []);
 
     useEffect(() => {
-        const controller = createController();
+        const controller = createUsersController();
 
         ApiService.users.get({
             controller,
+            options: {forSelect: true, sorting: {id: 'name', sort: 'asc'}},
         }).then(({status, data}) => {
             if (status === 'success') {
                 mergeState({creator: data.map(({id, firstName, lastName, middleName}) => ({

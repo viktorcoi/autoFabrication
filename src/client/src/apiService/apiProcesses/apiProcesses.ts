@@ -14,7 +14,16 @@ import {
     PostProcessOptions,
     ProcessTableRow
 } from "@/apiService/apiProcesses/types";
-import {createProcessOptions} from "@/apiService/apiProcesses/helpers";
+import {createProcessOptions, getProcessDateRangeParams} from "@/apiService/apiProcesses/helpers";
+
+const buildProcessTableOptions = (options?: GetTableOptions<Partial<GetProcessTableFilters> & {productId: number}>) => {
+    const {updatedAt, ...restOptions} = options ?? {};
+
+    return {
+        ...buildTableOptions(restOptions),
+        ...getProcessDateRangeParams(updatedAt),
+    };
+};
 
 export const ApiProcesses = {
     getById: async (options: ApiServiceOptions<{
@@ -95,11 +104,11 @@ export const ApiProcesses = {
 
     table: {
         get: async (options: ApiServiceOptions<{
-            options: GetTableOptions<GetProcessTableFilters>;
+            options: GetTableOptions<Partial<GetProcessTableFilters> & {productId: number}>;
         }>): Promise<ApiServiceResponse<GetTableResponse<ProcessTableRow[]>>> => {
             return await api.get("/processes/table", {
                 signal: options.controller?.signal,
-                params: buildTableOptions(options.options),
+                params: buildProcessTableOptions(options.options),
             }).then((response) => {
                 return handleApiSuccess(
                     response.data,

@@ -48,6 +48,11 @@ const userTableSortingSchema = z.object({
 	sort: z.enum(["asc", "desc"]),
 }).strict();
 
+const userListSortingSchema = z.object({
+	id: z.enum(["id", "name", "login"]),
+	sort: z.enum(["asc", "desc"]),
+}).strict();
+
 const parseTableSorting = (value: unknown) => {
 	if (value === null || value === undefined || value === "" || value === "null") {
 		return null;
@@ -125,6 +130,14 @@ export const deleteUserIdsSchema = z.array(
 	z.coerce.number().int().positive("id пользователя должен быть положительным числом"),
 ).min(1, "Нужно выбрать хотя бы одного пользователя");
 
+export const getUsersSchema = z.object({
+	search: z.preprocess(
+		(value) => typeof value === "string" ? value.trim() : undefined,
+		z.string().optional(),
+	).transform((value) => value && value.length > 0 ? value : undefined),
+	sorting: z.preprocess(parseTableSorting, userListSortingSchema.nullable()).optional().transform((value) => value ?? null),
+});
+
 export const getUsersTableSchema = z.object({
 	page: z.coerce.number().int().min(0).default(0),
 	rows: z.coerce.number().int().positive().max(100).default(20),
@@ -136,6 +149,7 @@ export const getUsersTableSchema = z.object({
 	roleId: z.preprocess(parseOptionalId, roleIdSchema.optional()),
 });
 
+export type GetUsersQuery = z.infer<typeof getUsersSchema>;
 export type GetUsersTableQuery = z.infer<typeof getUsersTableSchema>;
 export type DeleteUserIdsPayload = z.infer<typeof deleteUserIdsSchema>;
 export type UpdateUsersTableItemPayload = z.infer<typeof updateUsersTableItemSchema>;

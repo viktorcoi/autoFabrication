@@ -4,7 +4,7 @@ import multer from "multer";
 import { AppError } from "../../shared/errors/app-error.js";
 import { asyncHandler } from "../../shared/http/async-handler.js";
 import { requireAuth } from "../../shared/http/auth.js";
-import { assertPermission, loadRolePermissions, requirePermission } from "../../shared/http/permissions.js";
+import { assertPermission, hasPermission, loadRolePermissions, requirePermission } from "../../shared/http/permissions.js";
 import { validate } from "../../shared/http/validate.js";
 import {
 	AVATAR_FILE_SIZE_LIMIT,
@@ -16,6 +16,7 @@ import {
 import {
 	createUserSchema,
 	deleteUserIdsSchema,
+	getUsersSchema,
 	getUsersTableSchema,
 	updateUsersTableSchema,
 	updateUserSchema,
@@ -41,6 +42,21 @@ const parseId = (value: string) => {
 };
 
 export const userRouter = Router();
+
+const PRODUCTS_FOR_SELECT_PERMISSIONS = [
+	"view",
+	"adding",
+	"editing",
+	"viewProcess",
+	"addingProcess",
+	"editingProcess",
+] as const;
+
+const canReadUsersForSelect = (permissions: Awaited<ReturnType<typeof loadRolePermissions>>) =>
+	hasPermission(permissions, "/users", "view")
+	|| hasPermission(permissions, "/users", "adding")
+	|| hasPermission(permissions, "/users", "editing")
+	|| PRODUCTS_FOR_SELECT_PERMISSIONS.some((permission) => hasPermission(permissions, "/products", permission));
 
 const avatarUpload = multer({
 	storage: multer.memoryStorage(),
@@ -98,9 +114,20 @@ const requireResetPasswordPermissionIfNeeded = async (
 
 userRouter.get(
 	"/",
-	requirePermission("/users", "view"),
-	asyncHandler(async (_request, response) => {
-		const users = await listUsers();
+	asyncHandler(async (request, response) => {
+		const permissions = await loadRolePermissions(request, response);
+		const forSelect = request.query.forSelect === "true";
+
+		if (forSelect) {
+			if (!canReadUsersForSelect(permissions)) {
+				throw new AppError(403, "У вас отсутствует доступ для данного действия");
+			}
+		} else {
+			assertPermission(permissions, "/users", "view");
+		}
+
+		const query = validate(getUsersSchema, request.query);
+		const users = await listUsers(query);
 
 		response.json(users);
 	}),
